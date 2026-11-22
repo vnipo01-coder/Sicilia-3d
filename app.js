@@ -39,7 +39,37 @@ function init(){
  if(typeof maplibregl==='undefined'){showError();return;}
  map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[13.3615,38.1157],zoom:16.4,pitch:65,bearing:-20,antialias:true,maxPitch:85});
  map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'bottom-right');
- map.on('load',()=>{loaded=true;$('error').hidden=true;setStatus('● Karte geladen');addBuildings();});
+ 
+map.on('load', () => {
+  loaded = true;
+  $('error').hidden = true;
+  setStatus('● Karte geladen');
+  addBuildings();
+
+  try {
+    map.addSource('sicilia-terrain', {
+      type: 'raster-dem',
+      tiles: [
+        'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'
+      ],
+      tileSize: 256,
+      encoding: 'terrarium',
+      maxzoom: 15,
+      attribution: 'Elevation data: Mapzen/AWS and source contributors'
+    });
+
+    map.setTerrain({
+      source: 'sicilia-terrain',
+      exaggeration: 1.5
+    });
+
+    setStatus('● Karte + 3D-Gelände aktiviert');
+  } catch (error) {
+    console.warn('Gelände konnte nicht aktiviert werden:', error);
+    setStatus('● Karte geladen · Gelände nicht verfügbar');
+  }
+});
+  
  map.on('error',e=>console.warn('MapLibre:',e.error?.message||e));
  setTimeout(()=>{if(!loaded)showError()},15000);
 }
