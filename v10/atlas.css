@@ -67,3 +67,22 @@ footer{position:fixed;right:12px;bottom:8px;color:#eff7f1;font-size:9px;text-sha
  .inspector{top:auto;bottom:73px;max-height:38dvh;right:8px;width:min(340px,calc(100vw - 16px))}
  .maplibregl-ctrl-bottom-right{display:none}footer{display:none}
 }
+/* v10.4: compact GIS controls, clear information links */
+.osm-refresh{width:100%;background:#18606d;border:1px solid #7ad8cf;
+ color:#f5ffff;border-radius:9px;padding:10px 12px;text-align:left;font-size:12px;
+ margin:6px 0 9px;cursor:pointer}
+.osm-refresh:hover{background:#227988}
+#related{background:#123b4b}
+#related a{display:inline-block;border:1px solid #87d4cc6a;border-radius:7px;
+ padding:6px 9px;margin:4px 5px 3px 0;text-decoration:none;color:#b3f9ec;font-size:11px}
+#related p{color:#d3e8e6;line-height:1.55}
+.inspector{scrollbar-width:thin;scrollbar-color:#599e9e transparent}
+.quicklinks a:hover,.camera button:hover,.osm-refresh:hover{filter:brightness(1.15)}
+#source-info{line-height:1.5;white-space:normal;overflow-wrap:anywhere}
+#camera-indicator{font-size:10px;color:#c5e6dc}
+@media(max-width:750px){
+ .camera{top:96px}
+ .camera button{min-height:30px}
+ .inspector{right:7px;bottom:67px;top:auto}
+ .osm-refresh{font-size:11px;padding:8px}
+}
