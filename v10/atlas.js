@@ -356,6 +356,12 @@ async function searchPlace(){
     setStatus('● '+(f.properties?.name||query)+' gefunden');
   }catch(err){setStatus('Ortssuche: '+err.message);}
 }
+$('quickplaces').onclick=e=>{
+  const button=e.target.closest('button[data-place]');
+  if(!button)return;
+  const place=PLACES.find(p=>p.name===button.dataset.place);
+  if(place)centerPlace(place);
+};
 $('search-go').onclick=searchPlace;
 $('search').addEventListener('keydown',e=>{if(e.key==='Enter')searchPlace();});
 function handleClick(e){
