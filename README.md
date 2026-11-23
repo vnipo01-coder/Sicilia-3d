@@ -1,4 +1,4 @@
-# SICILIA 3D – Professional Geo Atlas v8.0
+# SICILIA 3D – Professional Geo Atlas v9.0
 
 Ein geografischer 3D-Atlas von Sizilien mit Kartenansicht, lokal begehbaren 3D-Modellen und einem Flight Explorer.
 
@@ -14,6 +14,13 @@ Ein geografischer 3D-Atlas von Sizilien mit Kartenansicht, lokal begehbaren 3D-M
 - walk.html, walk.js: Three.js-Ortsmodell für frei wählbare Sizilien-Koordinaten über die URL-Parameter lat, lng und name.
 - airport.html, airport.js: 3D-Flugzeuge, klar bezeichnete Landedemo und optional echte ADS-B-Daten mit eigenem FlyItalyADSB-Schlüssel.
 - app.js, v5.js, v6.js, style.css: alte Versionen, im Atlas v8 nicht mehr eingebunden.
+
+## Änderungen in Version 9
+- 3D Walk: Standardtempo 9 m/s statt 2.4 m/s; frei einstellbar (2–22 m/s), Shift für doppelte Geschwindigkeit, Mausrad für Tempo, Maus einfangen für FPS-Blicksteuerung und verbesserte Kollisionen an Hauswänden.
+- Desktop-Karte: separate kompakte Buttons zum Neigen, Senken, Drehen und Zurücksetzen der Kamera; Mausradwahl weiterhin im Kartenmenü.
+- Catania: 2'436 × 45 m Startbahn 08/26 als schematische Basis, modellierte Vorfelder, Rollwege, Parkpositionen und zusätzliche OSM-Layer, sofern diese geladen werden können.
+- Flugbewegungen: längere Annäherung aus der Entfernung, klar erkennbare simulierte Landung und Ausrollphase. Keine Simulation wird als Live-Messung bezeichnet.
+- ADS-B: sichtbarer Button «API-Schlüssel aktivieren & Live verbinden», Verbindungsanzeige, Details zu Fehlern sowie FlyItalyADSB als dokumentierter Dienst mit gültigem Schlüssel. Ohne Schlüssel kein echter Live-Datensatz.
 
 ## Steuerung am Computer
 
