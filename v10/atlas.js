@@ -169,11 +169,81 @@ function updateLayers(){
   visible(ids.peaks,state.peaks);
   visible(ids.poi,true);
 }
+// If the vector tiles do not show buildings locally, recover source-backed
+// building outlines from OpenStreetMap. Public Overpass is rate limited; only
+// sample when the camera has stopped and the area actually lacks extrusions.
+let osmRefreshTimer=null,osmFetchSequence=0;
+function queueLocalBuildings(){
+  if(osmRefreshTimer)clearTimeout(osmRefreshTimer);
+  if(map.getZoom()<14.15||!state.buildings||!map.getSource('s10-local-src')){
+    if(map.getSource('s10-local-src'))map.getSource('s10-local-src').setData({
+      type:'FeatureCollection',features:[]});
+    return;
+  }
+  osmRefreshTimer=setTimeout(()=>loadLocalBuildings(),1800);
+}
+async function loadLocalBuildings(){
+  if(state.localBusy||!state.buildings||!map.getSource('s10-local-src'))return;
+  const zoom=map.getZoom(),c=map.getCenter();
+  if(zoom<14.15||!isSicily(c.lat,c.lng))return;
+  // Tiles might simply be late; don't overload Overpass if there are
+  // already visible extrusions in the current viewport.
+  try{
+    const current=map.queryRenderedFeatures({layers:[ids.build]});
+    if(current.length>=3){
+      map.getSource('s10-local-src').setData({type:'FeatureCollection',features:[]});
+      $('source-info').textContent='3D-Gebäude aus OpenFreeMap-Vektorkacheln; fehlende Höhen sind Modellwerte.';
+      return;
+    }
+  }catch(error){/* Source may not be ready; try cached OSM outlines */}
+  if(Date.now()-state.localAt<50000)return;
+  if(state.localPosition){
+    const d=Math.hypot((state.localPosition.lat-c.lat)*111000,
+      (state.localPosition.lng-c.lng)*88000);
+    if(d<250&&state.localCount)return;
+  }
+  state.localBusy=true;state.localAt=Date.now();
+  state.localPosition={lat:c.lat,lng:c.lng};
+  const call=++osmFetchSequence;
+  $('source-info').textContent='Prüfe fehlende Gebäudegrundrisse in OpenStreetMap …';
+  try{
+    const result=await getLocalOSM(c.lat,c.lng,450);
+    if(call!==osmFetchSequence)return;
+    const features=[];
+    for(const e of result.elements||[]){
+      if(e.type!=='way'||!e.tags?.building||!Array.isArray(e.geometry)||e.geometry.length<4)continue;
+      const coords=e.geometry.map(p=>[p.lon,p.lat]);
+      if(coords.some(p=>!Number.isFinite(p[0])||!Number.isFinite(p[1])))continue;
+      const first=coords[0],last=coords.at(-1);
+      if(Math.hypot(first[0]-last[0],first[1]-last[1])>0.00001)coords.push([...first]);
+      if(coords.length<4)continue;
+      const h=getBuildingHeight(e.tags);
+      const tags={...e.tags,name:e.tags.name||'Gebäude',height_m:h.metres,
+        estimated:h.estimated,osm_id:e.id,osm_source:'OpenStreetMap'};
+      features.push({type:'Feature',id:e.id,geometry:{type:'Polygon',coordinates:[coords]},
+        properties:tags});
+      if(features.length>=330)break;
+    }
+    const src=map.getSource('s10-local-src');
+    if(src&&map.getZoom()>=14.15)src.setData({type:'FeatureCollection',features});
+    state.localCount=features.length;
+    $('source-info').textContent=features.length?
+      'Zusätzlich '+features.length+' OSM-Gebäude geladen; Höhen teilweise geschätzt · '+new Date(result.queriedAt).toLocaleString('de-CH'):
+      'Für diesen Ausschnitt wurden keine weiteren OSM-Gebäude gefunden.';
+  }catch(error){
+    $('source-info').textContent='Zusätzliche OSM-Gebäudedaten nicht erreichbar. Vektor-Gebäude bleiben eingeschaltet.';
+    console.warn('Local building service unavailable',error);
+  }finally{
+    state.localBusy=false;
+  }
+}
+
 map.on('style.load',()=>{
   styleReady=true;
   try{
     prepareStyle();
-    setStatus('● SICILIA 3D v10.1 · Karte sichtbar');
+    queueLocalBuildings();
+    setStatus('● SICILIA 3D · Karte + 3D-Gebäude geladen');
   }catch(error){
     console.warn('3D-Layer eingeschränkt:',error);
     // A healthy 2D map must remain accessible when DEM/3D layers fail.
@@ -194,6 +264,7 @@ function flyingWalkHref(){
 }
 map.on('moveend',()=>{
   if(!state.selected)flyingWalkHref();
+  queueLocalBuildings();
 });
 $('walking').addEventListener('click',flyingWalkHref);
 $('casal').onclick=()=>centerPlace(PLACES[0]);
@@ -255,12 +326,12 @@ async function searchPlace(){
 $('search-go').onclick=searchPlace;
 $('search').addEventListener('keydown',e=>{if(e.key==='Enter')searchPlace();});
 function handleClick(e){
-  const validLayers=[ids.build,ids.peaks,ids.poi].filter(id=>map.getLayer(id));
+  const validLayers=[ids.local,ids.build,ids.peaks,ids.poi].filter(id=>map.getLayer(id));
   let features=[];
   try{if(validLayers.length)features=map.queryRenderedFeatures(e.point,{layers:validLayers});}
   catch(err){}
   features.sort((a,b)=>{
-    const rank={[ids.build]:0,[ids.peaks]:1,[ids.poi]:2};
+    const rank={[ids.local]:0,[ids.build]:1,[ids.peaks]:2,[ids.poi]:3};
     return(rank[a.layer.id]??9)-(rank[b.layer.id]??9);
   });
   let f=features[0];
@@ -275,7 +346,7 @@ function handleClick(e){
   const p=f.properties||{};
   const location=f.geometry?.type==='Point'?{lon:f.geometry.coordinates[0],lat:f.geometry.coordinates[1]}:
     {lon:e.lngLat.lng,lat:e.lngLat.lat};
-  const kind=f.layer.id===ids.build?'Gebäude':f.layer.id===ids.peaks?'Berggipfel':
+  const kind=(f.layer.id===ids.build||f.layer.id===ids.local)?'Gebäude':f.layer.id===ids.peaks?'Berggipfel':
     f.layer.id===ids.poi?'Sehenswürdigkeit':'Ort';
   select({name:p.name||p.name_de||p.name_en||
     (kind==='Gebäude'?'Gebäude ohne Namen':'Unbenanntes Kartenobjekt'),
