@@ -251,14 +251,19 @@ map.on('style.load',()=>{
   }
 });
 map.on('load',()=>{
-  state.loaded=true;setStatus(fallbackUsed?'● Satelliten-Ersatzkarte geladen':'● SICILIA 3D · Sizilien sichtbar');
+  state.loaded=true;
+  setStatus(fallbackUsed?
+    '● Satelliten-Ersatzkarte geladen · 3D-Gebäude beim Hineinzoomen':
+    '● Sizilien geladen · 3D-Gebäude ab Zoomstufe 14');
 });
 map.on('error',e=>{
   console.warn('Externe Kartenkachel:',e.error?.message||e);
   if(!styleReady)setStatus('Kartenquelle lädt noch · Satelliten-Ersatzkarte wird bei Bedarf aktiviert');
 });
 function flyingWalkHref(){
-  const c=state.selected||{lat:map.getCenter().lat,lon:map.getCenter().lng,name:'Kartenausschnitt Sizilien'};
+  const c=state.selected||
+    (map.getZoom()<11.5?PLACES[0]:
+      {lat:map.getCenter().lat,lon:map.getCenter().lng,name:'Kartenausschnitt Sizilien'});
   const params=new URLSearchParams({
     lat:c.lat.toFixed(6),lng:c.lon.toFixed(6),name:c.name});
   $('walking').href='./explore.html?'+params;
@@ -504,6 +509,10 @@ async function loadWeather(obj,key){
   }
 }
 flyingWalkHref();
+// A full-island overview otherwise starts EXPLORE in empty countryside.
+// The first quick-entry intentionally defaults to the Casalvecchio pilot.
+$('walking').title='Bei Inselübersicht zuerst Casalvecchio; nach Ortsauswahl der gewählte Ort';
+$('detail-walk').title='Detaillierter 3D Walk mit tatsächlichen OSM-Gebäuden soweit vorhanden';
 // Start with the entire island in view, instead of a very close-up
 // potentially not-yet-rendered village view.
 setStatus('Lade Sizilien · 2D-Basiskarte zuerst, 3D-Daten danach …');
