@@ -1,6 +1,7 @@
 import {isSicily,getBuildingHeight,propertyRows,getLocalOSM} from './geo.js?v=115';
 import {SANTA,STOPS,LOCAL_REFERENCES,LINKS,inSantaTeresa,contextualSources,streetImageryUrl,stopDetails} from './local-sources.js?v=115';
 import {getWeather,formatWeather,weatherLabel,weatherDescription} from './weather.js?v=115';
+import {lookupWikipedia,lookupWikidata,officialKnowledge} from './knowledge.js?v=115';
 
 /* SICILIA 3D v10.1 ATLAS PREVIEW – isolated from v9 main site.
    Grounded map source labels and source-aware object inspector. */
@@ -463,44 +464,38 @@ function select(obj){
   loadWeather(obj,state.weatherRequest);
 }
 $('inspector-close').onclick=()=>$('inspector').hidden=true;
+function appendKnowledgeCard(root,data,isOfficial=false){
+  const card=create('div','official-fact');
+  card.append(create('strong','',data.title));
+  card.append(create('p','',data.facts||data.text||'Keine Kurzbeschreibung.'));
+  card.append(create('small','source-label',
+    (isOfficial?'Amtliche/Betreiberquelle: ':'Offene Wissensquelle: ')+
+    (data.attribution||'Herkunft dokumentiert')));
+  card.append(link('Originalquelle ↗',data.url));
+  root.append(card);
+}
 async function loadArticle(obj,key){
-  const article=$('article');article.replaceChildren(create('strong','','📖 Geschichte & Wissen'));
-  if(obj.kind==='Gebäude'&&!obj.props?.wikidata){
-    article.append(create('p','','Für dieses Gebäude ist kein eindeutig zugeordneter historischer Artikel erfasst. Prüfe die OSM- und Archivquellen.'));return;
+  const target=$('article');
+  target.replaceChildren(create('strong','','📚 Wissen aus mehreren Quellen'));
+  const official=officialKnowledge(obj);
+  if(official.length){
+    target.append(create('p','','Lokale Originalquellen mit belegten Kurzangaben:'));
+    for(const source of official)appendKnowledgeCard(target,source,true);
+  }else if(obj.kind==='Gebäude'){
+    target.append(create('p','','Für dieses Gebäude ist keine verifizierte Bauchronik hinterlegt. OSM-Gebäudeattribute werden separat angezeigt.'));
+  }else{
+    target.append(create('p','','Noch keine amtliche Ortsbeschreibung hinterlegt. Ich prüfe Wikipedia und Wikidata als weitere Quellen …'));
   }
-  article.append(create('p','','Prüfe passende Artikel …'));
-  const title=obj.name==='Ätna'?'Ätna':obj.name;
-  for(const lang of ['de','it']){
-    try{
-      const p=new URLSearchParams({action:'query',prop:'extracts|info|coordinates',inprop:'url',
-        titles:title,exintro:'1',explaintext:'1',redirects:'1',format:'json',origin:'*'});
-      const r=await fetch('https://'+lang+'.wikipedia.org/w/api.php?'+p);
-      if(!r.ok)continue;
-      const page=Object.values((await r.json()).query?.pages||{})[0];
-      if(key!==state.articleRequest)return;
-      if(!page||page.missing!==undefined)continue;
-      const geo=page.coordinates?.[0];
-      if(geo){
-        const dist=Math.hypot((geo.lat-obj.lat)*111,(geo.lon-obj.lon)*88);
-        const threshold=obj.kind==='Gebäude'?.35:14;
-        if(dist>threshold){
-          article.replaceChildren(create('strong','','📖 Artikel nicht örtlich bestätigt'),
-            create('p','','Ein gleichnamiger Artikel liegt rund '+dist.toFixed(1)+' km entfernt und wird deshalb nicht automatisch zugeordnet.'));
-          return;
-        }
-      }
-      article.replaceChildren(create('strong','','📖 '+page.title),
-        create('p','',(page.extract||'Keine Vorschau').slice(0,630)),
-        create('small','','Wikipedia '+lang.toUpperCase()+
-          (geo?' · Artikelkoordinate geprüft':' · Identität nicht geografisch geprüft')));
-      article.append(link('Vollständigen Artikel ↗',page.fullurl||
-        'https://'+lang+'.wikipedia.org/wiki/'+encodeURIComponent(page.title)));
-      return;
-    }catch(e){console.warn('Wikipedia nicht erreichbar:',e);}
-  }
-  if(key===state.articleRequest)
-    article.replaceChildren(create('strong','','📖 Kein bestätigter Artikel'),
-      create('p','','Es ist keine eindeutig verknüpfte historische Beschreibung verfügbar.'));
+  if(obj.kind==='Bushaltestelle')return;
+  if(obj.kind==='Gebäude'&&!obj.props?.wikidata&&!obj.props?.wikipedia)return;
+  const wiki=await lookupWikipedia(obj);
+  if(key!==state.articleRequest)return;
+  if(wiki){appendKnowledgeCard(target,wiki);return;}
+  const wd=await lookupWikidata(obj);
+  if(key!==state.articleRequest)return;
+  if(wd){appendKnowledgeCard(target,wd);return;}
+  if(!official.length)
+    target.append(create('p','','Kein eindeutig zugeordnetes historisches Dokument gefunden. Unter «Weitere Quellen» kannst du zusätzliche Archive und Karten öffnen.'));
 }
 async function loadWeather(obj,key){
   const box=$('weather');box.replaceChildren(create('strong','','🌦️ Wetter · '+obj.name),
