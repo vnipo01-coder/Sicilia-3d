@@ -21,7 +21,7 @@ scene.add(new THREE.HemisphereLight(0xd7ebf6,0x788a97,2.4));
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(75000,75000),new THREE.MeshStandardMaterial({color:0x739b84,roughness:1}));
 ground.rotation.x=-Math.PI/2;ground.position.y=-1;scene.add(ground);
 const sea=new THREE.Mesh(new THREE.PlaneGeometry(60000,60000),new THREE.MeshStandardMaterial({color:0x2d7798,metalness:.04,roughness:.64}));
-sea.rotation.x=-Math.PI/2;sea.position.set(0,-.5,20000);scene.add(sea);
+sea.rotation.x=-Math.PI/2;sea.position.set(0,-.5,31500);scene.add(sea);
 const runway=new THREE.Group();scene.add(runway);
 const asphalt=new THREE.MeshStandardMaterial({color:0x3a474e,roughness:.96});
 const markings=new THREE.MeshBasicMaterial({color:0xebf1e9});
@@ -167,7 +167,9 @@ async function loadAirportOSM(){
       flatLine(points,Number(t.width)||20,.73,fillMaterial(0x4a5157),sourceOverlay);taxi++;
     }else if(t.aeroway==='runway'&&points.length>1){
       const width=Number(t.width)||45;
-      if(points.length>=2)flatLine(points,width,.82,fillMaterial(0x333f46),sourceOverlay);
+      if(points.length>=4&&Math.hypot(points[0].x-points.at(-1).x,points[0].z-points.at(-1).z)<10)
+        flatPolygon(points,.86,fillMaterial(0x333f46),sourceOverlay);
+      else if(points.length>=2)flatLine(points,width,.82,fillMaterial(0x333f46),sourceOverlay);
       runways++;
     }else if(t.building&&points.length>3&&term<85){
       const cx=points.reduce((a,p)=>a+p.x,0)/points.length;
@@ -224,7 +226,7 @@ function clearPlanes(){
   });}
   planeItems.length=0;
 }
-let mode='demo',paused=false,theta=.9,phi=.75,distance=4200,following=false;
+let mode='demo',paused=false,theta=.9,phi=.75,distance=4200,following=false,demoRate=1;
 let lookAt=new THREE.Vector3(0,180,0),dragged=false,px=0,py=0,prev=performance.now(),time=0;
 function updateCamera(){
   const elevation=Math.cos(phi)*distance;
@@ -429,7 +431,7 @@ window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camer
 function render(now){
   requestAnimationFrame(render);
   const dt=Math.min(.04,(now-prev)/1000);prev=now;
-  if(!paused)time+=dt;
+  if(!paused)time+=dt*(mode==='demo'?demoRate:1);
   if(mode==='demo'&&!paused){
     for(const p of planeItems){
       const i=p.idx,speed=p.speed,t=time*speed;
@@ -437,7 +439,13 @@ function render(now){
       if(i===0){
         // Fictional approach in the direction of CTA RWY 08.
         // The 3D model descends, touches down, and rolls out.
-        const x=((time*155+900)%11200)-8000;
+        const phase=time%60;
+        let x;
+        if(phase<30)x=-6000+(4820/30)*phase;
+        else if(phase<48){
+          const u=phase-30;
+          x=-1180+145*u-2.3*u*u; // touchdown and decelerating rollout
+        }else x=-1180+145*18-2.3*18*18;
         const z=-0.176*x;
         const y=x< -1180?Math.max(4,(-x-1180)*.12+4):4;
         p.group.position.set(x,y,z);
@@ -467,5 +475,9 @@ function render(now){
   updateCamera();
   renderer.render(scene,camera);
 }
+// Make demo landing observable without having to watch a full loop.
+$('flight-approach').addEventListener('dblclick',()=>{
+  if(mode==='demo'){time=20;demoRate=1;}
+});
 demoPlanes();updateCamera();requestAnimationFrame(render);
 console.info('SICILIA 3D airport v9 - official runway dimension, 3D overlays and API status');
