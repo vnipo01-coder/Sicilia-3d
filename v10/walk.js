@@ -21,7 +21,9 @@ import {getWeather,formatWeather,weatherDescription} from './weather.js?v=115';
 
 /* Walk v10.1: OSM building geometry + single shared DEM. No fictional replacement city. */
 validateGeo();
-const $=id=>document.getElementById(id),loc=readLocation(),frame=new GeoFrame(loc.lat,loc.lon);
+const $=id=>document.getElementById(id),loc=readLocation();
+if(!loc.custom){loc.lat=SANTA.lat;loc.lon=SANTA.lon;loc.name=SANTA.name;}
+const frame=new GeoFrame(loc.lat,loc.lon);
 const isSanta=inSantaTeresa(loc,3800);
 const sceneRadius=isSanta?495:345;
 const dem=new TerrainDEM(frame,14),scene=new THREE.Scene();
