@@ -497,25 +497,68 @@ async function loadArticle(obj,key){
   if(!official.length)
     target.append(create('p','','Kein eindeutig zugeordnetes historisches Dokument gefunden. Unter «Weitere Quellen» kannst du zusätzliche Archive und Karten öffnen.'));
 }
-async function loadWeather(obj,key){
-  const box=$('weather');box.replaceChildren(create('strong','','🌦️ Wetter · '+obj.name),
-    create('p','','Aktuelle Modellwerte werden geladen …'));
+let currentWeatherObj={name:SANTA.name,kind:'Ort',lat:SANTA.lat,lon:SANTA.lon};
+async function loadWeather(obj,key,force=false){
+  currentWeatherObj=obj;
+  const card=$('weather');
+  card.replaceChildren(create('strong','','🌦️ Wetter · '+obj.name),
+    create('p','','Lade aktuelle Wettermodellwerte …'));
+  $('weather-summary').textContent='🌦️ '+obj.name+': Wetter laden …';
   try{
-    const p=new URLSearchParams({latitude:String(obj.lat),longitude:String(obj.lon),
-      current:'temperature_2m,cloud_cover,wind_speed_10m,precipitation',timezone:'Europe/Rome'});
-    const r=await fetch('https://api.open-meteo.com/v1/forecast?'+p);
-    if(!r.ok)throw Error('Open-Meteo');
-    const v=(await r.json()).current;
+    const raw=await getWeather(obj.lat,obj.lon,{fresh:force});
     if(key!==state.weatherRequest)return;
-    box.replaceChildren(create('strong','','🌦️ Wetter · Open-Meteo'),
-      create('p','',v.temperature_2m+' °C · Bewölkung '+v.cloud_cover+
-        ' % · Wind '+v.wind_speed_10m+' km/h · Niederschlag '+v.precipitation+' mm'),
-      create('p','',v.time+' (Ortszeit Italien) · Modellwert, keine Live-Messung am Gebäude'));
-  }catch(e){
-    if(key===state.weatherRequest)box.replaceChildren(create('strong','','🌦️ Wetter'),
-      create('p','','Der Wetterdienst ist momentan nicht erreichbar.'));
+    const v=formatWeather(raw);
+    card.replaceChildren(create('strong','','🌦️ Aktuelles Wetter · '+obj.name),
+      create('div','weather-main',v.emoji+' '+v.temp+' · '+v.label));
+    const grid=create('div','weather-grid');
+    for(const pair of [
+      ['Gefühlt',v.feels],['Wolken',v.clouds],['Wind',v.wind],
+      ['Luftfeuchte',v.humidity],['Niederschlag',v.precipitation]])
+      grid.append(create('span','',pair[0]+': '+pair[1]));
+    card.append(grid);
+    if(raw.forecast.length){
+      card.append(create('strong','','Nächste 6 Stunden'));
+      const strip=create('div','hour-strip');
+      for(const h of raw.forecast){
+        const el=create('div','');
+        el.append(create('small','',h.time.slice(-5)));
+        const t=Number.isFinite(h.temperature)?Math.round(h.temperature)+'°':'–';
+        el.append(create('div','',weatherLabel(h.weather)[0]+' '+t));
+        el.append(create('small','','Regen '+(h.chance??'–')+' %'));
+        strip.append(el);
+      }
+      card.append(strip);
+    }
+    card.append(create('p','weather-freshness',
+      'Modellzeit: '+v.time+' (Italien) · Abfrage '+new Date(raw.fetched).toLocaleTimeString('de-CH')+
+      (raw.stale?' · ältere Cachewerte':'')+
+      '. Open-Meteo: modellierte aktuelle Bedingungen, keine Live-Messung an diesem Gebäude.'));
+    card.append(link('Wetterquelle / Datenmodell','https://open-meteo.com/en/docs'));
+    $('weather-summary').textContent='🌦️ '+obj.name+': '+weatherDescription(raw)+
+      (raw.stale?' · älterer Stand':'');
+  }catch(error){
+    if(key!==state.weatherRequest)return;
+    card.replaceChildren(create('strong','','🌦️ Wetter derzeit nicht verfügbar'),
+      create('p','','Der Wetterdienst liefert derzeit keine bestätigten aktuellen Werte.'));
+    card.append(link('Wetterdienst öffnen','https://open-meteo.com/en/docs'));
+    $('weather-summary').textContent='🌦️ Wetterdaten fehlen · ↻ erneut abfragen';
   }
 }
+$('weather-update').onclick=()=>{
+  state.weatherRequest++;
+  loadWeather(currentWeatherObj,state.weatherRequest,true);
+};
+map.on('load',()=>{
+  if(!state.selected){
+    state.weatherRequest++;
+    loadWeather(currentWeatherObj,state.weatherRequest);
+  }
+});
+setInterval(()=>{
+  if(document.hidden)return;
+  state.weatherRequest++;
+  loadWeather(currentWeatherObj,state.weatherRequest,true);
+},6*60*1000);
 
 // Two verifiable bus stops from the Buscenter feed and a clearly approximate
 // Interbus notice location. Mapillary imagery is discovered, never faked.
