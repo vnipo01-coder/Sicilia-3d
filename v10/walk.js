@@ -15,15 +15,19 @@ try{
   }
 }
 import {readLocation,GeoFrame,TerrainDEM,getLocalOSM,polygonArea,pointInPolygon,tileXY,
-  getRoadWidth,getBuildingHeight,propertyRows,validateGeo} from './geo.js?v=102';
+  getRoadWidth,getBuildingHeight,propertyRows,validateGeo} from './geo.js?v=115';
+import {SANTA,STOPS,LOCAL_REFERENCES,LINKS,inSantaTeresa,streetImageryUrl,stopDetails} from './local-sources.js?v=115';
+import {getWeather,formatWeather,weatherDescription} from './weather.js?v=115';
 
 /* Walk v10.1: OSM building geometry + single shared DEM. No fictional replacement city. */
 validateGeo();
 const $=id=>document.getElementById(id),loc=readLocation(),frame=new GeoFrame(loc.lat,loc.lon);
+const isSanta=inSantaTeresa(loc,3800);
+const sceneRadius=isSanta?495:345;
 const dem=new TerrainDEM(frame,14),scene=new THREE.Scene();
 scene.background=new THREE.Color('#92b5bd');scene.fog=new THREE.FogExp2('#acc3bf',.0012);
-document.title=loc.name+' | SICILIA 3D v10 Walk';
-$('place-name').textContent=loc.name+' · v10.1';
+document.title=loc.name+' | SICILIA 3D v10.5 Walk';
+$('place-name').textContent=loc.name+' · v10.5';
 const host=$('world'),renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.6));renderer.setSize(innerWidth,innerHeight);
 renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;
@@ -40,7 +44,7 @@ const state={x:0,z:0,yaw:.42,pitch:0,third:false,speed:7,keys:new Set(),
 const height=(x,z)=>dem.height(x,z)??0;
 const toast=msg=>$('toast').textContent=msg;
 function makeTerrain(){
-  const size=820,seg=148,mesh=new THREE.PlaneGeometry(size,size,seg,seg);
+  const size=isSanta?1100:820,seg=isSanta?180:148,mesh=new THREE.PlaneGeometry(size,size,seg,seg);
   mesh.rotateX(-Math.PI/2);
   const p=mesh.getAttribute('position'),colors=[],c=new THREE.Color();
   for(let i=0;i<p.count;i++){
@@ -64,7 +68,8 @@ let aerialLoaded=0,aerialRequested=0;
 const tileLon=(x,z)=>x/(2**z)*360-180;
 const tileLat=(y,z)=>Math.atan(Math.sinh(Math.PI*(1-2*y/(2**z))))*180/Math.PI;
 function loadAerial(){
-  const zoom=16,coords=[frame.geo(-415,-415),frame.geo(415,415)];
+  const extent=isSanta?530:415;
+  const zoom=16,coords=[frame.geo(-extent,-extent),frame.geo(extent,extent)];
   const tiles=coords.map(p=>tileXY(p.lat,p.lon,zoom));
   const minX=Math.floor(Math.min(...tiles.map(p=>p.x)));
   const maxX=Math.floor(Math.max(...tiles.map(p=>p.x)));
@@ -147,7 +152,7 @@ function addBuilding(poly,tags,id,index){
   if(poly.length<3||poly.length>85||polygonArea(poly)<8)return;
   const cx=poly.reduce((a,p)=>a+p.x,0)/poly.length;
   const cz=poly.reduce((a,p)=>a+p.z,0)/poly.length;
-  if(Math.hypot(cx,cz)>390)return;
+  if(Math.hypot(cx,cz)>(isSanta?520:390))return;
   const heights=poly.map(p=>height(p.x,p.z)),modelHeight=getBuildingHeight(tags);
   const roofY=Math.max(...heights)+modelHeight.metres,vertices=[];
   for(let i=0;i<poly.length;i++){
@@ -254,7 +259,7 @@ function move(dt){
   const dx=(Math.sin(state.yaw)*f+Math.cos(state.yaw)*side)*speed*dt/n;
   const dz=(-Math.cos(state.yaw)*f+Math.sin(state.yaw)*side)*speed*dt/n;
   const nextX=state.x+dx,nextZ=state.z+dz;
-  if(Math.hypot(nextX,nextZ)>345)return;
+  if(Math.hypot(nextX,nextZ)>sceneRadius)return;
   if(height(nextX,nextZ)-height(state.x,state.z)>2.0&&Math.hypot(dx,dz)<1.2)return;
   if(!collision(nextX,nextZ)){state.x=nextX;state.z=nextZ;}
   else{
@@ -376,12 +381,12 @@ $('find-church').onclick=()=>{
 async function loadOSM(){
   $('osm-status').textContent='Lade OpenStreetMap-Grundrisse und Wege …';
   try{
-    const data=await getLocalOSM(loc.lat,loc.lon,370);
+    const data=await getLocalOSM(loc.lat,loc.lon,isSanta?470:370);
     if(buildings.length||roads.length){$('osm-status').textContent='Daten schon geladen. Zum Aktualisieren bitte neu laden.';return;}
     for(const e of data.elements){
       if(!e.tags?.highway||!e.geometry?.length)continue;
       addRoad(e.geometry.map(p=>frame.local(p.lon,p.lat)),e.tags);
-      if(roads.length>=260)break;
+      if(roads.length>=(isSanta?400:260))break;
     }
     let index=0;
     for(const e of data.elements){
@@ -389,7 +394,7 @@ async function loadOSM(){
       let poly=e.geometry.map(p=>frame.local(p.lon,p.lat));
       if(poly.length>2&&Math.hypot(poly[0].x-poly.at(-1).x,poly[0].z-poly.at(-1).z)<.4)poly.pop();
       addBuilding(poly,e.tags,e.id,index++);
-      if(buildings.length>=250)break;
+      if(buildings.length>=(isSanta?400:250))break;
     }
     $('osm-status').textContent='✓ '+buildings.length+' OSM-Gebäude · '+roads.length+
       ' Wege · '+new Date(data.queriedAt).toLocaleTimeString('de-CH')+
@@ -424,7 +429,7 @@ async function boot(){
   $('skip-load').onclick=()=>{$('loading').style.display='none';};
   try{
     $('load-message').textContent='Lade echte Terrarium-Höhenkacheln …';
-    const r=await dem.load(420);
+    const r=await dem.load(isSanta?560:420);
     $('terrain-status').textContent=r.valid?
       '✓ '+r.loaded+'/'+r.attempted+' Kacheln · Ortszentrum ca. '+
       Math.round(r.center)+' m ü. M. (DEM-Raster)':
