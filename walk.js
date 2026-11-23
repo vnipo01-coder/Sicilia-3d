@@ -35,7 +35,7 @@ const detailRaycaster=new THREE.Raycaster(), clickable=[];
 const state={
   yaw:0.38,pitch:0,thirdPerson:false,x:0,z:0,keys:new Set(),terrainOK:false,osmOK:false,
   groundLabel:'Höhenmodell nicht verfügbar',buildings:[],churches:[],buildingCount:0,streetCount:0,
-  dem:new Map(),originElevation:0,viewReady:false,cloudCover:null,
+  dem:new Map(),originElevation:0,viewReady:false,cloudCover:null,walkSpeed:9,
   last:performance.now(),elapsed:0,drag:false,rx:0,ry:0,raf:0
 };
 const palette=['#ead9bf','#cda78a','#e7c6aa','#e2d7c0','#dab99b','#dec8b2','#f0d9b5','#d6b59a'];
@@ -103,7 +103,7 @@ function ground(x,z){
   return Math.max(-120,Math.min(220,y));
 }
 function makeTerrain(){
-  const W=1300,segments=96;
+  const W=1300,segments=145;
   const geometry=new THREE.PlaneGeometry(W,W,segments,segments);
   geometry.rotateX(-Math.PI/2);
   const pos=geometry.attributes.position;
@@ -381,7 +381,8 @@ function updateCamera(){
   }else ui('height').textContent='⛰️ Relief: Modell';
 }
 function move(dt){
-  const speed=dt*(state.keys.has('sprint')?5:2.4);
+  // Faster navigation for desktop and long streets. Speed is deliberately adjustable.
+  const speed=dt*state.walkSpeed*(state.keys.has('sprint')?2.0:1.0);
   const forward=(state.keys.has('forward')?1:0)-(state.keys.has('back')?1:0);
   const sideways=(state.keys.has('right')?1:0)-(state.keys.has('left')?1:0);
   if(!forward&&!sideways)return;
@@ -389,12 +390,12 @@ function move(dt){
   const dx=(Math.sin(state.yaw)*forward+Math.cos(state.yaw)*sideways)*speed/norm;
   const dz=(-Math.cos(state.yaw)*forward+Math.sin(state.yaw)*sideways)*speed/norm;
   const nx=state.x+dx,nz=state.z+dz;
-  if(Math.hypot(nx,nz)<260&&!hitBuilding(nx,nz)){
+  if(Math.hypot(nx,nz)<310&&!hitBuilding(nx,nz)){
     state.x=nx;state.z=nz;
   }
 }
-const keyMap={w:'forward',ArrowUp:'forward',s:'back',ArrowDown:'back',
-  a:'left',ArrowLeft:'left',d:'right',ArrowRight:'right',Shift:'sprint'};
+const keyMap={w:'forward',W:'forward',ArrowUp:'forward',s:'back',S:'back',ArrowDown:'back',
+  a:'left',A:'left',ArrowLeft:'left',d:'right',D:'right',ArrowRight:'right',Shift:'sprint'};
 document.addEventListener('keydown',e=>{
   const k=keyMap[e.key];if(!k)return;
   if(e.target instanceof Element&&e.target.closest('input,textarea'))return;
@@ -412,6 +413,43 @@ for(const b of document.querySelectorAll('[data-move]')){
     b.addEventListener(type,()=>state.keys.delete(key));
   b.addEventListener('contextmenu',e=>e.preventDefault());
 }
+const speedControl=document.createElement('div');
+speedControl.className='walk-speed-panel';
+speedControl.innerHTML='<label for="walk-speed">🏃 Geschwindigkeit <strong id="walk-speed-label">9 m/s</strong></label>'+
+  '<input id="walk-speed" type="range" min="2" max="22" step="1" value="9" aria-label="Geh- und Lauftempo">'+
+  '<p class="walk-speed-note">Shift halten = Sprint (2×). Mausrad = schneller/langsamer. WASD oder Pfeiltasten bewegen.</p>'+
+  '<button id="walk-mouselook" type="button">🖱️ Maussteuerung aktivieren</button>';
+document.querySelector('.hud')?.append(speedControl);
+const speedSlider=ui('walk-speed');
+speedSlider.oninput=()=>{
+  state.walkSpeed=Number(speedSlider.value);
+  ui('walk-speed-label').textContent=state.walkSpeed+' m/s';
+};
+renderer.domElement.addEventListener('wheel',e=>{
+  e.preventDefault();
+  state.walkSpeed=Math.max(2,Math.min(22,state.walkSpeed+(e.deltaY<0?1:-1)));
+  speedSlider.value=state.walkSpeed;
+  ui('walk-speed-label').textContent=state.walkSpeed+' m/s';
+},{passive:false});
+const mouseBtn=ui('walk-mouselook');
+mouseBtn.onclick=async()=>{
+  if(document.pointerLockElement===renderer.domElement){
+    document.exitPointerLock();return;
+  }
+  if(renderer.domElement.requestPointerLock){
+    try{await renderer.domElement.requestPointerLock();}
+    catch(e){showNotice('Maussteuerung im Browser nicht verfügbar. Du kannst weiterhin ziehen.');}
+  }
+};
+document.addEventListener('pointerlockchange',()=>{
+  mouseBtn.textContent=document.pointerLockElement===renderer.domElement?
+    '✕ Maussteuerung verlassen (Esc)':'🖱️ Maussteuerung aktivieren';
+});
+document.addEventListener('mousemove',e=>{
+  if(document.pointerLockElement!==renderer.domElement)return;
+  state.yaw+=e.movementX*.0032;
+  state.pitch=Math.max(-.72,Math.min(1.1,state.pitch-e.movementY*.003));
+});
 renderer.domElement.addEventListener('pointerdown',e=>{
   state.drag=false;state.rx=e.clientX;state.ry=e.clientY;
   renderer.domElement.setPointerCapture(e.pointerId);
@@ -509,6 +547,7 @@ async function boot(){
     try{await getOSM();}catch(error){console.warn('OSM data failed',error);fallbackVillage();}
     addDecoration();
     const p=findWalkableSpawn();state.x=p.x;state.z=p.z;
+    if(speedSlider)speedSlider.value=String(state.walkSpeed);
     state.viewReady=true;
     ui('height').textContent=state.groundLabel;
     if(state.osmOK)showNotice('✓ '+state.buildingCount+' OpenStreetMap-Gebäude, '+state.streetCount+' Wege. Fassaden teilweise modelliert; erfasste Kirchen: '+state.churches.length+'.');
