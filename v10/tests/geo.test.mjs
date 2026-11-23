@@ -55,7 +55,7 @@ test('Preview links and recovery paths are present',()=>{
   const index=readFileSync(new URL('../index.html',import.meta.url),'utf8');
   const walk=readFileSync(new URL('../walk.html',import.meta.url),'utf8');
   const explore=readFileSync(new URL('../explore.html',import.meta.url),'utf8');
-  assert.match(index,/atlas\.js\?v=110/);
+  assert.match(index,/atlas\.js\?v=111/);
   assert.match(walk,/walk\.js\?v=109/);
   assert.match(index,/3D-Erkundung/);
   assert.match(index,/Ortsmodell/);
