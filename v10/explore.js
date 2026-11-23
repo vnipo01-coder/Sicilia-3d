@@ -1,7 +1,10 @@
-import {readLocation,isSicily,getBuildingHeight} from './geo.js?v=108';
+import {readLocation,isSicily,getBuildingHeight} from './geo.js?v=115';
+import {SANTA,STOPS,LOCAL_REFERENCES,LINKS,inSantaTeresa,streetImageryUrl,stopDetails} from './local-sources.js?v=115';
+import {getWeather,weatherDescription,formatWeather} from './weather.js?v=115';
 const $=id=>document.getElementById(id);
 const loc=readLocation();
 const params=new URLSearchParams(location.search);
+if(!loc.custom){loc.lat=SANTA.lat;loc.lon=SANTA.lon;loc.name=SANTA.name;}
 let lon=loc.lon,lat=loc.lat,heading=Number(params.get('bearing'))||0;
 let speed=6,pitch=76,zoom=18.1,wheelTilt=false,buildingsOn=true;
 const keys=new Set(),maplibre=window.maplibregl;
@@ -74,7 +77,7 @@ map.on('error',e=>{
   console.warn('3D source',e.error?.message||e);
   if(!loaded)setStatus('Basiskarte verzögert · Satelliten-Ersatz wird geprüft');
 });
-$('place').textContent=loc.name+' · 3D-Kartenerkundung';
+$('place').textContent=loc.name+' · 3D-Küstenansicht · v10.5';
 function updateWalkLink(){
   const p=new URLSearchParams({lat:lat.toFixed(6),lng:lon.toFixed(6),name:loc.name});
   $('real-walk').href='./walk.html?'+p;
@@ -215,4 +218,90 @@ const panel=$('panel-hide');panel.onclick=()=>{
   }
   panel.textContent=isSmall?'− Menü verkleinern':'+ Menü öffnen';
 };
+
+const coastalDocs=$('coastal-documents');
+function sourceLink(label,url){
+  const a=document.createElement('a');a.textContent=label;a.href=url;
+  a.target='_blank';a.rel='noopener noreferrer';return a;
+}
+function renderLocalPanel(){
+  coastalDocs.replaceChildren();
+  const nearby=inSantaTeresa({lat,lon},5500);
+  for(const btn of document.querySelectorAll('.coastal-links button'))
+    btn.disabled=!nearby;
+  if(!nearby){
+    $('coastal-summary').textContent='Der aktuelle Ausschnitt liegt ausserhalb von Santa Teresa. Für diesen Ort werden vorhandene Kartendaten angezeigt.';
+    coastalDocs.append(sourceLink('📷 Mapillary-Aufnahmen prüfen',streetImageryUrl(lat,lon)));
+    return;
+  }
+  $('coastal-summary').textContent=
+    'Santa Teresa di Riva: amtliche Kulturquellen, überprüfbare Haltestellen und aktuelle Wettermodellwerte. Die Häuser sind OSM-3D-Modelle, keine exakten Fassadenrekonstruktionen.';
+  for(const info of LOCAL_REFERENCES.slice(0,4))
+    coastalDocs.append(sourceLink('🏛️ '+info.title,info.url));
+  coastalDocs.append(sourceLink('🚌 Interbus-Haltestellenänderung',LINKS.transportNotice));
+  coastalDocs.append(sourceLink('🚌 Fahrplanauskunft Interbus',LINKS.transport));
+  coastalDocs.append(sourceLink('🚆 Trenitalia',LINKS.trains));
+  coastalDocs.append(sourceLink('📷 Strassenbilder bei Mapillary prüfen',streetImageryUrl(lat,lon)));
+}
+const busMarkers=[];
+function showStop(stop){
+  $('detail-title').textContent='🚌 '+stop.name;
+  const box=$('detail-body');box.replaceChildren();
+  for(const item of stopDetails(stop)){
+    const p=document.createElement('p'),strong=document.createElement('strong');
+    strong.textContent=item.label+': ';
+    p.append(strong,document.createTextNode(item.value));box.append(p);
+  }
+  box.append(sourceLink('Offizielle Interbus-Mitteilung ↗',LINKS.transportNotice));
+  box.append(sourceLink('Fahrplan beim Betreiber prüfen ↗',LINKS.transport));
+  box.append(sourceLink('Haltestellen-Datenquelle ↗',stop.url));
+  $('detail').classList.add('open');
+}
+function initStops(){
+  for(const stop of STOPS){
+    const el=document.createElement('button');el.className='coastal-marker';
+    el.textContent='🚌';el.title=stop.name;
+    el.setAttribute('aria-label','Bushaltestelle '+stop.name);
+    el.onclick=e=>{e.stopPropagation();showStop(stop);};
+    const marker=new maplibre.Marker({element:el,anchor:'bottom'}).
+      setLngLat([stop.lon,stop.lat]).addTo(map);
+    busMarkers.push(marker);
+  }
+  refreshStops();
+}
+function refreshStops(){
+  const show=inSantaTeresa({lat,lon},8000)&&map.getZoom()>=12;
+  busMarkers.forEach(m=>m.getElement().style.display=show?'block':'none');
+}
+function flyToPlace(p,zoomLevel=18.4){
+  lon=p.lon;lat=p.lat;heading=0;pitch=78;
+  map.flyTo({center:[lon,lat],zoom:zoomLevel,pitch,bearing:heading,duration:950});
+  updateCoords();renderLocalPanel();refreshStops();
+}
+$('goto-municipio').onclick=()=>flyToPlace(SANTA);
+$('goto-lungomare').onclick=()=>flyToPlace({
+  lat:37.9393543554652,lon:15.3628167268097},18.2);
+$('goto-busstop').onclick=()=>{
+  const stop=STOPS[0];flyToPlace(stop,18.4);showStop(stop);
+};
+let weatherLast=null,weatherBusy=false;
+async function refreshWeather(){
+  if(weatherBusy)return;weatherBusy=true;
+  $('weather-live').textContent='🌦️ Lade aktuelle Modellwerte …';
+  try{
+    const data=await getWeather(lat,lon,{fresh:true});
+    weatherLast=data;
+    const fmt=formatWeather(data);
+    $('weather-live').textContent=weatherDescription(data)+' · Stand '+fmt.time+
+      (data.stale?' · zwischengespeichert':'')+' · Open-Meteo-Modell';
+  }catch(error){
+    $('weather-live').textContent='🌦️ Wetter nicht verfügbar – erneute Abfrage später';
+  }finally{weatherBusy=false;}
+}
+map.on('load',()=>{initStops();renderLocalPanel();refreshWeather();});
+map.on('moveend',()=>{renderLocalPanel();refreshStops();});
+setInterval(()=>{
+  if(!document.hidden)refreshWeather();
+},6*60*1000);
+
 updateCoords();
