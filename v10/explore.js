@@ -72,6 +72,7 @@ map.on('style.load',()=>{
 });
 map.on('error',e=>{
   console.warn('3D source',e.error?.message||e);
+  if(!loaded)setStatus('Basiskarte verzögert · Satelliten-Ersatz wird geprüft');
 });
 $('place').textContent=loc.name+' · 3D-Kartenerkundung';
 function updateWalkLink(){
@@ -144,7 +145,7 @@ const keymap={w:'forward',ArrowUp:'forward',s:'back',ArrowDown:'back',
   q:'rotateLeft',e:'rotateRight',Shift:'sprint'};
 document.addEventListener('keydown',e=>{
   const key=keymap[e.key];
-  if(key&&!e.target.closest('input,textarea')){
+  if(key&&!(e.target instanceof Element && e.target.closest('input,textarea'))){
     e.preventDefault();keys.add(key);
   }
 });
