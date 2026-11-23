@@ -42,7 +42,7 @@ export const LOCAL_REFERENCES=Object.freeze([
   url:'https://www.trenitalia.com/it/informazioni/orari-regionali-digitali.html',type:'verkehr'}
 ]);
 export const LINKS={
-  transport:'https://www.interbus.it/',
+  transport:'https://www.interbus.it/travel-plan/ticket.php',
   transportNotice:'https://www.interbus.it/santateresa-mofidica-fermata25giugno2026/',
   trains:'https://www.trenitalia.com/it/informazioni/orari-regionali-digitali.html',
   mapillary:'https://www.mapillary.com/app/',
@@ -66,9 +66,17 @@ export function isSpecificChurch(obj){
 }
 export function contextualSources(obj){
   if(!inSantaTeresa(obj))return [];
+  if(obj?.kind==='Bushaltestelle')
+    return LOCAL_REFERENCES.filter(s=>s.id==='interbus-notice');
+  if(obj?.kind==='Gebäude'){
+    const id=isSpecificChurch(obj);
+    return id?LOCAL_REFERENCES.filter(s=>s.id===id):[];
+  }
+  // A neighbouring town (e.g. Furci Siculo) should never inherit Santa Teresa's history.
+  if(obj?.kind==='Ort'&&obj.name&&!/santa\s*teresa/i.test(obj.name))
+    return [];
   const id=isSpecificChurch(obj);
   if(id)return LOCAL_REFERENCES.filter(s=>s.id===id);
-  if(obj?.kind==='Gebäude')return []; // town-history is NOT a fact about a random building
   return LOCAL_REFERENCES;
 }
 export function streetImageryUrl(lat,lon){
