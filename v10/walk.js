@@ -55,6 +55,62 @@ function makeTerrain(){
   mesh.computeVertexNormals();
   world.add(new THREE.Mesh(mesh,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,side:THREE.DoubleSide})));
 }
+// Optional imagery drape: unlike invented facades, source pixels map to real
+// geographic coordinates. A failed imagery request never blocks walking.
+const aerial=new THREE.Group();
+aerial.name='Esri-Luftbilder auf DEM';
+world.add(aerial);
+let aerialLoaded=0,aerialRequested=0;
+const tileLon=(x,z)=>x/(2**z)*360-180;
+const tileLat=(y,z)=>Math.atan(Math.sinh(Math.PI*(1-2*y/(2**z))))*180/Math.PI;
+function loadAerial(){
+  const zoom=16,coords=[frame.geo(-415,-415),frame.geo(415,415)];
+  const tiles=coords.map(p=>tileXY(p.lat,p.lon,zoom));
+  const minX=Math.floor(Math.min(...tiles.map(p=>p.x)));
+  const maxX=Math.floor(Math.max(...tiles.map(p=>p.x)));
+  const minY=Math.floor(Math.min(...tiles.map(p=>p.y)));
+  const maxY=Math.floor(Math.max(...tiles.map(p=>p.y)));
+  const loader=new THREE.TextureLoader();loader.setCrossOrigin('anonymous');
+  const output=$('aerial-status');
+  for(let tx=minX;tx<=maxX;tx++)for(let ty=minY;ty<=maxY;ty++){
+    if(aerialRequested>=18)break;
+    aerialRequested++;
+    const nw=frame.local(tileLon(tx,zoom),tileLat(ty,zoom));
+    const se=frame.local(tileLon(tx+1,zoom),tileLat(ty+1,zoom));
+    const vertices=[],uv=[],indices=[],n=16;
+    for(let row=0;row<=n;row++)for(let col=0;col<=n;col++){
+      const u=col/n,v=row/n;
+      const x=nw.x+(se.x-nw.x)*u,z=nw.z+(se.z-nw.z)*v;
+      vertices.push(x,height(x,z)-.18,z);
+      uv.push(u,1-v);
+    }
+    for(let row=0;row<n;row++)for(let col=0;col<n;col++){
+      const i=row*(n+1)+col;
+      indices.push(i,i+n+1,i+1,i+1,i+n+1,i+n+2);
+    }
+    const geometry=new THREE.BufferGeometry();
+    geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
+    geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+    geometry.setIndex(indices);geometry.computeVertexNormals();
+    const url='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+zoom+'/'+ty+'/'+tx;
+    loader.load(url,texture=>{
+      texture.colorSpace=THREE.SRGBColorSpace;
+      aerial.add(new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({
+        map:texture,side:THREE.DoubleSide})));
+      aerialLoaded++;
+      if(output)output.textContent='✓ '+aerialLoaded+' Luftbildkacheln geladen · Esri/Datenpartner, nicht live';
+    },undefined,()=>{
+      geometry.dispose();
+      if(!aerialLoaded&&output)
+        output.textContent='Luftbildserver nicht erreichbar · Gelände bleibt sichtbar';
+    });
+  }
+  const button=$('aerial-toggle');
+  if(button)button.onclick=()=>{
+    aerial.visible=!aerial.visible;
+    button.textContent=aerial.visible?'🛰️ Luftbild ausblenden':'🛰️ Luftbild anzeigen';
+  };
+}
 function addRoad(points,tags){
   if(points.length<2)return;
   const samples=[];
@@ -342,7 +398,8 @@ async function loadOSM(){
     $('toast').textContent='✓ '+buildings.length+' echte Grundrisse und '+roads.length+' Wege geladen';
   }catch(e){
     $('osm-status').textContent='Keine OSM-Daten: '+e.message+
-      '. Keine erfundenen Häuser werden eingeblendet.';
+      '. Luftbild und Gelände bleiben sichtbar; alternativ die bisherige 3D-Version öffnen.';
+    $('legacy-panel').hidden=false;
     $('toast').textContent='OSM momentan nicht erreichbar; Geländeszene bleibt benutzbar.';
   }
 }
@@ -372,7 +429,9 @@ async function boot(){
       '✓ '+r.loaded+'/'+r.attempted+' Kacheln · Ortszentrum ca. '+
       Math.round(r.center)+' m ü. M. (DEM-Raster)':
       '⚠️ Kein DEM am Ortszentrum. Keine erfundene Ortshöhe; Gelände wird flach dargestellt.';
-    makeTerrain();state.ready=true;
+    makeTerrain();
+    loadAerial(); // background, non-blocking
+    state.ready=true;
     $('loading').style.display='none';
     $('toast').textContent=r.valid?'Echtes Geländerelief geladen':'Höhendaten fehlen – keine erfundene Topografie';
     loadOSM();loadWeather();
@@ -380,6 +439,7 @@ async function boot(){
     console.error(error);
     $('load-message').textContent='3D-Szene nicht startbar: '+error.message;
     $('load-retry').hidden=false;
+    $('legacy-walk').hidden=false;
   }
 }
 requestAnimationFrame(tick);
