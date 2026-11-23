@@ -266,6 +266,11 @@ map.on('moveend',()=>{
   if(!state.selected)flyingWalkHref();
   queueLocalBuildings();
 });
+map.on('dragstart',()=>{
+  // Deliberately moving the map changes the target of "Walk here".
+  state.selected=null;
+  flyingWalkHref();
+});
 $('walking').addEventListener('click',flyingWalkHref);
 $('casal').onclick=()=>centerPlace(PLACES[0]);
 $('overview').onclick=()=>{
@@ -284,6 +289,16 @@ $('exaggeration').oninput=e=>{
 $('buildings').onchange=e=>{state.buildings=e.target.checked;updateLayers();};
 $('peaks').onchange=e=>{state.peaks=e.target.checked;updateLayers();};
 $('shade').onchange=e=>{state.shade=e.target.checked;updateLayers();};
+$('refresh-osm').onclick=()=>{
+  state.localAt=0;state.localCount=0;
+  const src=map.getSource('s10-local-src');
+  if(src)src.setData({type:'FeatureCollection',features:[]});
+  if(map.getZoom()<14.15){
+    setStatus('Zoome auf einen Ort (mindestens Stufe 14), um dessen Gebäude nachzuladen.');
+    return;
+  }
+  loadLocalBuildings();
+};
 $('modes').onclick=e=>{
   const button=e.target.closest('button[data-mode]');if(!button)return;
   state.mode=button.dataset.mode;
@@ -299,11 +314,22 @@ const cameraActions={
   'camera-reset':()=>map.easeTo({pitch:48,bearing:0,duration:400})
 };
 for(const [key,fn] of Object.entries(cameraActions))$(key).onclick=fn;
+$('wheel-mode').onclick=()=>{
+  state.wheelMode=state.wheelMode==='zoom'?'pitch':'zoom';
+  $('wheel-mode').textContent=state.wheelMode==='zoom'?'🖱️ Mausrad: Zoom':'🖱️ Mausrad: Neigen';
+  $('wheel-mode').title=state.wheelMode==='zoom'?
+    'Normal zoomen, Shift + Rad neigen':'Normal neigen, Shift + Rad zoomen';
+};
 map.getCanvasContainer().addEventListener('wheel',e=>{
-  if(!e.shiftKey)return;
+  // The default scroll behavior is zoom. Switching makes the same wheel
+  // control pitch; holding Shift temporarily inverts that preference.
+  const tilt=(state.wheelMode==='pitch')!==Boolean(e.shiftKey);
+  if(!tilt)return;
   e.preventDefault();e.stopImmediatePropagation();
-  map.easeTo({pitch:Math.min(78,Math.max(0,map.getPitch()+Math.sign(e.deltaY)*3)),duration:90});
+  map.easeTo({pitch:Math.min(78,Math.max(0,
+    map.getPitch()+Math.sign(e.deltaY)*4)),duration:110});
 },{capture:true,passive:false});
+try{map.dragRotate.enable();map.touchZoomRotate.enableRotation();}catch(error){};
 async function searchPlace(){
   const query=$('search').value.trim();if(!query)return;
   const local=PLACES.find(p=>p.name.toLowerCase().includes(query.toLowerCase()));
@@ -382,10 +408,32 @@ function select(obj){
     'https://de.wikipedia.org/w/index.php?search='+encodeURIComponent(obj.name)));
   if(obj.props?.wikidata&&/^Q\d+$/.test(obj.props.wikidata))
     links.append(link('🔗 Wikidata','https://www.wikidata.org/wiki/'+obj.props.wikidata));
+  if(obj.props?.wikipedia){
+    const articleId=String(obj.props.wikipedia),parts=articleId.split(':');
+    const language=/^[a-z]{2,3}$/.test(parts[0])?parts.shift():'it';
+    links.append(link('📖 Direkt verknüpfter Wikipedia-Artikel',
+      'https://'+language+'.wikipedia.org/wiki/'+encodeURIComponent(parts.join(':'))));
+  }
   if(Math.hypot(obj.lat-37.95736,obj.lon-15.3223)<.014)
     links.append(link('⛪ Gemeinde – Kirchen',
       'https://comune.casalvecchiosiculo.me.it/tipi_luogo/chiesa/'));
   $('walking').href=visit;
+  const related=$('related');related.replaceChildren(
+    create('strong','','📚 Quellen für '+obj.name));
+  related.append(create('p','',
+    obj.kind==='Gebäude'?
+      'Gebäudespezifische Angaben stammen aus OSM. Eine Ortschronik ist kein Beweis für das Baujahr dieses Hauses.':
+      'Für Orte und Sehenswürdigkeiten kannst du die verfügbaren Geschichts- und Kulturdatenbanken durchsuchen.'));
+  related.append(
+    link('Wikipedia (de)','https://de.wikipedia.org/w/index.php?search='+encodeURIComponent(obj.name)),
+    link('Wikipedia (it)','https://it.wikipedia.org/w/index.php?search='+encodeURIComponent(obj.name)),
+    link('Wikidata','https://www.wikidata.org/w/index.php?search='+encodeURIComponent(obj.name)),
+    link('OpenStreetMap','https://www.openstreetmap.org/?mlat='+obj.lat+'&mlon='+obj.lon+'#map=18/'+obj.lat+'/'+obj.lon)
+  );
+  if(obj.kind==='Gebäude'&&obj.props?.osm_id){
+    related.append(link('OSM-Gebäude '+obj.props.osm_id,
+      'https://www.openstreetmap.org/way/'+obj.props.osm_id));
+  }
   loadArticle(obj,state.articleRequest);
   loadWeather(obj,state.weatherRequest);
 }
