@@ -85,7 +85,7 @@ function clearPlanes(){
   });}
   planeItems.length=0;
 }
-let mode='demo',paused=false,theta=.9,phi=.75,distance=3900;
+let mode='demo',paused=false,theta=.9,phi=.75,distance=2700;
 let lookAt=new THREE.Vector3(0,180,0),dragged=false,px=0,py=0,prev=performance.now(),time=0;
 function updateCamera(){
   const elevation=Math.cos(phi)*distance;
@@ -99,9 +99,9 @@ function putPlane(plane){
 }
 function demoPlanes(){
   clearPlanes();mode='demo';$('demo').classList.add('active');$('live').classList.remove('active');
-  $('status').textContent='🎮 MODELLSIMULATION – alle Flugbahnen und Positionen sind erfunden. Flugzeuge sind räumliche 3D-Modelle.';
+  $('status').textContent='🎮 MODELLSIMULATION – alle Flugbahnen und Positionen sind erfunden. 3D-Flugzeuge sind für bessere Sichtbarkeit vergrössert.';
   for(let i=0;i<4;i++){
-    const group=planeModel();group.scale.setScalar(i===3?1.4:1.0);
+    const group=planeModel();group.scale.setScalar(i===3?3.1:2.7);
     putPlane({group,id:'SIM-'+String(i+1).padStart(2,'0'),demo:true,idx:i,
       speed:70+i*21,alt:160+(i*180),angle:(i%2)*Math.PI,
       note:'Illustrierte Flugbewegung, nicht real'});
@@ -204,8 +204,8 @@ function render(now){
     for(const p of planeItems){
       const i=p.idx,speed=p.speed,t=time*speed;
       // Deliberately simulated approach/holding patterns, NOT actual flights.
-      const x=((t+i*1400)%9500)-4750;
-      const z=Math.sin((x+i*120)/1900)*600+(i-1.5)*480;
+      const x=((t+i*650)%5000)-2500;
+      const z=Math.sin((x+i*120)/1600)*330+(i-1.5)*360;
       const y=p.alt+Math.sin(time*.15+i)*65;
       p.group.position.set(x,y,z);
       p.group.rotation.y=(i%2===0)?-Math.PI/2:Math.PI/2;
