@@ -15,9 +15,9 @@ try{
   }
 }
 import {readLocation,GeoFrame,TerrainDEM,getLocalOSM,polygonArea,pointInPolygon,tileXY,
-  getRoadWidth,getBuildingHeight,propertyRows,validateGeo} from './geo.js?v=115';
-import {SANTA,STOPS,LOCAL_REFERENCES,LINKS,inSantaTeresa,streetImageryUrl,stopDetails} from './local-sources.js?v=115';
-import {getWeather,formatWeather,weatherDescription} from './weather.js?v=115';
+  getRoadWidth,getBuildingHeight,propertyRows,validateGeo} from './geo.js?v=116';
+import {SANTA,STOPS,LOCAL_REFERENCES,LINKS,inSantaTeresa,streetImageryUrl,stopDetails} from './local-sources.js?v=116';
+import {getWeather,formatWeather,weatherDescription} from './weather.js?v=116';
 
 /* Walk v10.1: OSM building geometry + single shared DEM. No fictional replacement city. */
 validateGeo();
