@@ -224,7 +224,7 @@ function clearPlanes(){
   });}
   planeItems.length=0;
 }
-let mode='demo',paused=false,theta=.9,phi=.75,distance=2700;
+let mode='demo',paused=false,theta=.9,phi=.75,distance=4200,following=false;
 let lookAt=new THREE.Vector3(0,180,0),dragged=false,px=0,py=0,prev=performance.now(),time=0;
 function updateCamera(){
   const elevation=Math.cos(phi)*distance;
@@ -262,7 +262,7 @@ function renderList(){
 }
 let chosen=null;
 function selectPlane(a){
-  chosen=a;
+  chosen=a;following=true;
   $('card-title').textContent='✈ '+a.id;
   $('card-text').textContent=a.demo?
     'Dies ist ein modelliertes Beispiel. Flugroute und Höhe sind nicht real.':
@@ -305,6 +305,7 @@ async function loadLive(){
   AIRPORT_LIVE.busy=true;
   AIRPORT_LIVE.key=key;
   $('status').textContent='📡 Lade empfangene ADS-B-Positionen rund um Catania …';
+  if($('api-indicator'))$('api-indicator').textContent='🟡 Verbindung wird geprüft …';
   try{
     const endpoint='https://api.flyitalyadsb.com/v2/lat/37.4668/lon/15.0664/dist/55';
     const response=await fetch(endpoint,{headers:{'X-Api-Key':key,'Accept':'application/json'},cache:'no-store'});
@@ -338,13 +339,17 @@ async function loadLive(){
         seenAt:performance.now(),predicted,
         note:'Gemeldete Position; 3D-Modell zur Sichtbarkeit vergrössert'});
     }
-    mode='live';chosen=null;renderList();AIRPORT_LIVE.refreshed=Date.now();
+    mode='live';chosen=null;following=false;renderList();AIRPORT_LIVE.refreshed=Date.now();
+    if($('api-indicator'))$('api-indicator').textContent=
+      '🟢 API verbunden · '+aircraft.length+' aktuelle Flugzeugmeldungen';
     const stamp=new Date().toLocaleTimeString('de-CH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     $('status').textContent='🟢 '+planeItems.length+' gemeldete Flugzeuge · empfangen '+stamp+
       '. Positionen können verzögert sein. Bewegung zwischen Messungen wird höchstens 20 Sekunden geschätzt; keine garantierte Landung.';
   }catch(error){
     // Never show simulated aircraft under the live label.
-    clearPlanes();mode='live';chosen=null;renderList();
+    clearPlanes();mode='live';chosen=null;following=false;renderList();
+    if($('api-indicator'))$('api-indicator').textContent=
+      '🔴 Keine Verbindung: '+String(error.message||'Anfrage fehlgeschlagen');
     $('status').textContent='⚠️ Keine Live-Positionsdaten verfügbar ('+
       String(error.message||'Dienstfehler')+
       '). Prüfe deinen Schlüssel bzw. API-Limits oder öffne das externe Radar. Keine erfundenen Live-Positionen.';
@@ -357,6 +362,44 @@ setInterval(()=>{
      Date.now()-AIRPORT_LIVE.refreshed>40000)loadLive();
 },45000);
 
+// Desktop presets: show the entire field or follow the long-range landing path.
+const airportPanel=document.querySelector('.panel');
+$('flight-panel-toggle').onclick=()=>{
+  airportPanel.hidden=!airportPanel.hidden;
+  $('flight-panel-toggle').textContent=airportPanel.hidden?'☰ Menü öffnen':'✕ Menü';
+};
+$('flight-overview').onclick=()=>{
+  following=false;chosen=null;
+  lookAt.set(0,80,0);
+  distance=4800;theta=0.85;phi=.58;updateCamera();
+};
+$('flight-approach').onclick=()=>{
+  const inbound=planeItems.find(a=>a.demo&&a.idx===0) || planeItems[0];
+  if(inbound){
+    selectPlane(inbound);
+    distance=2350;theta=2.05;phi=.82;
+    lookAt.copy(inbound.group.position);updateCamera();
+  }else{
+    following=false;lookAt.set(-3500,250,600);
+    distance=3900;theta=1.25;phi=.71;updateCamera();
+  }
+};
+$('flight-follow').onclick=()=>{
+  if(!planeItems.length){$('status').textContent='Noch keine Flugzeuge verfügbar. Aktiviere die Simulation oder Live-Daten.';return;}
+  if(!chosen)chosen=planeItems[0];
+  following=!following;
+  if(following){lookAt.copy(chosen.group.position);distance=1400;}
+  $('flight-follow').textContent=following?'🎥 Verfolgung stoppen':'🎥 Flugzeug folgen';
+  updateCamera();
+};
+$('api-connect').onclick=()=>{
+  const key=$('fly-key').value.trim();
+  if(!key){$('api-indicator').textContent='🟠 Bitte zuerst einen API-Schlüssel eingeben.';return;}
+  loadLive();
+};
+$('fly-key').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){$('api-connect').click();}
+});
 const canvas=renderer.domElement;
 canvas.addEventListener('pointerdown',e=>{dragged=false;px=e.clientX;py=e.clientY;canvas.setPointerCapture(e.pointerId);});
 canvas.addEventListener('pointermove',e=>{
@@ -394,11 +437,11 @@ function render(now){
       if(i===0){
         // Fictional approach in the direction of CTA RWY 08.
         // The 3D model descends, touches down, and rolls out.
-        const x=((time*100+300)%4100)-2200;
-        const z=-0.16*x;
-        const y=x< -50?Math.max(4,(-x-50)*.075):4;
+        const x=((time*155+900)%11200)-8000;
+        const z=-0.176*x;
+        const y=x< -1180?Math.max(4,(-x-1180)*.12+4):4;
         p.group.position.set(x,y,z);
-        p.group.rotation.y=-Math.PI/2-.16;
+        p.group.rotation.y=Math.PI*(100/180);
       }else{
         const x=((t+i*650)%5000)-2500;
         const z=Math.sin((x+i*120)/1600)*330+(i-1.5)*360;
@@ -420,8 +463,9 @@ function render(now){
       if(p.altKnown)p.group.position.y=Math.max(5,p.alt+p.verticalMPS*seconds);
     }
   }
-  if(chosen)lookAt.lerp(chosen.group.position,.08);
+  if(following && chosen)lookAt.lerp(chosen.group.position,.08);
   updateCamera();
   renderer.render(scene,camera);
 }
 demoPlanes();updateCamera();requestAnimationFrame(render);
+console.info('SICILIA 3D airport v9 - official runway dimension, 3D overlays and API status');
