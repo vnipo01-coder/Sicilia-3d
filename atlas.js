@@ -47,10 +47,8 @@ function row(host,key,value){
   r.append(mk('span','',key),mk('strong','',String(value)));host.append(r);
 }
 function openPane(name){
-  const same=currentPane===name&&!$('drawer').hidden;
   currentPane=name;
-  $('drawer').hidden=same;
-  if(same){$('dock').querySelectorAll('button').forEach(b=>b.classList.remove('active'));return;}
+  $('drawer').hidden=false;
   $('drawer-title').textContent=({
     discover:'🧭 Orte entdecken',
     layers:'🗺️ Kartendarstellung',
@@ -66,7 +64,7 @@ function openPane(name){
 }
 function closeDrawer(){$('drawer').hidden=true;currentPane='';$('dock').querySelectorAll('button').forEach(b=>b.classList.remove('active'));}
 $('drawer-close').onclick=closeDrawer;
-$('dock').addEventListener('click',e=>{const b=e.target.closest('button[data-pane]');if(b)openPane(b.dataset.pane);});
+$('dock').addEventListener('click',e=>{const b=e.target.closest('button[data-pane]');if(b){if(currentPane===b.dataset.pane&&!$('drawer').hidden)closeDrawer();else openPane(b.dataset.pane);}});
 function viewPlace(p){
   const lng=p[2],lat=p[3],name=p[1];
   const local=name.includes('Casalvecchio')||name==='Piazza Chiesa';
