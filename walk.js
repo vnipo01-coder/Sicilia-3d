@@ -5,10 +5,17 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.m
    Terrarium DEM data are sampled when CORS permits. Generated facades and decorations
    are illustrative, not verified reconstructions of real buildings or streets.
 */
-const ORIGIN={lat:37.95736,lng:15.32230},LAT_METERS=111320;
+const queryParams=new URLSearchParams(location.search);
+const candidate={lat:Number(queryParams.get('lat')),lng:Number(queryParams.get('lng'))};
+const valid=queryParams.has('lat')&&queryParams.has('lng')&&Number.isFinite(candidate.lat)&&Number.isFinite(candidate.lng)&&candidate.lat>=35.7&&candidate.lat<=39.2&&candidate.lng>=11.4&&candidate.lng<=16.5;
+const ORIGIN=valid?candidate:{lat:37.95736,lng:15.32230};
+const PLACE_NAME=(queryParams.get('name')||'Casalvecchio Siculo').slice(0,75),LAT_METERS=111320;
 const LON_METERS=LAT_METERS*Math.cos(ORIGIN.lat*Math.PI/180);
 const ui=id=>document.getElementById(id);
 const host=ui('world');
+if(document.querySelector('.logo small'))document.querySelector('.logo small').textContent=PLACE_NAME+' · Begehbares 3D-Modell';
+if(document.querySelector('.hud h2'))document.querySelector('.hud h2').textContent='🚶 '+PLACE_NAME+' · 3D Walk';
+document.title=PLACE_NAME+' | SICILIA 3D Walk';
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));
 renderer.setSize(innerWidth,innerHeight);
@@ -27,7 +34,7 @@ const world=new THREE.Group();scene.add(world);
 const detailRaycaster=new THREE.Raycaster(), clickable=[];
 const state={
   yaw:0.38,pitch:0,thirdPerson:false,x:0,z:0,keys:new Set(),terrainOK:false,osmOK:false,
-  groundLabel:'Höhenmodell nicht verfügbar',buildings:[],buildingCount:0,streetCount:0,
+  groundLabel:'Höhenmodell nicht verfügbar',buildings:[],churches:[],buildingCount:0,streetCount:0,
   dem:new Map(),originElevation:0,viewReady:false,cloudCover:null,
   last:performance.now(),elapsed:0,drag:false,rx:0,ry:0,raf:0
 };
@@ -162,7 +169,8 @@ function geometryQuad(arr,material){
 function addFacade(poly,base,height,tags,color,isReal,index,osmId){
   const tagHeight=Number.parseFloat(tags.height)||Number.parseFloat(tags['building:height']);
   const levels=Number.parseFloat(tags['building:levels']);
-  const h=Number.isFinite(tagHeight)&&tagHeight>2&&tagHeight<70?tagHeight:
+  const church=tags.building==='church'||tags.building==='chapel'||tags.amenity==='place_of_worship'||/chiesa|church|basilica|cattedrale/i.test(tags.name||'');
+  const h=Number.isFinite(tagHeight)&&tagHeight>2&&tagHeight<70?tagHeight:church?Math.max(10,Math.min(19,7.5+(index%3)*2.6)):
     Number.isFinite(levels)&&levels>=1&&levels<=10?levels*3.1:5.8+(index%3)*2.4;
   const shape=new THREE.Shape();
   poly.forEach((p,i)=>{if(i===0)shape.moveTo(p.x,-p.z);else shape.lineTo(p.x,-p.z);});
@@ -176,7 +184,17 @@ function addFacade(poly,base,height,tags,color,isReal,index,osmId){
   wall.userData.building={tags,index,osmId,isReal,height:h};
   world.add(wall);clickable.push(wall);
   const center=poly.reduce((a,p)=>({x:a.x+p.x/poly.length,z:a.z+p.z/poly.length}),{x:0,z:0});
-  const roofH=Math.min(3.6,Math.max(1.1,h*.25));
+  const roofH=Math.min(church?5:3.6,Math.max(1.1,h*.25));
+  if(church){
+    const name=tags.name||'Religiöses Gebäude';
+    // Approximate bell tower derived from mapped church usage, not real surveyed geometry.
+    const minX=Math.min(...poly.map(p=>p.x)),maxZ=Math.max(...poly.map(p=>p.z));
+    const towerHeight=Math.min(20,h*1.45);
+    boxMesh(3.2,towerHeight,3.2,'#d2b997',minX+2,base+towerHeight/2,maxZ-2);
+    const top=new THREE.Mesh(new THREE.ConeGeometry(2.5,4.2,4),mat('#b97355'));
+    top.position.set(minX+2,base+towerHeight+2.1,maxZ-2);top.rotation.y=Math.PI/4;world.add(top);
+    state.churches.push({name,center:{x:minX+2,z:maxZ-2},osmId});
+  }
   if(tags['roof:shape']==='flat'){
     const roof=new THREE.Mesh(new THREE.ShapeGeometry(shape),mat('#c77f62'));
     roof.rotation.x=-Math.PI/2;roof.position.y=base+h+.09;world.add(roof);
@@ -269,7 +287,7 @@ function fallbackVillage(){
 }
 async function getOSM(){
   setProgress('Lade Gebäudegrundrisse und Strassen aus OpenStreetMap …');
-  const query='[out:json][timeout:14];(way(around:235,37.95736,15.32230)["building"];way(around:270,37.95736,15.32230)["highway"];);out geom;';
+  const query='[out:json][timeout:14];(way(around:330,'+ORIGIN.lat+','+ORIGIN.lng+')["building"];way(around:370,'+ORIGIN.lat+','+ORIGIN.lng+')["highway"];way(around:350,'+ORIGIN.lat+','+ORIGIN.lng+')["amenity"="place_of_worship"];);out geom;';
   let data=null;
   for(const endpoint of ['https://overpass.kumi.systems/api/interpreter','https://overpass-api.de/api/interpreter']){
     try{
@@ -299,10 +317,10 @@ async function getOSM(){
     if(pts.length>2&&Math.hypot(pts[0].x-pts.at(-1).x,pts[0].z-pts.at(-1).z)<.5)pts.pop();
     if(pts.length<3||pts.length>48||polygonArea(pts)<9)continue;
     const xs=pts.reduce((a,p)=>a+p.x/pts.length,0),zs=pts.reduce((a,p)=>a+p.z/pts.length,0);
-    if(Math.hypot(xs,zs)>280)continue;
+    if(Math.hypot(xs,zs)>340)continue;
     addFacade(pts,ground(xs,zs),0,element.tags,palette[buildingCount%palette.length],true,buildingCount,element.id);
     buildingCount++;
-    if(buildingCount>85)break;
+    if(buildingCount>125)break;
   }
   if(buildingCount<3){fallbackVillage();return;}
   state.osmOK=true;state.streetCount=roadCount;
@@ -428,6 +446,7 @@ function inspect(pointer){
     ['Höhe',Math.round(entry.height)+' m'+(tags.height?' (OSM)':' (geschätzt)')],
     ['Stockwerke',tags['building:levels']||'nicht erfasst'],
     ['Baujahr',known||'nicht dokumentiert'],
+    ['Kirchliche Nutzung',tags.building==='church'||tags.amenity==='place_of_worship'?'OSM erfasst':'nicht erfasst'],
     ['Darstellung',entry.isReal?'OSM-Grundriss; Fassaden illustrativ':'Schematisches Beispielgebäude']
   ];
   const body=ui('detail-text');body.replaceChildren();
@@ -492,7 +511,18 @@ async function boot(){
     const p=findWalkableSpawn();state.x=p.x;state.z=p.z;
     state.viewReady=true;
     ui('height').textContent=state.groundLabel;
-    if(state.osmOK)showNotice('✓ OpenStreetMap-Grundrisse geladen. Gebäudehöhen, Fassaden, Fenster und Dächer sind teilweise geschätzt.');
+    if(state.osmOK)showNotice('✓ '+state.buildingCount+' OpenStreetMap-Gebäude, '+state.streetCount+' Wege. Fassaden teilweise modelliert; erfasste Kirchen: '+state.churches.length+'.');
+    const cb=document.createElement('button');cb.textContent='⛪ Kirche finden';
+    cb.style.cssText='padding:8px 10px;background:#155c6b;color:#fff;border:1px solid #82dfe0;border-radius:8px;margin-top:8px;font-size:11px';
+    cb.onclick=()=>{
+      if(!state.churches.length){showNotice('Keine als Kirche erfassten Gebäude im sichtbaren Ausschnitt.');return;}
+      const near=state.churches.map(c=>({...c,d:Math.hypot(state.x-c.center.x,state.z-c.center.z)})).sort((a,b)=>a.d-b.d)[0];
+      const x=near.center.x+8,z=near.center.z+8;
+      if(!hitBuilding(x,z)){state.x=x;state.z=z;}
+      state.yaw=Math.atan2(near.center.x-state.x,-(near.center.z-state.z));
+      updateCamera();showNotice('⛪ '+near.name+' · OSM-Kirche, modellierte Fassade.');
+    };
+    document.querySelector('.hud')?.append(cb);
     loadWeather();
   }catch(error){
     console.error('Walking world error',error);
