@@ -1,7 +1,7 @@
 <!doctype html><html lang="de"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#081b32">
-<title>Catania Flight Explorer v8 | SICILIA 3D</title>
+<title>Catania Flight Explorer v9 | SICILIA 3D</title>
 <style>
 :root{color-scheme:dark;font:14px/1.45 Inter,system-ui,sans-serif}
 *{box-sizing:border-box}body{margin:0;color:#f1f8fc;background:#0c2946;overflow:hidden}
@@ -14,7 +14,15 @@ header{position:fixed;top:12px;left:12px;right:12px;z-index:8;display:flex;align
 .brand small{display:block;color:#b9d6e3;font-size:10px}
 .back{pointer-events:auto;margin-left:auto;border-radius:10px;padding:11px;font-size:12px;font-weight:700}
 .panel{position:fixed;bottom:14px;left:14px;width:min(350px,calc(100vw - 28px));max-height:60dvh;overflow:auto;z-index:8;border-radius:15px;padding:14px}
-.panel h2{font-size:16px;margin:0}.panel p{color:#c7dce5;font-size:12px;line-height:1.5}
+.panel h2{font-size:16px;margin:0}
+.panel[hidden]{display:none!important}
+.air-toolbar{display:flex;gap:6px;align-items:center;margin-top:5px;flex-wrap:wrap}
+.air-toolbar button{font-size:12px;padding:8px 10px;color:#fff;background:#1b465d;border:1px solid #80aeba;border-radius:9px}
+.air-toolbar button:focus-visible{outline:2px solid #81eade}
+#api-connect{background:#19767c;border:1px solid #7ae4d4;color:white;border-radius:8px;padding:9px 12px;font-weight:700;display:block;margin-top:8px}
+#api-indicator{font-size:11px;color:#b3d9e3;display:block;margin-top:7px}
+#airport-data-status{margin:7px 0;font-size:11px}
+.panel p{color:#c7dce5;font-size:12px;line-height:1.5}
 .controls{display:flex;gap:7px;margin:10px 0;flex-wrap:wrap}
 .controls button{border:1px solid #79a4b9;background:#1b3a56;padding:10px 11px;border-radius:10px;font-size:12px}
 .controls button.active{background:#225e72;border-color:#79d7df}
@@ -31,7 +39,13 @@ header{position:fixed;top:12px;left:12px;right:12px;z-index:8;display:flex;align
 </style></head>
 <body><div id="scene" aria-label="Dreidimensionales Flughafen- und Flugzeugmodell"></div>
 <header><div class="brand glass"><strong>SICILIA <span>3D</span> / AIR</strong><small>Aeroporto di Catania-Fontanarossa</small></div><a class="back glass" href="./index.html">← Karte</a></header>
-<div id="hud">🛰️ 3D-Luftfahrzeuge · Ansicht drehen mit dem Finger</div>
+<div id="hud">🛰️ 3D-Luftfahrzeuge · Rechts ziehen zum Drehen, Mausrad zum Zoomen
+<div class="air-toolbar">
+<button id="flight-overview">🌍 Flughafen komplett</button>
+<button id="flight-approach">🛬 Anflug von weitem</button>
+<button id="flight-follow">🎥 Flugzeug folgen</button>
+<button id="flight-panel-toggle">☰ Menü</button>
+</div></div>
 <section class="panel glass">
 <h2>✈️ Catania Flight Explorer</h2>
 <p>Betrachte Flugzeuge räumlich in 3D. Die Simulation ist keine Live-Flugbewegung. Für echte Flugpositionen benötigen wir einen zugelassenen Datendienst.</p>
@@ -41,12 +55,15 @@ header{position:fixed;top:12px;left:12px;right:12px;z-index:8;display:flex;align
 <button id="pause">⏸ Pause</button>
 </div>
 <div id="status" class="note">Simulation: Flugzeuge sind modelliert und ihre Routen erfunden. Keine realen Flugnummern oder Positionen.</div>
-<div class="small">Mit dem Finger drehen · Pinch oder Mausrad zum Zoomen · Flugzeug antippen zum Verfolgen</div>
+<div class="small">Maus ziehen = Drehen · Rad = Zoom · Flugzeug anklicken = Infos · Ansichtstasten oben für ganze Startbahn und Anflug.</div>
+<div id="airport-data-status" class="note">3D-Flughafenmodell geladen; reale OSM-Vorfeld- und Rollwegdaten werden abgefragt …</div>
 <div class="note">
 <strong>📡 Live-Modus mit FlyItalyADSB</strong>
 <p>Gib einen eigenen kostenlosen API-Schlüssel ein. Er wird nur für diese Browsersitzung verwendet und nicht auf GitHub gespeichert. In den Entwicklertools deines Browsers ist er während der Anfrage sichtbar.</p>
 <label for="fly-key">API-Schlüssel (nicht veröffentlichen)</label>
 <input id="fly-key" type="password" autocomplete="off" spellcheck="false" placeholder="FlyItalyADSB X-Api-Key" style="display:block;width:100%;margin:7px 0;padding:10px;border:1px solid #8cc7d0;border-radius:8px;color:white;background:#102a41">
+<button id="api-connect" type="button">🔑 API-Schlüssel aktivieren & Live verbinden</button>
+<span id="api-indicator" role="status">⚪ Nicht verbunden</span>
 <a href="https://flyitalyadsb.com/data/api/" target="_blank" rel="noopener noreferrer" style="color:#9eece5;text-decoration:underline">Kostenlosen Schlüssel beziehen</a>
 </div>
 <div class="note"><strong>Offizielle Flugtafeln:</strong>
@@ -63,4 +80,4 @@ setTimeout(function(){
   const status=document.getElementById('status');
   if(status)status.textContent='⚠️ Die 3D-Engine konnte nicht geladen werden. Prüfe WebGL/Internet und versuche die Seite erneut. Die externe Flugradar-Seite ist weiterhin erreichbar.';
 },14000);
-</script><script type="module" src="./airport.js?v=80"></script></body></html>
+</script><script type="module" src="./airport.js?v=91"></script></body></html>
