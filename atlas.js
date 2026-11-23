@@ -449,6 +449,17 @@ function initialize(){
   map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/bright',
     center:[14.05,37.55],zoom:7.3,pitch:36,bearing:0,antialias:true,maxPitch:78});
   map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'bottom-right');
+  const pad=mk('div','camera-pad glass');pad.id='sic-camera-pad';
+  const head=mk('strong','','🎥 3D KAMERA');pad.append(head);
+  for(const [name,run] of [
+    ['↗ Neigen',()=>map.easeTo({pitch:Math.min(75,map.getPitch()+12),duration:220})],
+    ['↘ Senken',()=>map.easeTo({pitch:Math.max(0,map.getPitch()-12),duration:220})],
+    ['↶ Links',()=>map.easeTo({bearing:map.getBearing()-22,duration:250})],
+    ['↷ Rechts',()=>map.easeTo({bearing:map.getBearing()+22,duration:250})],
+    ['⊙ Zurücksetzen',()=>map.easeTo({pitch:45,bearing:0,duration:400})]
+  ]){const b=btn(name,run,name.includes('Zurücksetzen')?'wide':'');pad.append(b);}
+  pad.append(mk('small','','Rechts ziehen · Shift + Mausrad'));
+  document.body.append(pad);
   // The top-bar Walk link always starts a local 3D scene at the map centre.
   const updateWalkLink=()=>{
     const c=map.getCenter(),anchor=$('walk-launch');
