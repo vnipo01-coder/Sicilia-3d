@@ -81,8 +81,18 @@ function addBuilding(poly,tags,id,index){
   const roofY=Math.max(...heights)+modelHeight.metres,vertices=[];
   for(let i=0;i<poly.length;i++){
     const j=(i+1)%poly.length,a=poly[i],b=poly[j];
-    vertices.push(a.x,heights[i]-.05,a.z,b.x,heights[j]-.05,b.z,b.x,roofY,b.z,
-      a.x,heights[i]-.05,a.z,b.x,roofY,b.z,a.x,roofY,a.z);
+    // Subdivide long walls: every wall segment uses the same DEM as the ground.
+    // This reduces floating wall edges on a steep hillside.
+    const dist=Math.hypot(b.x-a.x,b.z-a.z);
+    const segments=Math.min(35,Math.max(1,Math.ceil(dist/3)));
+    for(let k=0;k<segments;k++){
+      const t=k/segments,u=(k+1)/segments;
+      const p={x:a.x+(b.x-a.x)*t,z:a.z+(b.z-a.z)*t};
+      const q={x:a.x+(b.x-a.x)*u,z:a.z+(b.z-a.z)*u};
+      const hp=height(p.x,p.z)-.05,hq=height(q.x,q.z)-.05;
+      vertices.push(p.x,hp,p.z,q.x,hq,q.z,q.x,roofY,q.z,
+        p.x,hp,p.z,q.x,roofY,q.z,p.x,roofY,p.z);
+    }
   }
   const geom=new THREE.BufferGeometry();
   geom.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geom.computeVertexNormals();
