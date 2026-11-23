@@ -1,7 +1,7 @@
 <!doctype html><html lang="de"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#081b32">
-<title>Catania Flight Explorer v9 | SICILIA 3D</title>
+<title>Catania Flight Explorer v9.2 | SICILIA 3D</title>
 <style>
 :root{color-scheme:dark;font:14px/1.45 Inter,system-ui,sans-serif}
 *{box-sizing:border-box}body{margin:0;color:#f1f8fc;background:#0c2946;overflow:hidden}
@@ -41,7 +41,7 @@ header{position:fixed;top:12px;left:12px;right:12px;z-index:8;display:flex;align
 <header><div class="brand glass"><strong>SICILIA <span>3D</span> / AIR</strong><small>Aeroporto di Catania-Fontanarossa</small></div><a class="back glass" href="./index.html">← Karte</a></header>
 <div id="hud">🛰️ 3D-Luftfahrzeuge · Rechts ziehen zum Drehen, Mausrad zum Zoomen
 <div class="air-toolbar">
-<button id="flight-overview">🌍 Flughafen komplett</button>
+<button id="flight-overview">🌍 Flughafen komplett</button><button id="flight-imagery">🛰️ Luftbild an</button>
 <button id="flight-approach">🛬 Anflug von weitem</button>
 <button id="flight-follow">🎥 Flugzeug folgen</button>
 <button id="flight-panel-toggle">☰ Menü</button>
@@ -56,7 +56,7 @@ header{position:fixed;top:12px;left:12px;right:12px;z-index:8;display:flex;align
 </div>
 <div id="status" class="note">Simulation: Flugzeuge sind modelliert und ihre Routen erfunden. Keine realen Flugnummern oder Positionen.</div>
 <div class="small">Maus ziehen = Drehen · Rad = Zoom · Flugzeug anklicken = Infos · Ansichtstasten oben für ganze Startbahn und Anflug.</div>
-<div id="airport-data-status" class="note">3D-Flughafenmodell geladen; reale OSM-Vorfeld- und Rollwegdaten werden abgefragt …</div>
+<div id="imagery-status" class="note">🛰️ Luftbilder werden geladen …</div><div id="airport-data-status" class="note">3D-Flughafenmodell geladen; reale OSM-Vorfeld- und Rollwegdaten werden abgefragt …</div>
 <div class="note">
 <strong>📡 Live-Modus mit FlyItalyADSB</strong>
 <p>Gib einen eigenen kostenlosen API-Schlüssel ein. Er wird nur für diese Browsersitzung verwendet und nicht auf GitHub gespeichert. In den Entwicklertools deines Browsers ist er während der Anfrage sichtbar.</p>
@@ -71,6 +71,7 @@ header{position:fixed;top:12px;left:12px;right:12px;z-index:8;display:flex;align
 <a href="https://aeroporto.catania.it/flight-tracking/departures" target="_blank" rel="noopener noreferrer" style="color:#9eece5;text-decoration:underline">Abflüge Catania</a>.
 Fahrplanzeiten sind keine gemessenen Flugpositionen.</div>
 <div id="aircraft-list"></div>
+<div class="note">Luftbilder: © Esri, Vantor, Earthstar Geographics, GIS User Community. Gebäude, Rollwege und Beleuchtung können modelliert und unvollständig sein.</div>
 <div class="note">Bei fehlendem Browserzugriff auf den Flugdatenanbieter werden keine angeblichen Live-Flugzeuge erfunden. <a href="https://globe.adsb.fi/" target="_blank" rel="noopener noreferrer" style="color:#84ddef;text-decoration:underline">Echtes Flugradar extern öffnen</a>.</div>
 </section>
 <div id="card" class="glass"><button id="close" aria-label="Schliessen">×</button><h3 id="card-title"></h3><p id="card-text"></p></div>
@@ -80,4 +81,4 @@ setTimeout(function(){
   const status=document.getElementById('status');
   if(status)status.textContent='⚠️ Die 3D-Engine konnte nicht geladen werden. Prüfe WebGL/Internet und versuche die Seite erneut. Die externe Flugradar-Seite ist weiterhin erreichbar.';
 },14000);
-</script><script type="module" src="./airport.js?v=91"></script></body></html>
+</script><script type="module" src="./airport.js?v=92"></script></body></html>
