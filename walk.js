@@ -55,7 +55,11 @@ async function loadElevationTiles(){
   const jobs=[];
   for(let tx=minX;tx<=maxX;tx++)for(let ty=minY;ty<=maxY;ty++){
     jobs.push((async()=>{
-      const response=await fetch('https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/'+tx+'/'+ty+'.png',{mode:'cors'});
+      const url='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/14/'+tx+'/'+ty+'.png';
+      const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),8500);
+      let response;
+      try{response=await fetch(url,{mode:'cors',signal:controller.signal});}
+      finally{clearTimeout(timer);}
       if(!response.ok)throw Error('Elevation '+response.status);
       const image=await createImageBitmap(await response.blob());
       const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
@@ -66,8 +70,8 @@ async function loadElevationTiles(){
   }
   const results=await Promise.allSettled(jobs);
   const success=results.filter(x=>x.status==='fulfilled').length;
-  state.terrainOK=success>0;
-  if(state.terrainOK)state.originElevation=rawDEM(0,0)??0;
+  state.terrainOK=success>0 && rawDEM(0,0)!==null;
+  if(state.terrainOK)state.originElevation=rawDEM(0,0);
   state.groundLabel=state.terrainOK?'Mapzen/AWS-Höhendaten':'Schematisches Geländemodell';
   if(success<jobs.length)console.warn('Terrain tiles partially unavailable',success,jobs.length);
 }
@@ -266,7 +270,7 @@ async function getOSM(){
   let data=null;
   for(const endpoint of ['https://overpass.kumi.systems/api/interpreter','https://overpass-api.de/api/interpreter']){
     try{
-      const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),12500);
+      const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),7900);
       let response;
       try{response=await fetch(endpoint+'?data='+encodeURIComponent(query),{signal:ctrl.signal});}
       finally{clearTimeout(timer);}
