@@ -1,7 +1,7 @@
 <!doctype html><html lang="de"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#081b32">
-<title>Catania 3D Flugradar | SICILIA 3D</title>
+<title>Catania Flight Explorer v8 | SICILIA 3D</title>
 <style>
 :root{color-scheme:dark;font:14px/1.45 Inter,system-ui,sans-serif}
 *{box-sizing:border-box}body{margin:0;color:#f1f8fc;background:#0c2946;overflow:hidden}
@@ -36,12 +36,23 @@ header{position:fixed;top:12px;left:12px;right:12px;z-index:8;display:flex;align
 <h2>✈️ Catania Flight Explorer</h2>
 <p>Betrachte Flugzeuge räumlich in 3D. Die Simulation ist **keine** Live-Flugbewegung. Für echte Flugpositionen benötigen wir einen zugelassenen Datendienst.</p>
 <div class="controls">
-<button id="demo" class="active">🎮 3D-Demoflüge</button>
-<button id="live">📡 Echte ADS-B-Daten prüfen</button>
+<button id="demo" class="active">🎮 Lande-Simulation</button>
+<button id="live">📡 ADS-B-Live laden</button>
 <button id="pause">⏸ Pause</button>
 </div>
 <div id="status" class="note">Simulation: Flugzeuge sind modelliert und ihre Routen erfunden. Keine realen Flugnummern oder Positionen.</div>
 <div class="small">Mit dem Finger drehen · Pinch oder Mausrad zum Zoomen · Flugzeug antippen zum Verfolgen</div>
+<div class="note">
+<strong>📡 Live-Modus mit FlyItalyADSB</strong>
+<p>Gib einen eigenen kostenlosen API-Schlüssel ein. Er wird nur für diese Browsersitzung verwendet und nicht auf GitHub gespeichert. In den Entwicklertools deines Browsers ist er während der Anfrage sichtbar.</p>
+<label for="fly-key">API-Schlüssel (nicht veröffentlichen)</label>
+<input id="fly-key" type="password" autocomplete="off" spellcheck="false" placeholder="FlyItalyADSB X-Api-Key" style="display:block;width:100%;margin:7px 0;padding:10px;border:1px solid #8cc7d0;border-radius:8px;color:white;background:#102a41">
+<a href="https://flyitalyadsb.com/data/api/" target="_blank" rel="noopener noreferrer" style="color:#9eece5;text-decoration:underline">Kostenlosen Schlüssel beziehen</a>
+</div>
+<div class="note"><strong>Offizielle Flugtafeln:</strong>
+<a href="https://aeroporto.catania.it/flight-tracking/arrivals" target="_blank" rel="noopener noreferrer" style="color:#9eece5;text-decoration:underline">Ankünfte Catania</a> · 
+<a href="https://aeroporto.catania.it/flight-tracking/departures" target="_blank" rel="noopener noreferrer" style="color:#9eece5;text-decoration:underline">Abflüge Catania</a>.
+Fahrplanzeiten sind keine gemessenen Flugpositionen.</div>
 <div id="aircraft-list"></div>
 <div class="note">Bei fehlendem Browserzugriff auf den Flugdatenanbieter werden keine angeblichen Live-Flugzeuge erfunden. <a href="https://globe.adsb.fi/" target="_blank" rel="noopener noreferrer" style="color:#84ddef;text-decoration:underline">Echtes Flugradar extern öffnen</a>.</div>
 </section>
