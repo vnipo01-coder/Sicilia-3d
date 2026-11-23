@@ -1,6 +1,6 @@
-import {readLocation,isSicily,getBuildingHeight} from './geo.js?v=115';
-import {SANTA,STOPS,LOCAL_REFERENCES,LINKS,inSantaTeresa,streetImageryUrl,stopDetails} from './local-sources.js?v=115';
-import {getWeather,weatherDescription,formatWeather} from './weather.js?v=115';
+import {readLocation,isSicily,getBuildingHeight} from './geo.js?v=116';
+import {SANTA,STOPS,LOCAL_REFERENCES,LINKS,inSantaTeresa,streetImageryUrl,stopDetails} from './local-sources.js?v=116';
+import {getWeather,weatherDescription,formatWeather} from './weather.js?v=116';
 const $=id=>document.getElementById(id);
 const loc=readLocation();
 const params=new URLSearchParams(location.search);
