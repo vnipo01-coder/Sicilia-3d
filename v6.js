@@ -191,7 +191,7 @@
   const mapKeys={ArrowUp:'forward',ArrowDown:'back',ArrowLeft:'left',ArrowRight:'right',
     w:'forward',s:'back',a:'left',d:'right'};
   document.addEventListener('keydown',e=>{
-    if(!walking.active||e.target.closest('input,textarea,select'))return;
+    if(!walking.active||(e.target instanceof Element&&e.target.closest('input,textarea,select')))return;
     const key=mapKeys[e.key];if(!key)return;
     e.preventDefault();
     if(!e.repeat&&!walking.keys.has(key))beginControl(key);
@@ -246,5 +246,10 @@
   };
   // Prevent normal page UI from obscuring the map when on a tiny screen.
   window.addEventListener('resize',()=>{if(walking.active)camera();});
+  const status=$('status');
+  if(status){
+    status.textContent='● SICILIA 3D v6.0 · Erkundung';
+    map.on('style.load',()=>{status.textContent='● SICILIA 3D v6.0 · Erkundung';});
+  }
   console.info('SICILIA 3D v6.0: map-first UI and game-like avatar walking enabled.');
 })();
