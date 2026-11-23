@@ -46,4 +46,10 @@ header{position:fixed;top:12px;left:12px;right:12px;z-index:8;display:flex;align
 <div class="note">Bei fehlendem Browserzugriff auf den Flugdatenanbieter werden keine angeblichen Live-Flugzeuge erfunden. <a href="https://globe.adsb.fi/" target="_blank" rel="noopener noreferrer" style="color:#84ddef;text-decoration:underline">Echtes Flugradar extern öffnen</a>.</div>
 </section>
 <div id="card" class="glass"><button id="close" aria-label="Schliessen">×</button><h3 id="card-title"></h3><p id="card-text"></p></div>
-<script type="module" src="./airport.js?v=70"></script></body></html>
+<script>
+setTimeout(function(){
+  if(document.body.dataset.airportReady==='1')return;
+  const status=document.getElementById('status');
+  if(status)status.textContent='⚠️ Die 3D-Engine konnte nicht geladen werden. Prüfe WebGL/Internet und versuche die Seite erneut. Die externe Flugradar-Seite ist weiterhin erreichbar.';
+},14000);
+</script><script type="module" src="./airport.js?v=70"></script></body></html>
