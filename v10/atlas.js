@@ -548,12 +548,7 @@ $('weather-update').onclick=()=>{
   state.weatherRequest++;
   loadWeather(currentWeatherObj,state.weatherRequest,true);
 };
-map.on('load',()=>{
-  if(!state.selected){
-    state.weatherRequest++;
-    loadWeather(currentWeatherObj,state.weatherRequest);
-  }
-});
+// Weather loads independently of the map engine so a map-source failure cannot hide it.
 setInterval(()=>{
   if(document.hidden)return;
   state.weatherRequest++;
@@ -633,3 +628,5 @@ $('detail-walk').title='Detaillierter 3D Walk mit tatsächlichen OSM-Gebäuden s
 // Start with the entire island in view, instead of a very close-up
 // potentially not-yet-rendered village view.
 setStatus('Lade Sizilien · 2D-Basiskarte zuerst, 3D-Daten danach …');
+state.weatherRequest++;
+loadWeather(currentWeatherObj,state.weatherRequest);
