@@ -141,7 +141,7 @@ function drawLayers(){
   pitch.oninput=()=>{map.easeTo({pitch:Number(pitch.value),duration:0});pitchText.textContent='Neigung: '+pitch.value+'°';};
   ctl.append(pitchText,pitch,btn('🧭 Nach Norden',()=>map.easeTo({bearing:0,duration:450}),'primary'));host.append(ctl);
 }
-const IDs={sat:'atlas-sat',hill:'atlas-shade',building:'atlas-buildings',places:'atlas-places',peaks:'atlas-peaks',pois:'atlas-pois',clouds:'atlas-clouds'};
+const IDs={sat:'atlas-sat',hill:'atlas-shade',color:'atlas-hypsometric',building:'atlas-buildings',places:'atlas-places',peaks:'atlas-peaks',pois:'atlas-pois',clouds:'atlas-clouds'};
 function layer(id){return map?.getLayer(id);}
 function toggle(id,on){if(layer(id))map.setLayoutProperty(id,'visibility',on?'visible':'none');}
 function addLayer(l,before){try{if(!layer(l.id))map.addLayer(l,before);}catch(error){console.warn('Map layer',l.id,error);}}
@@ -156,6 +156,14 @@ function prepareLayers(){
   const layers=map.getStyle().layers||[];
   const label=layers.find(l=>l.type==='symbol'&&l.layout?.['text-field'])?.id;
   addLayer({id:IDs.sat,type:'raster',source:'sat-src',paint:{'raster-opacity':1,'raster-fade-duration':150}},label);
+  const lines=layers.find(l=>l.type==='line')?.id||label;
+  addLayer({id:IDs.color,type:'color-relief',source:'hill-dem',paint:{
+    'color-relief-color':['interpolate',['linear'],['elevation'],
+      -200,'#215976',0,'#72b4a1',100,'#b4cb91',350,'#92ad7c',
+      700,'#cfbc81',1100,'#d9a983',1700,'#aa948a',2300,'#b8b3ac',
+      3000,'#e3e3da',3500,'#faf9f0'],
+    'color-relief-opacity':0.66
+  }},lines);
   addLayer({id:IDs.hill,type:'hillshade',source:'hill-dem',paint:{
     'hillshade-exaggeration':.48,'hillshade-shadow-color':'#53655a',
     'hillshade-highlight-color':'#fff1d6','hillshade-accent-color':'#64785b'}},label);
@@ -189,6 +197,7 @@ function prepareLayers(){
 }
 function applyLayers(){
   toggle(IDs.sat,mode==='sat');
+  toggle(IDs.color,mode==='relief');
   toggle(IDs.hill,shading&&mode!=='map');
   toggle(IDs.building,buildings);
   toggle(IDs.peaks,showPeaks);toggle(IDs.places,true);toggle(IDs.pois,true);
