@@ -340,6 +340,26 @@ function inspect(x=0,y=0){
   ray.setFromCamera(new THREE.Vector2(x,y),camera);
   const hit=ray.intersectObjects(targets,false)[0];
   if(!hit){$('detail').classList.remove('show');return;}
+  const stop=hit.object.userData.stop;
+  if(stop){
+    $('detail-title').textContent='🚌 '+stop.name;
+    const body=$('detail-body');body.replaceChildren();
+    for(const entry of stopDetails(stop)){
+      const p=document.createElement('p'),strong=document.createElement('strong');
+      strong.textContent=entry.label+': ';
+      p.append(strong,document.createTextNode(entry.value));body.append(p);
+    }
+    const links=[
+      ['Fahrplan bei Interbus',LINKS.transport],
+      ['Offizielle Haltestellen-Mitteilung',LINKS.transportNotice],
+      ['Datensatz zur Haltestelle',stop.url]
+    ];
+    for(const [label,url] of links){
+      const a=document.createElement('a');a.textContent=label+' ↗';
+      a.href=url;a.target='_blank';a.rel='noopener noreferrer';body.append(a);
+    }
+    $('detail').classList.add('show');return;
+  }
   const obj=hit.object.userData.object;
   if(!obj)return;
   $('detail-title').textContent='🏠 '+(obj.tags.name||obj.tags['addr:street']||'Gebäude');
@@ -378,6 +398,66 @@ $('find-church').onclick=()=>{
     }
   }
 };
+// Santa Teresa neighbourhood navigation: real locations, separate high-detail
+// sectors because a single browser mesh cannot hold every building on the coast.
+function townLink(label,coords){
+  const params=new URLSearchParams({lat:coords.lat.toFixed(6),
+    lng:coords.lon.toFixed(6),name:label});
+  return './walk.html?'+params;
+}
+function initTownTools(){
+  const a=$('mapillary-current');
+  if(a)a.href=streetImageryUrl(loc.lat,loc.lon);
+  if(!isSanta)return;
+  $('santa-district').hidden=false;
+  $('town-heritage').hidden=false;
+  const cities=[
+    {label:'🏛️ Municipio',lat:SANTA.lat,lon:SANTA.lon},
+    {label:'🌊 Lungomare Barracca',lat:37.9393543554652,lon:15.3628167268097},
+    {label:'🚌 Via Savoca',lat:37.9417550549932,lon:15.3596597089612},
+    {label:'🏖️ Lungomare Nord',lat:37.955189,lon:15.376800}
+  ];
+  const list=$('santa-district-buttons');list.replaceChildren();
+  for(const city of cities){
+    const b=document.createElement('button');
+    b.textContent=city.label;
+    b.onclick=()=>{location.href=townLink(city.label,city);};
+    list.append(b);
+  }
+  const sources=$('town-heritage-links');sources.replaceChildren();
+  for(const ref of LOCAL_REFERENCES){
+    const a=document.createElement('a');
+    a.href=ref.url;a.target='_blank';a.rel='noopener noreferrer';
+    a.textContent=ref.title;
+    const small=document.createElement('small');
+    small.textContent=ref.attribution+' – '+ref.facts;
+    a.append(small);sources.append(a);
+  }
+  $('santa-bus-status').textContent='Interbus-Haltestellen und Betreiberquellen: anklickbare 🚌-Symbole erscheinen an dokumentierten bzw. klar als ungefähr gekennzeichneten Orten.';
+}
+function townBusSymbols(){
+  if(!isSanta)return;
+  let count=0;
+  for(const stop of STOPS){
+    const p=frame.local(stop.lon,stop.lat);
+    if(Math.hypot(p.x,p.z)>sceneRadius+35)continue;
+    const y=height(p.x,p.z),g=new THREE.Group();
+    g.position.set(p.x,y,p.z);
+    const pole=new THREE.Mesh(new THREE.CylinderGeometry(.10,.10,3,8),material('#cad4d5'));
+    pole.position.y=1.5;g.add(pole);
+    const sign=new THREE.Mesh(new THREE.BoxGeometry(1.7,1.15,.20),material('#0b668d'));
+    sign.position.y=3.05;g.add(sign);
+    const disk=new THREE.Mesh(new THREE.CircleGeometry(.45,20),material('#f5de9c'));
+    disk.position.set(0,3.05,.13);g.add(disk);
+    const hit=new THREE.Mesh(new THREE.BoxGeometry(2.6,4,2.6),
+      new THREE.MeshBasicMaterial({visible:false}));
+    hit.position.y=1.9;hit.userData.stop=stop;g.add(hit);targets.push(hit);
+    world.add(g);
+    addLabel('🚌 '+stop.name,p.x,y+8,p.z);
+    count++;
+  }
+  $('santa-bus-status').textContent=count+' lokal verortete Haltestelle(n) in diesem Sektor. Zeiten nur über offizielle Betreiberquellen; keine erfundenen Live-Abfahrten.';
+}
 async function loadOSM(){
   $('osm-status').textContent='Lade OpenStreetMap-Grundrisse und Wege …';
   try{
@@ -399,6 +479,7 @@ async function loadOSM(){
     $('osm-status').textContent='✓ '+buildings.length+' OSM-Gebäude · '+roads.length+
       ' Wege · '+new Date(data.queriedAt).toLocaleTimeString('de-CH')+
       '. Dächer und Fenster sind Modelle.';
+    townBusSymbols();
     if(collision(state.x,state.z)){const p=spawn();state.x=p.x;state.z=p.z;}
     $('toast').textContent='✓ '+buildings.length+' echte Grundrisse und '+roads.length+' Wege geladen';
   }catch(e){
@@ -439,6 +520,8 @@ async function boot(){
     state.ready=true;
     $('loading').style.display='none';
     $('toast').textContent=r.valid?'Echtes Geländerelief geladen':'Höhendaten fehlen – keine erfundene Topografie';
+    initTownTools();
+    townBusSymbols();
     loadOSM();loadWeather();
   }catch(error){
     console.error(error);
