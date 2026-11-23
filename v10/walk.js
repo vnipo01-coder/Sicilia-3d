@@ -1,5 +1,20 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
-import {readLocation,GeoFrame,TerrainDEM,getLocalOSM,polygonArea,pointInPolygon,
+// Use a second CDN when the first 3D library server is blocked.
+let THREE;
+try{
+  THREE=await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js');
+}catch(primaryError){
+  console.warn('Three.js primary CDN failed',primaryError);
+  try{
+    THREE=await import('https://unpkg.com/three@0.180.0/build/three.module.js');
+  }catch(secondaryError){
+    document.getElementById('load-message').textContent=
+      '3D-Engine nicht erreichbar. Verwende die bisherige 3D-Version oder lade neu.';
+    document.getElementById('load-retry').hidden=false;
+    document.getElementById('legacy-walk').hidden=false;
+    throw secondaryError;
+  }
+}
+import {readLocation,GeoFrame,TerrainDEM,getLocalOSM,polygonArea,pointInPolygon,tileXY,
   getRoadWidth,getBuildingHeight,propertyRows,validateGeo} from './geo.js?v=102';
 
 /* Walk v10.1: OSM building geometry + single shared DEM. No fictional replacement city. */
