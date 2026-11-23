@@ -25,15 +25,15 @@ sea.rotation.x=-Math.PI/2;sea.position.set(0,-.5,20000);scene.add(sea);
 const runway=new THREE.Group();scene.add(runway);
 const asphalt=new THREE.MeshStandardMaterial({color:0x3a474e,roughness:.96});
 const markings=new THREE.MeshBasicMaterial({color:0xebf1e9});
-const tarmac=new THREE.Mesh(new THREE.BoxGeometry(62,1.1,2400),asphalt);
-tarmac.position.y=.1;runway.add(tarmac);runway.rotation.y=-Math.PI/2+0.16;
-for(let i=-1080;i<1100;i+=95){
+const tarmac=new THREE.Mesh(new THREE.BoxGeometry(45,1.1,2436),asphalt);
+tarmac.position.y=.1;runway.add(tarmac);runway.rotation.y=Math.PI*(100/180); // 08/26 axis; approximate geometry before OSM alignment
+for(let i=-1100;i<1100;i+=70){
   const mark=new THREE.Mesh(new THREE.BoxGeometry(1.6,.05,40),markings);
   mark.position.set(0,.71,i);runway.add(mark);
 }
 for(let side of [-1,1]){
   const edge=new THREE.Mesh(new THREE.BoxGeometry(1,.05,2330),markings);
-  edge.position.set(side*29.5,.71,0);runway.add(edge);
+  edge.position.set(side*21.5,.71,0);runway.add(edge);
 }
 const terminal=new THREE.Mesh(new THREE.BoxGeometry(210,21,75),new THREE.MeshStandardMaterial({color:0xb4bec1,roughness:1}));
 terminal.position.set(280,10,-60);scene.add(terminal);
@@ -52,6 +52,144 @@ function textSprite(text,x,y,z){
   sprite.position.set(x,y,z);sprite.scale.set(400,70,1);scene.add(sprite);labelSprites.push(sprite);
 }
 textSprite('CATANIA – CTA',80,110,160);
+// v9: richer airport model. The layout is initially a schematic render
+// grounded to the real runway length and approximate 08/26 alignment;
+// OpenStreetMap geometries are drawn above it if the source responds.
+const airfield=new THREE.Group();scene.add(airfield);
+const apronMaterial=new THREE.MeshStandardMaterial({color:0x69767b,roughness:.98,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1});
+const taxiMaterial=new THREE.MeshStandardMaterial({color:0x454e55,roughness:.97,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1});
+const lineYellow=new THREE.MeshBasicMaterial({color:0xe5c965});
+const whitePaint=new THREE.MeshBasicMaterial({color:0xeeeeeb});
+const fillMaterial=c=>new THREE.MeshStandardMaterial({color:c,roughness:.85,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1});
+function airportBox(w,h,d,color,x,y,z,group=airfield){
+  const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),
+    new THREE.MeshStandardMaterial({color,roughness:.76}));
+  mesh.position.set(x,y,z);group.add(mesh);return mesh;
+}
+function flatPolygon(points,y,material=apronMaterial,group=airfield){
+  if(points.length<3)return;
+  const shape=new THREE.Shape();
+  points.forEach((p,i)=>{if(!i)shape.moveTo(p.x,-p.z);else shape.lineTo(p.x,-p.z);});
+  shape.closePath();
+  const geometry=new THREE.ShapeGeometry(shape);
+  geometry.rotateX(-Math.PI/2);
+  const mesh=new THREE.Mesh(geometry,material);
+  mesh.position.y=y;group.add(mesh);
+  return mesh;
+}
+function flatLine(points,width,y,material=taxiMaterial,group=airfield){
+  const v=[];
+  for(let i=0;i<points.length-1;i++){
+    const a=points[i],b=points[i+1],dx=b.x-a.x,dz=b.z-a.z,len=Math.hypot(dx,dz);
+    if(!len||len>3000)continue;
+    const nx=-dz/len*width/2,nz=dx/len*width/2;
+    v.push(
+      a.x+nx,y,a.z+nz,a.x-nx,y,a.z-nz,b.x+nx,y,b.z+nz,
+      a.x-nx,y,a.z-nz,b.x-nx,y,b.z-nz,b.x+nx,y,b.z+nz
+    );
+  }
+  if(!v.length)return;
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.computeVertexNormals();
+  group.add(new THREE.Mesh(g,material));
+}
+// Parked aircraft, apron lighting and taxiways are indicative visuals only.
+// Actual footprint overlays from OSM are added independently.
+function makeAirportGroundDetails(){
+  flatPolygon([{x:-1030,z:-230},{x:490,z:-230},{x:490,z:-550},{x:-1030,z:-550}],.25,apronMaterial);
+  flatLine([{x:-1160,z:-145},{x:1050,z:-145}],22,.34);
+  flatLine([{x:-480,z:-145},{x:-430,z:-30},{x:-350,z:0}],20,.37);
+  flatLine([{x:320,z:-145},{x:400,z:-30},{x:450,z:0}],20,.37);
+  flatLine([{x:-800,z:-145},{x:-760,z:-265}],18,.38);
+  flatLine([{x:0,z:-145},{x:35,z:-265}],18,.38);
+  for(let j=0;j<13;j++){
+    const x=-930+j*115;
+    airportBox(2,.05,49,0xe1d47b,x,.47,-336);
+    airportBox(38,1,1,0xf5ecd3,x,.55,-530);
+    const post=airportBox(1.4,19,1.4,0xd4d9d6,x,10,-460);
+    const lamp=new THREE.PointLight(0xe5efff,.25,135);
+    lamp.position.set(x,21,-460);airfield.add(lamp);
+  }
+  // Runway threshold markings at both ends; correct *illustrative* runway markings.
+  for(const end of [-1,1]){
+    for(const side of [-1,1]){
+      for(let k=0;k<4;k++){
+        const mark=airportBox(3.1,.07,28,0xf6f7f1,side*(4+k*4),.74,end*1080);
+        runway.add(mark);mark.position.set(side*(4+k*4),.74,end*1080);
+      }
+    }
+    for(const x of [-13,13]){
+      const aim=airportBox(5,.07,48,0xfafafa,x,.75,end*640,runway);
+      aim.position.set(x,.75,end*640);
+    }
+  }
+  for(let i=0;i<8;i++){
+    const x=-900+i*235;
+    airportBox(96,18,64,i%2?0xc0c6c9:0xb9bcb8,x,9,-700);
+    airportBox(91,1,69,0xe2e6e7,x,18.9,-700);
+    for(let c=0;c<6;c++)airportBox(8,7,1,0x416779,x-37+c*15,11,-666);
+  }
+  // Airport perimeter / runway approach lights.
+  for(const end of [-1,1])for(let n=0;n<15;n++){
+    const z=end*(1250+n*42);
+    const light=airportBox(1.2,1.6,1.2,n%3===0?0xf4443d:0xf6e6db,0,1,z,runway);
+    light.position.set(0,1,z);
+  }
+}
+makeAirportGroundDetails();
+const sourceOverlay=new THREE.Group();scene.add(sourceOverlay);
+async function loadAirportOSM(){
+  const info=document.getElementById('airport-data-status');
+  if(info)info.textContent='Lade reale Flughafen-Geometrien aus OpenStreetMap …';
+  const query='[out:json][timeout:18];(way(around:2100,37.4668,15.0664)["aeroway"];'+
+    'way(around:1950,37.4668,15.0664)["building"];);out geom;';
+  let result;
+  try{
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),13500);
+    let response;try{
+      response=await fetch('https://overpass.kumi.systems/api/interpreter?data='+
+        encodeURIComponent(query),{signal:controller.signal});
+    }finally{clearTimeout(timer);}
+    if(!response.ok)throw Error('OSM HTTP '+response.status);
+    result=await response.json();
+  }catch(e){
+    if(info)info.textContent='⚠️ OSM nicht erreichbar. Das sichtbare Flughafenmodell ist eine schematische Rekonstruktion, keine exakte Anlage.';
+    return;
+  }
+  let apron=0,taxi=0,term=0,runways=0;
+  for(const element of (result.elements||[])){
+    if(!element.geometry?.length)continue;
+    const t=element.tags||{},points=element.geometry.map(p=>loc(p.lon,p.lat));
+    if(points.some(p=>Math.hypot(p.x,p.z)>6000))continue;
+    if(t.aeroway==='apron'&&points.length>3){
+      flatPolygon(points,.67,fillMaterial(0x707b83),sourceOverlay);apron++;
+    }else if(t.aeroway==='taxiway'&&points.length>1){
+      flatLine(points,Number(t.width)||20,.73,fillMaterial(0x4a5157),sourceOverlay);taxi++;
+    }else if(t.aeroway==='runway'&&points.length>1){
+      const width=Number(t.width)||45;
+      if(points.length>=2)flatLine(points,width,.82,fillMaterial(0x333f46),sourceOverlay);
+      runways++;
+    }else if(t.building&&points.length>3&&term<85){
+      const cx=points.reduce((a,p)=>a+p.x,0)/points.length;
+      const cz=points.reduce((a,p)=>a+p.z,0)/points.length;
+      const h=Math.min(45,Math.max(5,Number(t.height)||((+t['building:levels']||3)*3.5)));
+      const shape=new THREE.Shape();
+      points.forEach((p,i)=>i?shape.lineTo(p.x,-p.z):shape.moveTo(p.x,-p.z));
+      shape.closePath();
+      const geometry=new THREE.ExtrudeGeometry(shape,{depth:h,bevelEnabled:false,steps:1});
+      geometry.rotateX(-Math.PI/2);
+      const mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({
+        color:t.aeroway==='terminal'?0x9eb9bf:0xb7bec1,roughness:.88}));
+      mesh.position.y=.2;sourceOverlay.add(mesh);term++;
+    }
+  }
+  if(info)info.textContent=apron+taxi+term+runways ?
+    '✓ OpenStreetMap-Overlay: '+runways+' Landebahn-Einträge, '+taxi+
+    ' Rollwege, '+apron+' Vorfelder, '+term+' Gebäude. Detailgeometrie und Beleuchtung teilweise modelliert.':
+    'Keine zusätzlichen OSM-Objekte geliefert. Es bleibt bei der ausdrücklich schematischen 3D-Modellierung.';
+}
+loadAirportOSM();
+
 const planeItems=[],raycaster=new THREE.Raycaster();
 const mat=(c)=>new THREE.MeshStandardMaterial({color:c,metalness:.15,roughness:.42,side:THREE.DoubleSide});
 const mats={body:mat(0xedf3f6),wing:mat(0xc7d6dd),tail:mat(0x2b78a1),glass:mat(0x203e53),engine:mat(0x5c7b88)};
