@@ -66,10 +66,13 @@ aside{left:8px;bottom:65px;max-height:55dvh;padding:11px;width:min(290px,72vw)}
   <h2>Auf Augenhöhe erkunden</h2>
   <p class="sub">Mit Mausziehen umsehen; auf «Maus übernehmen» klicken für FPS-Steuerung. WASD zum Gehen, Shift zum Sprinten.</p>
   <div class="metrics"><span id="altitude">⛰️ Höhe: wird geladen</span><span id="location">📍 37.95736 / 15.32230</span></div>
-  <div class="data"><strong>🏔️ Gelände</strong><p id="terrain-status">Höhenraster wird geprüft …</p>
+  <div class="data"><strong>🏔️ Gelände und Luftbild</strong><p id="terrain-status">Höhenraster wird geprüft …</p>
+    <p id="aerial-status" class="sub">Zusätzliche Luftbilder werden nachgeladen …</p>
+    <button id="aerial-toggle" type="button">🛰️ Luftbild ausblenden</button>
     <p class="sub">Höhenangaben stammen nur aus dem Höhenmodell. Ohne Messdaten verwenden wir keine erfundene Ortshöhe.</p></div>
   <div class="data"><strong>🏘️ Gebäude und Wege</strong><p id="osm-status">OpenStreetMap wird geprüft …</p>
-    <button id="retry-data">Daten nochmals laden</button></div>
+    <button id="retry-data">Daten nochmals laden</button>
+    <p id="legacy-panel" class="sub" hidden><a href="../walk.html" id="legacy-panel-link" style="color:#9af0e2">Bisherigen 3D Walk v9 öffnen</a></p></div>
   <div class="data"><strong>🚶 Bewegung <span id="speed-label">7 m/s</span></strong>
     <input type="range" class="speed" min="2" max="20" step="1" value="7" id="speed">
     <p class="sub">Shift = Sprint. Kollisionen und Höhenanpassung aktiv. Strassen und Dächer können vereinfacht sein.</p>
@@ -93,6 +96,35 @@ aside{left:8px;bottom:65px;max-height:55dvh;padding:11px;width:min(290px,72vw)}
 <div id="loading"><div><div class="spinner"></div><h1>SICILIA 3D · V10 WALK</h1>
   <p id="load-message">Der Ort wird aus Geländekacheln und Gebäudegrundrissen aufgebaut.</p>
   <button id="load-retry" hidden onclick="location.reload()">↻ Neu laden</button>
-  <button id="skip-load" hidden>Ohne weitere Abfragen starten</button></div></div>
-<script type="module" src="./walk.js?v=102"></script>
+  <button id="skip-load" hidden>Ohne weitere Abfragen starten</button>
+  <p><a id="legacy-walk" hidden href="../walk.html"
+     style="color:#a5f4e3;background:#163d4d;border:1px solid #9ce6dc;padding:10px 12px;border-radius:9px;text-decoration:none">
+    ↗ Bisherige 3D-Version öffnen</a></p>
+  </div></div>
+<script>
+(function(){
+  // If module/CDN/WebGL fails before boot(), expose a useful escape route.
+  const params=new URLSearchParams(location.search);
+  for(const id of ['legacy-walk','legacy-panel-link']){
+    const anchor=document.getElementById(id);
+    if(anchor)anchor.href='../walk.html?'+params.toString();
+  }
+  setTimeout(function(){
+    const overlay=document.getElementById('loading');
+    if(!overlay||overlay.style.display==='none')return;
+    document.getElementById('load-message').textContent=
+      'Die 3D-Welt reagiert nicht. Ein externer 3D- oder Höhendatenserver könnte blockiert sein. Du kannst neu laden oder die vorherige Version öffnen.';
+    document.getElementById('load-retry').hidden=false;
+    document.getElementById('legacy-walk').hidden=false;
+  },14500);
+  window.addEventListener('error',function(event){
+    if(document.getElementById('loading')?.style.display==='none')return;
+    const message=document.getElementById('load-message');
+    if(message)message.textContent='Fehler beim Laden der 3D-Welt. Bitte neu laden oder die bisherige Version öffnen.';
+    document.getElementById('load-retry').hidden=false;
+    document.getElementById('legacy-walk').hidden=false;
+  });
+})();
+</script>
+<script type="module" src="./walk.js?v=104"></script>
 </body></html>
