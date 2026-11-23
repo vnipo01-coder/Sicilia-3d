@@ -51,10 +51,25 @@ test('Road widths and empty building properties',()=>{
   assert.equal(getRoadWidth({width:'4.5'}),4.5);
   assert.equal(propertyRows({}).length,0);
 });
-test('Preview shell links all required modules',()=>{
+test('Preview links and recovery paths are present',()=>{
   const index=readFileSync(new URL('../index.html',import.meta.url),'utf8');
   const walk=readFileSync(new URL('../walk.html',import.meta.url),'utf8');
-  assert.match(index,/atlas\.js\?v=105/);
-  assert.match(walk,/walk\.js\?v=104/);
-  assert.match(index,/Hier in 3D laufen/);
+  const explore=readFileSync(new URL('../explore.html',import.meta.url),'utf8');
+  assert.match(index,/atlas\.js\?v=109/);
+  assert.match(walk,/walk\.js\?v=109/);
+  assert.match(index,/3D-Erkundung/);
+  assert.match(index,/Ortsmodell/);
+  assert.match(walk,/map-explore-link/);
+  assert.match(explore,/explore\.js\?v=108/);
+});
+test('3D buildings survive raster fallback and have an independent vector source',()=>{
+  const code=readFileSync(new URL('../atlas.js',import.meta.url),'utf8');
+  assert.match(code,/s10-osm-independent/);
+  assert.match(code,/https:\/\/tiles\.openfreemap\.org\/planet/);
+  assert.match(code,/s10-local-buildings/);
+  assert.doesNotMatch(code,/!map\.loaded\(\)\s*&&\s*!fallbackUsed/);
+});
+test('Windows in source data never become invented construction years',()=>{
+  const info=propertyRows({building:'yes',name:'Casa Rossi'});
+  assert.equal(info.some(([label])=>label==='Bauzeit'),false);
 });
