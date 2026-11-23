@@ -259,8 +259,10 @@ map.on('error',e=>{
 });
 function flyingWalkHref(){
   const c=state.selected||{lat:map.getCenter().lat,lon:map.getCenter().lng,name:'Kartenausschnitt Sizilien'};
-  $('walking').href='./walk.html?'+new URLSearchParams({
+  const params=new URLSearchParams({
     lat:c.lat.toFixed(6),lng:c.lon.toFixed(6),name:c.name});
+  $('walking').href='./explore.html?'+params;
+  $('detail-walk').href='./walk.html?'+params;
 }
 map.on('moveend',()=>{
   if(!state.selected)flyingWalkHref();
@@ -400,8 +402,12 @@ function select(obj){
   const links=$('object-links');links.replaceChildren();
   const visit='./walk.html?'+new URLSearchParams({
     lat:obj.lat.toFixed(6),lng:obj.lon.toFixed(6),name:obj.name});
-  const walkingLink=create('a','','🚶 3D Walk hier');
-  walkingLink.href=visit;links.append(walkingLink);
+  const walkingLink=create('a','','🎮 Hier 3D-Karte erkunden');
+  walkingLink.href='./explore.html?'+new URLSearchParams({
+    lat:obj.lat.toFixed(6),lng:obj.lon.toFixed(6),name:obj.name});
+  links.append(walkingLink);
+  const detailed=create('a','','🚶 Begehbares Ortsmodell');
+  detailed.href=visit;links.append(detailed);
   links.append(link('🗺️ OpenStreetMap',
     'https://www.openstreetmap.org/?mlat='+obj.lat+'&mlon='+obj.lon+'#map=18/'+obj.lat+'/'+obj.lon));
   links.append(link('📚 Wikipedia-Suche',
@@ -417,7 +423,8 @@ function select(obj){
   if(Math.hypot(obj.lat-37.95736,obj.lon-15.3223)<.014)
     links.append(link('⛪ Gemeinde – Kirchen',
       'https://comune.casalvecchiosiculo.me.it/tipi_luogo/chiesa/'));
-  $('walking').href=visit;
+  $('detail-walk').href=visit;
+  $('walking').href=walkingLink.href;
   const related=$('related');related.replaceChildren(
     create('strong','','📚 Quellen für '+obj.name));
   related.append(create('p','',
