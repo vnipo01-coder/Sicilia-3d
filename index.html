@@ -4,20 +4,20 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#092535">
 <meta name="description" content="SICILIA 3D – Geografischer Atlas Siziliens mit 3D-Gelände, Orten, Wetter, Gebäudeinformationen, begehbarem Dorfmodell und 3D-Flugzeugen.">
-<title>SICILIA 3D | Digital Island Explorer v7</title>
+<title>SICILIA 3D | Digital Island Explorer v8</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.css">
-<link rel="stylesheet" href="./atlas.css?v=70">
+<link rel="stylesheet" href="./atlas.css?v=80">
 </head>
 <body>
 <main id="map" role="application" aria-label="Interaktive 3D-Karte von Sizilien"></main>
 <header class="top">
-  <div class="brand glass"><strong>SICILIA <em>3D</em></strong><small>DIGITAL ISLAND EXPLORER · V7</small></div>
+  <div class="brand glass"><strong>SICILIA <em>3D</em></strong><small>DIGITAL ISLAND EXPLORER · V8</small></div>
   <div class="quicksearch glass">
     <input id="search" type="search" placeholder="Stadt, Dorf, Piazza oder Strasse …" aria-label="Ort suchen">
     <button id="search-go" aria-label="Suchen">⌕</button>
   </div>
   <div class="toplinks">
-    <a href="./walk.html" class="glass" title="Begehbare 3D-Umgebung Casalvecchio">🚶 3D Walk</a>
+    <a href="./walk.html" id="walk-launch" class="glass" title="Begehbare 3D-Umgebung an der aktuellen Kartenposition">🚶 Walk hier</a>
     <a href="./airport.html" class="glass" title="Flugzeuge und Catania in 3D">✈️ Air</a>
   </div>
 </header>
@@ -37,6 +37,6 @@
 </section>
 <div style="display:none"><button id="quick-casalvecchio">Casalvecchio</button><button id="quick-piazza">Piazza Chiesa</button></div>
 <script src="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.js"></script>
-<script src="./atlas.js?v=70"></script>
+<script src="./atlas.js?v=80"></script>
 </body>
 </html>
