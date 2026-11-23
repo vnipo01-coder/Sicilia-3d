@@ -1,4 +1,4 @@
-import {isSicily,getBuildingHeight,propertyRows} from './geo.js?v=102';
+import {isSicily,getBuildingHeight,propertyRows,getLocalOSM} from './geo.js?v=108';
 
 /* SICILIA 3D v10.1 ATLAS PREVIEW – isolated from v9 main site.
    Grounded map source labels and source-aware object inspector. */
@@ -23,9 +23,10 @@ const src={
   satellite:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
 };
 const ids={sat:'s10-satellite',color:'s10-color',shade:'s10-shade',build:'s10-buildings',
-  peaks:'s10-peaks',poi:'s10-poi',cloud:'s10-cloud'};
+  peaks:'s10-peaks',poi:'s10-poi',cloud:'s10-cloud',local:'s10-local-buildings'};
 const state={mode:'relief',exaggeration:1,shade:true,buildings:true,peaks:false,
-  selected:null,articleRequest:0,weatherRequest:0,loaded:false};
+  selected:null,articleRequest:0,weatherRequest:0,loaded:false,wheelMode:'zoom',
+  localBusy:false,localAt:0,localPosition:null,localCount:0,vectorSource:null};
 const create=(tag,cls,text)=>{
   const el=document.createElement(tag);if(cls)el.className=cls;
   if(text!==undefined)el.textContent=String(text);return el;
@@ -45,9 +46,12 @@ function centerPlace(p){
 }
 const fallbackStyle={
   version:8,name:'SICILIA 3D – Satellit bei Kartendienst-Ausfall',
-  sources:{'safe-imagery':{type:'raster',
-    tiles:[src.satellite],tileSize:256,maxzoom:19,
-    attribution:'Imagery: Esri, Vantor, Earthstar Geographics, GIS User Community'}},
+  sources:{
+    'safe-imagery':{type:'raster',tiles:[src.satellite],tileSize:256,maxzoom:19,
+      attribution:'Imagery: Esri, Vantor, Earthstar Geographics, GIS User Community'},
+    's10-osm-independent':{type:'vector',url:'https://tiles.openfreemap.org/planet',
+      attribution:'© OpenStreetMap-Mitwirkende, OpenMapTiles / OpenFreeMap'}
+  },
   layers:[{id:'safe-imagery-layer',type:'raster',source:'safe-imagery'}]
 };
 let styleReady=false;
@@ -71,11 +75,9 @@ function showSatelliteFallback(){
 setTimeout(()=>{
   if(!styleReady)showSatelliteFallback();
 },10500);
-// A parsed style can still fail to provide the actual map tiles. Detect
-// stalled rendering separately, instead of showing a forever-empty map.
-setTimeout(()=>{
-  if(!map.loaded()&&!fallbackUsed)showSatelliteFallback();
-},19000);
+// Do NOT use map.loaded() as a timeout trigger: DEM/imagery may still be loading
+// although the vector base map and all building layers are healthy. Resetting
+// the style here previously deleted the 3D building layer!
 map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'bottom-right');
 function addSource(id,source){if(!map.getSource(id))map.addSource(id,source);}
 function addLayer(obj,before){
@@ -91,7 +93,9 @@ function prepareStyle(){
   addSource('s10-shade-dem',{type:'raster-dem',tiles:[src.dem],tileSize:256,encoding:'terrarium',maxzoom:15});
   addSource('s10-aerial',{type:'raster',tiles:[src.satellite],tileSize:256,maxzoom:19,
     attribution:'Imagery: Esri, Vantor, Earthstar Geographics, GIS User Community'});
-  map.setTerrain({source:'s10-dem',exaggeration:state.exaggeration});
+  try{map.setTerrain({source:'s10-dem',exaggeration:state.exaggeration});}
+  catch(error){console.warn('Terrain not ready:',error);}
+
   const layers=map.getStyle().layers||[];
   const labels=layers.find(l=>l.type==='symbol'&&l.layout?.['text-field'])?.id;
   addLayer({id:ids.color,type:'color-relief',source:'s10-shade-dem',
@@ -104,20 +108,37 @@ function prepareStyle(){
   addLayer({id:ids.shade,type:'hillshade',source:'s10-shade-dem',
     paint:{'hillshade-exaggeration':.36,'hillshade-shadow-color':'#50695e',
       'hillshade-highlight-color':'#f9e8c8','hillshade-accent-color':'#7a8975'}},labels);
-  const vectors=Object.entries(map.getStyle().sources||{}).find(([k,v])=>v.type==='vector'&&
-    /planet|openfreemap|openmaptiles/i.test(k+' '+(v.url||'')))||
-    Object.entries(map.getStyle().sources||{}).find(([,v])=>v.type==='vector');
-  const source=vectors?.[0];
+  // MapLibre's official 3D buildings example uses an independent OpenFreeMap
+  // vector source. Do not assume a raster/satellite style has one.
+  const builtIn=Object.entries(map.getStyle().sources||{}).find(
+    ([,v])=>v.type==='vector' && /openmaptiles|openfreemap|planet/i.test(v.url||'')
+  )||Object.entries(map.getStyle().sources||{}).find(([,v])=>v.type==='vector');
+  let source=builtIn?.[0];
+  if(!source){
+    source='s10-osm-independent';
+    addSource(source,{type:'vector',url:'https://tiles.openfreemap.org/planet',
+      attribution:'© OpenStreetMap-Mitwirkende / OpenFreeMap'});
+  }
+  state.vectorSource=source;
   if(source){
-    addLayer({id:ids.build,type:'fill-extrusion',source,'source-layer':'building',minzoom:14,
-      paint:{'fill-extrusion-color':['interpolate',['linear'],
-        ['coalesce',['to-number',['get','render_height']],['to-number',['get','height']],0],
-        0,'#cbb89d',25,'#b8b3a7',80,'#7695a2'],
-        'fill-extrusion-height':['interpolate',['linear'],['zoom'],14,0,15,
-          ['coalesce',['to-number',['get','render_height']],
-            ['to-number',['get','height']],['*',['coalesce',['to-number',['get','building:levels']],3],3]]],
+    const actualHeight=['to-number',['get','render_height'],0];
+    const osmHeight=['to-number',['get','height'],0];
+    const guessed=['case',
+      ['>',actualHeight,2],actualHeight,
+      ['>',osmHeight,2],osmHeight,
+      ['>', ['to-number',['get','building:levels'],0],0],
+       ['*',['to-number',['get','building:levels'],0],3.1],
+      9.5];
+    addLayer({id:ids.build,type:'fill-extrusion',source,'source-layer':'building',
+      minzoom:13.4,filter:['!=',['get','hide_3d'],true],
+      paint:{
+        'fill-extrusion-color':['interpolate',['linear'],guessed,
+          0,'#e5ceae',12,'#ceb9a1',34,'#aeb6ae',85,'#7696a4'],
+        'fill-extrusion-height':['interpolate',['linear'],['zoom'],
+          13.4,0,14.1,['*',guessed,0.7],15,guessed],
         'fill-extrusion-base':['coalesce',['to-number',['get','render_min_height']],0],
-        'fill-extrusion-opacity':.86}},labels);
+        'fill-extrusion-opacity':0.95
+      }},labels);
     addLayer({id:ids.peaks,type:'circle',source,'source-layer':'mountain_peak',minzoom:12.4,
       filter:['all',['has','name'],['>=',['to-number',['get','ele'],0],700]],
       paint:{'circle-radius':4.5,'circle-color':'#eecfa5','circle-opacity':.82,
@@ -125,6 +146,18 @@ function prepareStyle(){
     addLayer({id:ids.poi,type:'circle',source,'source-layer':'poi',minzoom:13.4,
       paint:{'circle-radius':10,'circle-opacity':.007}},labels);
   }
+  // Independent, source-backed OSM outline fallback for missing or outdated
+  // vector tiles at village zoom. Never fabricate buildings when absent.
+  addSource('s10-local-src',{type:'geojson',data:{
+    type:'FeatureCollection',features:[]}});
+  addLayer({id:ids.local,type:'fill-extrusion',source:'s10-local-src',minzoom:14,
+    paint:{
+      'fill-extrusion-color':['case',['get','estimated'],'#bdab95','#a9c4c4'],
+      'fill-extrusion-base':0,
+      'fill-extrusion-height':['interpolate',['linear'],['zoom'],14,0,15,
+        ['to-number',['get','height_m'],9]],
+      'fill-extrusion-opacity':0.93
+    }},labels);
   updateLayers();
 }
 function updateLayers(){
@@ -132,6 +165,7 @@ function updateLayers(){
   visible(ids.color,state.mode==='relief');
   visible(ids.shade,state.shade&&state.mode!=='map');
   visible(ids.build,state.buildings);
+  visible(ids.local,state.buildings);
   visible(ids.peaks,state.peaks);
   visible(ids.poi,true);
 }
