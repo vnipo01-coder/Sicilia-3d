@@ -10,7 +10,7 @@ const codes={
   80:['🌦️','Leichte Regenschauer'],81:['🌧️','Regenschauer'],82:['⛈️','Heftige Schauer'],
   95:['⛈️','Gewitter'],96:['⛈️','Gewitter mit Hagel'],99:['⛈️','Kräftiges Gewitter']
 };
-export function weatherLabel(code){return codes[Number(code)]||['🌡️','Aktuelle Bedingungen'];}
+export function weatherLabel(code){return code===null||code===undefined?['🌡️','Wetterwert fehlt']:(codes[Number(code)]||['🌡️','Aktuelle Bedingungen']);}
 export function weatherParams(lat,lon){
   return new URLSearchParams({
     latitude:String(lat),longitude:String(lon),
