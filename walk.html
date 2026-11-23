@@ -40,7 +40,7 @@ button,a{font:inherit}button{cursor:pointer}a{color:inherit}
 <body>
 <div id="world" aria-label="Interaktiver dreidimensionaler Spaziergang durch eine modellierte Ortsumgebung"></div>
 <div class="topbar">
-  <div class="logo glass"><strong>SICILIA <span>3D</span> / WALK</strong><small>Casalvecchio Siculo · Piazza Chiesa</small></div>
+  <div class="logo glass"><strong>SICILIA <span>3D</span> / WALK</strong><small>Begehbare Ortsmodelle in Sizilien</small></div>
   <div class="actions">
     <button class="action glass" id="perspective">🧍 Erste Person</button>
     <button class="action glass" id="reset">↻ Zur Piazza</button>
@@ -61,7 +61,7 @@ button,a{font:inherit}button{cursor:pointer}a{color:inherit}
   <span></span><button data-move="back" aria-label="Rückwärts">▼</button><span></span>
 </div>
 <div class="credit">© OpenStreetMap / Mapzen-AWS · illustrativ modellierte Fassaden</div>
-<div id="loading"><div><div class="loader"></div><strong>CASALVECCHIO · 3D WALK</strong><p id="load-status">Wir bauen deine begehbare 3D-Umgebung auf. Gebäudedaten und Gelände werden nach Möglichkeit aus echten Geodaten geladen.</p></div></div>
+<div id="loading"><div><div class="loader"></div><strong>SICILIA 3D · WALK</strong><p id="load-status">Wir bauen deine begehbare 3D-Umgebung auf. Gebäudedaten und Gelände werden nach Möglichkeit aus echten Geodaten geladen.</p></div></div>
 <script>
 window.addEventListener('unhandledrejection',function(event){
   const msg=document.getElementById('load-status');
@@ -79,5 +79,5 @@ setTimeout(function(){
   }
 },18000);
 </script>
-<script type="module" src="./walk.js?v=70"></script>
+<script type="module" src="./walk.js?v=80"></script>
 </body></html>
