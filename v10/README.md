@@ -27,6 +27,40 @@ Stand: 23. November 2026
 
 Bei alten Bildschirmständen: Seite mit Ctrl+Shift+R neu laden. Wenn die v10-Seite nicht funktioniert, die bewährte v9-Karte unter https://vnipo01-coder.github.io/Sicilia-3d/ öffnen.
 
+## v10.4 – Wiederherstellung der Gebäude und neue Ortsnavigation
+
+Diese Fassung repariert die Gebäude-Regressionsfehler der v10.1-Version und ergänzt einen zweiten, von externen Overpass-Abfragen unabhängigen 3D-Erkundungsmodus.
+
+### Die konkrete Fehlerursache
+1. Der ursprüngliche Atlas schaltete nach 19 Sekunden automatisch auf einen **reinen Raster-Satellitenstil** um, sobald \`map.loaded()\` noch \`false\` meldete. Das ist beim Nachladen umfangreicher DEM- und Luftbildkacheln normal und **kein** zuverlässiger Beweis, dass die Karte nicht funktioniert.
+2. Der Ersatzstil hatte **keine Gebäude-Vektordaten**. Die bis dahin eingebundenen 3D-Gebäudeebenen gingen beim \`setStyle()\` verloren.
+3. Im unabhängigen 3D-Walk werden Gebäude nur nachgeladen, wenn eine OSM/Overpass-Abfrage gelingt; bei Serverausfällen erschien deshalb lediglich die Hügellandschaft.
+
+### Korrekturen
+- Der destruktive \`map.loaded()\`-Zeitgeber ist entfernt. Ein Stilwechsel geschieht nur noch, wenn die anfängliche Kartenstil-Ladung selbst nicht zustande kommt.
+- Auch der Satelliten-Ersatzstil enthält nun eine **eigene OpenFreeMap-Vektordatenquelle** (\`https://tiles.openfreemap.org/planet\`). Die Gebäude sind nicht mehr vom Hauptstil abhängig.
+- Eine neue Vektorextrusion liest \`render_height\` / \`height\`; wo Angaben fehlen, nutzt sie eine **als Modell erkennbar bleibende Höhe**. Gebäudekörper sind kartografische Volumen und keine photogrammetrischen Aufnahmen.
+- Wo Vektorkacheln keine sichtbaren Häuser liefern, kann die App bei naher Ansicht zusätzlich tatsächliche OSM-Gebäudegrundrisse über die bereits gecachte Overpass-Verbindung nachladen. Über einen eigenen Button lässt sich dies erneut versuchen. Anbieterausfälle und Datenlücken bleiben möglich.
+- Die Gebäude erscheinen sinnvollerweise erst ab Stadt-/Ortszoom (ungefähr Zoom 14); aus Inselentfernung wären sie nicht erkennbar.
+- \`Mausrad: Zoom/Neigen\` wechselt die Funktion des Scrollrads. Shift kehrt sie temporär um. Mit rechter Maustaste ziehen kann die Karte weiterhin gedreht und geneigt werden.
+- Ein Ortsklick zeigt verfügbare OSM-Eigenschaften, geografische Quellen, Wikidata und gezielte Wikipedia-Suchen (de/it). Ortsinformationen werden nicht mit unbelegten Angaben eines einzelnen Hauses verwechselt.
+- Die Atlas-Links bieten nun zwei klar unterscheidbare Modi:
+  - **3D-Erkundung** – \`/v10/explore.html\`: Eine bewegliche Karte mit Vektor-Gebäuden, Terrain, 3D-Kamera, WASD, Shift-Sprint und Mausradsteuerung, ohne separat geladenen Overpass-Ortsmesh. Dies ist für Orte mit vorhandenen Vektorkacheln der robustere Einstieg.
+  - **Ortsmodell** – \`/v10/walk.html\`: Geländemesh mit OSM-Strassen und einzelnen Hausgrundrissen. Mehr lokale Details, aber abhängig von den konkreten Overpass-Daten. Ein Rücksprung in die kartografische 3D-Erkundung ist jederzeit möglich.
+
+### Aktuelle Grenzen
+- Die 3D-Erkundung ist **kein echtes Street View, kein LiDAR-Scan von Fassaden und kein begehbares Gebäudeinnere**.
+- Nicht alle OSM-Gebäude haben dokumentierte Höhen oder Baujahre. Einige OSM-Gebäude können in OpenFreeMap-Kacheln fehlen oder veraltet sein.
+- Das detaillierte Ortsmodell wird nur innerhalb eines begrenzten Radius aufgebaut. Eine durchgehend gebaute und fotorealistische Spielwelt für alle sizilianischen Strassen ist damit noch nicht erreicht.
+- Ein echter grafischer Browser-/Netzwerktest ist für die vollständige Qualitätsabnahme weiterhin erforderlich.
+
+### Direkte Testadressen
+- Atlas mit wiederhergestellter 3D-Ebene: https://vnipo01-coder.github.io/Sicilia-3d/v10/?release=104
+- Unabhängige 3D-Kartenerkundung in Casalvecchio: https://vnipo01-coder.github.io/Sicilia-3d/v10/explore.html?lat=37.95736&lng=15.32230&name=Casalvecchio%20Siculo
+- Detailliertes Casalvecchio-Ortsmodell: https://vnipo01-coder.github.io/Sicilia-3d/v10/walk.html?lat=37.95736&lng=15.32230&name=Casalvecchio%20Siculo
+- Weiterhin verfügbar: https://vnipo01-coder.github.io/Sicilia-3d/ (v9-Hauptseite)
+
+
 ## Tatsächlich geändert
 - Neue eigenständige v10-Oberfläche und 3D-Walk im Unterordner \`/v10/\`.
 - Eine gemeinsame Geodaten-Bibliothek (\`geo.js\`) verarbeitet geografische Koordinaten, Terrarium-Höhen und OSM-Daten.
