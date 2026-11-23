@@ -423,6 +423,16 @@ function initialize(){
   map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/bright',
     center:[14.05,37.55],zoom:7.3,pitch:36,bearing:0,antialias:true,maxPitch:78});
   map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'bottom-right');
+  // The top-bar Walk link always starts a local 3D scene at the map centre.
+  const updateWalkLink=()=>{
+    const c=map.getCenter(),anchor=$('walk-launch');
+    if(!anchor)return;
+    anchor.href='./walk.html?'+new URLSearchParams({
+      lat:c.lat.toFixed(6),lng:c.lng.toFixed(6),name:'Kartenausschnitt Sizilien'
+    });
+    anchor.title='3D-Spaziergang an '+c.lat.toFixed(5)+'° N / '+c.lng.toFixed(5)+'° E';
+  };
+  map.on('moveend',updateWalkLink);updateWalkLink();
   // Keep plain-wheel zoom. Shift+wheel changes pitch (desktop request).
   map.getCanvasContainer().addEventListener('wheel',e=>{
     if(!e.shiftKey)return;
