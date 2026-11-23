@@ -137,6 +137,50 @@ function makeAirportGroundDetails(){
   }
 }
 makeAirportGroundDetails();
+// Optional imagery drape: map real geographic satellite pixels onto the 3D ground.
+// Tiles are cached by the browser; failures leave the schematic airport functional.
+const imageryGround=new THREE.Group();scene.add(imageryGround);
+let imageryVisible=true,imageryLoaded=0,imageryAttempted=0;
+function tileXY(lon,lat,zoom){
+  const n=2**zoom,phi=lat*Math.PI/180;
+  return {x:(lon+180)/360*n,y:(1-Math.log(Math.tan(phi)+1/Math.cos(phi))/Math.PI)/2*n};
+}
+function tileLon(x,zoom){return x/(2**zoom)*360-180;}
+function tileLat(y,zoom){return Math.atan(Math.sinh(Math.PI*(1-2*y/(2**zoom))))*180/Math.PI;}
+function updateImageryStatus(){
+  const status=document.getElementById('imagery-status');
+  if(status)status.textContent=imageryLoaded?
+    '🛰️ Luftbilder: '+imageryLoaded+'/'+imageryAttempted+
+    ' Esri-Kacheln geladen. Bildaufnahme nicht live.':
+    '🛰️ Keine Luftbilder erreichbar; vereinfachtes 3D-Modell bleibt sichtbar.';
+}
+function loadSatelliteGround(){
+  const zoom=15,topLeft=tileXY(LNG-.034,LAT+.020,zoom),
+        bottomRight=tileXY(LNG+.034,LAT-.020,zoom);
+  const minX=Math.floor(topLeft.x),maxX=Math.floor(bottomRight.x);
+  const minY=Math.floor(topLeft.y),maxY=Math.floor(bottomRight.y);
+  const loader=new THREE.TextureLoader();loader.setCrossOrigin('anonymous');
+  for(let tx=minX;tx<=maxX;tx++)for(let ty=minY;ty<=maxY;ty++){
+    if(imageryAttempted>=45)break;
+    imageryAttempted++;
+    const nw=loc(tileLon(tx,zoom),tileLat(ty,zoom));
+    const se=loc(tileLon(tx+1,zoom),tileLat(ty+1,zoom));
+    const width=Math.abs(se.x-nw.x),depth=Math.abs(se.z-nw.z);
+    const centerX=(nw.x+se.x)/2,centerZ=(nw.z+se.z)/2;
+    const url='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+zoom+'/'+ty+'/'+tx;
+    loader.load(url,texture=>{
+      texture.colorSpace=THREE.SRGBColorSpace;
+      const plane=new THREE.Mesh(new THREE.PlaneGeometry(width,depth),
+        new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide,depthWrite:false}));
+      plane.rotation.x=-Math.PI/2;
+      plane.position.set(centerX,-.72,centerZ);
+      imageryGround.add(plane);imageryLoaded++;
+      updateImageryStatus();
+    },undefined,()=>updateImageryStatus());
+  }
+  updateImageryStatus();
+}
+loadSatelliteGround();
 const sourceOverlay=new THREE.Group();scene.add(sourceOverlay);
 async function loadAirportOSM(){
   const info=document.getElementById('airport-data-status');
@@ -366,6 +410,11 @@ setInterval(()=>{
 
 // Desktop presets: show the entire field or follow the long-range landing path.
 const airportPanel=document.querySelector('.panel');
+const imageryButton=$('flight-imagery');
+if(imageryButton)imageryButton.onclick=()=>{
+  imageryVisible=!imageryVisible;imageryGround.visible=imageryVisible;
+  imageryButton.textContent=imageryVisible?'🛰️ Luftbild an':'🛰️ Luftbild aus';
+};
 $('flight-panel-toggle').onclick=()=>{
   airportPanel.hidden=!airportPanel.hidden;
   $('flight-panel-toggle').textContent=airportPanel.hidden?'☰ Menü öffnen':'✕ Menü';
