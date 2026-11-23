@@ -58,6 +58,7 @@ aside{left:8px;bottom:65px;max-height:55dvh;padding:11px;width:min(290px,72vw)}
   <div class="topbuttons">
     <button id="perspective" title="Zwischen Ich- und Drittpersonkamera wechseln">🎮 Dritte Person</button>
     <button id="reset">↻ Start</button>
+    <a id="map-explore-top" href="./explore.html" title="Bodennahe 3D-Karte für jeden Ort">🎮 3D-Karte</a>
     <a href="./index.html">← Atlas</a>
   </div>
 </header>
@@ -72,6 +73,9 @@ aside{left:8px;bottom:65px;max-height:55dvh;padding:11px;width:min(290px,72vw)}
     <p class="sub">Höhenangaben stammen nur aus dem Höhenmodell. Ohne Messdaten verwenden wir keine erfundene Ortshöhe.</p></div>
   <div class="data"><strong>🏘️ Gebäude und Wege</strong><p id="osm-status">OpenStreetMap wird geprüft …</p>
     <button id="retry-data">Daten nochmals laden</button>
+    <p class="sub">Fehlen Gebäudedaten, kannst du denselben Ort direkt in der 3D-Kartenansicht erkunden.</p>
+    <p><a id="map-explore-link" href="./explore.html"
+      style="color:#a9f5e6;text-decoration:underline;font-size:12px">🎮 Zur 3D-Kartenerkundung dieses Orts</a></p>
     <p id="legacy-panel" class="sub" hidden><a href="../walk.html" id="legacy-panel-link" style="color:#9af0e2">Bisherigen 3D Walk v9 öffnen</a></p></div>
   <div class="data"><strong>🚶 Bewegung <span id="speed-label">7 m/s</span></strong>
     <input type="range" class="speed" min="2" max="20" step="1" value="7" id="speed">
@@ -96,6 +100,8 @@ aside{left:8px;bottom:65px;max-height:55dvh;padding:11px;width:min(290px,72vw)}
 <div id="loading"><div><div class="spinner"></div><h1>SICILIA 3D · V10 WALK</h1>
   <p id="load-message">Der Ort wird aus Geländekacheln und Gebäudegrundrissen aufgebaut.</p>
   <button id="load-retry" hidden onclick="location.reload()">↻ Neu laden</button>
+  <a id="loader-explore" href="./explore.html"
+     style="color:#d1fff3;display:inline-block;margin:8px;text-decoration:underline">🎮 Alternativ 3D-Karte öffnen</a>
   <button id="skip-load" hidden>Ohne weitere Abfragen starten</button>
   <p><a id="legacy-walk" hidden href="../walk.html"
      style="color:#a5f4e3;background:#163d4d;border:1px solid #9ce6dc;padding:10px 12px;border-radius:9px;text-decoration:none">
@@ -108,6 +114,10 @@ aside{left:8px;bottom:65px;max-height:55dvh;padding:11px;width:min(290px,72vw)}
   for(const id of ['legacy-walk','legacy-panel-link']){
     const anchor=document.getElementById(id);
     if(anchor)anchor.href='../walk.html?'+params.toString();
+  }
+  for(const id of ['map-explore-link','map-explore-top','loader-explore']){
+    const a=document.getElementById(id);
+    if(a)a.href='./explore.html?'+params.toString();
   }
   setTimeout(function(){
     const overlay=document.getElementById('loading');
@@ -126,5 +136,5 @@ aside{left:8px;bottom:65px;max-height:55dvh;padding:11px;width:min(290px,72vw)}
   });
 })();
 </script>
-<script type="module" src="./walk.js?v=104"></script>
+<script type="module" src="./walk.js?v=109"></script>
 </body></html>
