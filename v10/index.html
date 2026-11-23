@@ -15,6 +15,7 @@
     <button id="overview" title="Inselübersicht">🌍 Insel</button>
     <a id="walking" href="./walk.html">🚶 Hier in 3D laufen</a>
     <a href="../airport.html" title="Bestehender Flight Explorer – Ausbau in v10.3">✈️ AIR v9</a>
+    <a href="../index.html" title="Bisheriger SICILIA 3D Kartenatlas">↩ Karte v9</a>
   </div>
 </header>
 <div id="state" class="glass">Karte wird geladen …</div>
@@ -54,7 +55,27 @@
   <div class="weather" id="weather"><strong>🌦️ Wetter</strong><p>Wähle einen Ort.</p></div>
 </section>
 <footer>© OpenStreetMap-Mitwirkende · Mapzen/AWS · OpenFreeMap · Esri · Open-Meteo · Wikimedia · Pilotphase v10.1</footer>
-<div id="error" hidden class="error">Eine externe Kartenquelle ist nicht erreichbar. Bitte aktualisiere die Seite.</div>
+<div id="error" hidden class="error">
+  Die neue Kartenansicht konnte nicht gestartet werden.
+  <p><a href="../index.html" style="color:#d9ffe8;font-weight:700">↩ Funktionierende bisherige Karte öffnen</a></p>
+  <button onclick="location.reload()" style="background:#1d7580;color:#fff;border:1px solid #ace8df;border-radius:8px;padding:9px">↻ Erneut versuchen</button>
+</div>
+<script>
+(function(){
+  function showError(){
+    const err=document.getElementById('error');
+    const state=document.getElementById('state');
+    if(err)err.hidden=false;
+    if(state)state.textContent='Neue Karten-Engine nicht verfügbar · bisherige Karte bleibt erreichbar';
+  }
+  window.addEventListener('error',function(event){
+    if(!window.maplibregl)showError();
+  });
+  setTimeout(function(){
+    if(!window.maplibregl||!document.querySelector('#map canvas'))showError();
+  },12000);
+})();
+</script>
 <script src="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.js"></script>
-<script type="module" src="./atlas.js?v=103"></script>
+<script type="module" src="./atlas.js?v=105"></script>
 </body></html>
