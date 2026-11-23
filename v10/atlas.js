@@ -1,7 +1,7 @@
-import {isSicily,getBuildingHeight,propertyRows,getLocalOSM} from './geo.js?v=115';
-import {SANTA,STOPS,LOCAL_REFERENCES,LINKS,inSantaTeresa,contextualSources,streetImageryUrl,stopDetails} from './local-sources.js?v=115';
-import {getWeather,formatWeather,weatherLabel,weatherDescription} from './weather.js?v=115';
-import {lookupWikipedia,lookupWikidata,officialKnowledge} from './knowledge.js?v=115';
+import {isSicily,getBuildingHeight,propertyRows,getLocalOSM} from './geo.js?v=116';
+import {SANTA,STOPS,LOCAL_REFERENCES,LINKS,inSantaTeresa,contextualSources,streetImageryUrl,stopDetails} from './local-sources.js?v=116';
+import {getWeather,formatWeather,weatherLabel,weatherDescription} from './weather.js?v=116';
+import {lookupWikipedia,lookupWikidata,officialKnowledge} from './knowledge.js?v=116';
 
 /* SICILIA 3D v10.1 ATLAS PREVIEW – isolated from v9 main site.
    Grounded map source labels and source-aware object inspector. */
