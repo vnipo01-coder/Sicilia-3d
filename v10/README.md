@@ -7,6 +7,26 @@ Stand: 23. November 2026
 - Casalvecchio Siculo direkt: https://vnipo01-coder.github.io/Sicilia-3d/v10/walk.html?lat=37.95736&lng=15.32230&name=Casalvecchio%20Siculo
 - Die weiterhin bestehende Version 9.2: https://vnipo01-coder.github.io/Sicilia-3d/
 
+
+## Reparatur vom 23. November 2026 (v10.1 Hotfix)
+
+**Ursache der leeren Atlas-Ansicht:** HTML hatte eine MapLibre-6-UMD-Datei \`dist/maplibre-gl.js\` eingebunden, obwohl dieser Dateipfad seit v6 nicht mehr bereitgestellt wird. Die Karte konnte deshalb überhaupt nicht initialisieren. Das Atlas-HTML verwendet jetzt wieder die zuvor verwendete MapLibre GL JS 5.6.2 UMD-Datei.
+
+**Zusätzliche Sicherungen:**
+- Initialer Kartenausschnitt zeigt ganz Sizilien statt einer potenziell leeren Nahansicht.
+- Wenn der OpenFreeMap-Stil nicht ankommt oder die Kacheln stehen bleiben, schaltet der Atlas auf einen reinen Esri-Raster-Satellitenstil um.
+- Die Atlas-Oberfläche hat eine direkte Rückkehr zur weiterhin existierenden v9-Karte und zeigt Ladefehler statt einer leeren Oberfläche.
+- Der v10-Walk lädt Three.js über jsDelivr mit einem zweiten CDN als Ausweichquelle und meldet Ladefehler.
+- Der Walk überlagert nun optional Esri-Luftbilder entlang des vorhandenen DEM statt auf Gebäudedaten zu warten. Scheitern OSM-Aufrufe, bleibt der Hintergrund benutzbar.
+- Auf beiden Seiten gibt es bei Problemen einen einfachen Link zur bisherigen Version.
+- Alle JS-Dateien wurden erneut auf Syntax geprüft, und die referenzierten HTML-IDs sind vorhanden. **Ein echter Browser-/Netzwerk-End-to-End-Test ist weiterhin erforderlich.**
+
+**Testlinks:**
+- https://vnipo01-coder.github.io/Sicilia-3d/v10/?repair=20261123
+- https://vnipo01-coder.github.io/Sicilia-3d/v10/walk.html?lat=37.95736&lng=15.32230&name=Casalvecchio%20Siculo&repair=20261123
+
+Bei alten Bildschirmständen: Seite mit Ctrl+Shift+R neu laden. Wenn die v10-Seite nicht funktioniert, die bewährte v9-Karte unter https://vnipo01-coder.github.io/Sicilia-3d/ öffnen.
+
 ## Tatsächlich geändert
 - Neue eigenständige v10-Oberfläche und 3D-Walk im Unterordner \`/v10/\`.
 - Eine gemeinsame Geodaten-Bibliothek (\`geo.js\`) verarbeitet geografische Koordinaten, Terrarium-Höhen und OSM-Daten.
