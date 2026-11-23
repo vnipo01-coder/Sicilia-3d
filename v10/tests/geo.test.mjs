@@ -104,7 +104,7 @@ test('All pages expose the right weather and Santa Teresa source controls',()=>{
   const a=readFileSync(new URL('../index.html',import.meta.url),'utf8');
   const b=readFileSync(new URL('../explore.html',import.meta.url),'utf8');
   const c=readFileSync(new URL('../walk.html',import.meta.url),'utf8');
-  assert.ok(a.includes('id="weather-live"')&&a.includes('id="stops"'));
+  assert.ok(a.includes('id="live-weather"')&&a.includes('id="stops"'));
   assert.ok(a.includes('id="santateresa"'));
   assert.ok(b.includes('id="coastal-panel"')&&b.includes('id="weather-live"'));
   assert.ok(c.includes('id="santa-district"')&&c.includes('id="town-heritage-links"'));
