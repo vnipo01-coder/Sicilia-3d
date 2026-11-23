@@ -132,14 +132,14 @@ export function propertyRows(tags={}){
     ['Strasse',tags['addr:street']],['Hausnummer',tags['addr:housenumber']],
     ['Stockwerke',tags['building:levels']],['Höhe',tags.height],
     ['Bauzeit',tags.start_date||tags['building:year_built']],
-    ['Dach',tags['roof:shape']],['Material',tags['building:material']],
+    ['Dach',tags['roof:shape']],['Fassadenfarbe',tags['building:colour']],['Dachfarbe',tags['roof:colour']],['Material',tags['building:material']],
     ['Architekt',tags.architect],['Wikidata',tags.wikidata]];
   return fields.filter(([,v])=>v!==undefined&&v!==null&&String(v).trim()!=='');
 }
 export async function getLocalOSM(lat,lon,radius=360){
   // One browser cache per source location helps respect public Overpass limits.
   // A production deployment will require a server-side cached OSM extract.
-  const cacheKey='sicilia-v10-osm:'+lat.toFixed(4)+':'+lon.toFixed(4)+':'+radius;
+  const cacheKey='sicilia-v10-osm-v2:'+lat.toFixed(4)+':'+lon.toFixed(4)+':'+radius;
   try{
     const raw=localStorage.getItem(cacheKey);
     if(raw){
@@ -152,7 +152,10 @@ export async function getLocalOSM(lat,lon,radius=360){
   }catch(error){/* localStorage may be blocked; continue without caching */}
   const q='[out:json][timeout:12];(way(around:'+radius+','+lat+','+lon+
     ')["building"];way(around:'+radius+','+lat+','+lon+')["highway"];' +
-    'way(around:'+radius+','+lat+','+lon+')["amenity"="place_of_worship"];);out geom;';
+    'way(around:'+radius+','+lat+','+lon+')["amenity"="place_of_worship"];' +
+    'node(around:'+radius+','+lat+','+lon+')["highway"="street_lamp"];' +
+    'node(around:'+radius+','+lat+','+lon+')["highway"="bus_stop"];' +
+    ');out geom;';
   const errors=[];
   for(const endpoint of ['https://overpass.private.coffee/api/interpreter',
                          'https://overpass-api.de/api/interpreter']){
