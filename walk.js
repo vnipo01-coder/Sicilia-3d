@@ -193,6 +193,8 @@ function addFacade(poly,base,height,tags,color,isReal,index,osmId){
   const floors=Math.min(5,Math.max(1,Math.round(h/3.2)));
   const glass=mat('#2a4c55'),frames=mat('#ede5d4'),shutters=mat(index%3===0?'#58795b':'#6a7b7b');
   let windows=0;
+  // Mobile performance: render facade details only in the near field.
+  if(Math.hypot(center.x,center.z)<115){
   for(let i=0;i<poly.length;i++){
     const a=poly[i],b=poly[(i+1)%poly.length],dx=b.x-a.x,dz=b.z-a.z,len=Math.hypot(dx,dz);
     if(len<4.8)continue;
@@ -201,7 +203,7 @@ function addFacade(poly,base,height,tags,color,isReal,index,osmId){
     if((mid.x-center.x)*nx+(mid.z-center.z)*nz<0){nx=-nx;nz=-nz;}
     const n=Math.min(6,Math.max(1,Math.floor(len/3.7)));
     for(let f=0;f<floors;f++)for(let j=0;j<n;j++){
-      if(windows++>180)break;
+      if(windows++>26)break;
       const t=(j+1)/(n+1),x=a.x+dx*t+nx*.09,z=a.z+dz*t+nz*.09,y=base+1.95+f*3.05;
       if(y+0.7>base+h-.4)continue;
       const win=new THREE.Mesh(new THREE.PlaneGeometry(.84,1.18),frames);
@@ -219,6 +221,7 @@ function addFacade(poly,base,height,tags,color,isReal,index,osmId){
       const door=new THREE.Mesh(new THREE.PlaneGeometry(1.15,2.18),mat('#61473c'));
       door.position.set(x,base+1.11,z);door.rotation.y=Math.atan2(nx,nz);world.add(door);
     }
+  }
   }
   state.buildings.push({poly,base,height:h,tags,osmId,isReal,center});
   state.buildingCount++;
@@ -299,7 +302,7 @@ async function getOSM(){
     if(Math.hypot(xs,zs)>280)continue;
     addFacade(pts,ground(xs,zs),0,element.tags,palette[buildingCount%palette.length],true,buildingCount,element.id);
     buildingCount++;
-    if(buildingCount>150)break;
+    if(buildingCount>85)break;
   }
   if(buildingCount<3){fallbackVillage();return;}
   state.osmOK=true;state.streetCount=roadCount;
