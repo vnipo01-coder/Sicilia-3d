@@ -43,11 +43,29 @@ function centerPlace(p){
   map.flyTo({center:[p.lon,p.lat],zoom:p.zoom,pitch,bearing:-28,duration:1400});
   select({name:p.name,kind:'Ort',lat:p.lat,lon:p.lon,props:{},source:'Geografische Ortsauswahl'});
 }
+const fallbackStyle={
+  version:8,name:'SICILIA 3D – Satellit bei Kartendienst-Ausfall',
+  sources:{'safe-imagery':{type:'raster',
+    tiles:[src.satellite],tileSize:256,maxzoom:19,
+    attribution:'Imagery: Esri, Vantor, Earthstar Geographics, GIS User Community'}},
+  layers:[{id:'safe-imagery-layer',type:'raster',source:'safe-imagery'}]
+};
+let styleReady=false;
 const map=new maplibregl.Map({
   container:'map',style:'https://tiles.openfreemap.org/styles/bright',
-  center:[15.19,37.94],zoom:11.2,pitch:48,bearing:-15,
+  center:[14.15,37.55],zoom:7.45,pitch:32,bearing:-6,
   maxPitch:80,antialias:true
 });
+// If OpenFreeMap cannot deliver a style at all, the atlas remains usable
+// with an independent raster satellite base map.
+setTimeout(()=>{
+  if(styleReady)return;
+  setStatus('Kartendienst antwortet nicht · wechsle automatisch auf Satellitenkarte …');
+  try{map.setStyle(fallbackStyle);}catch(error){
+    console.warn('Fallback style failed',error);
+    $('error').hidden=false;
+  }
+},11500);
 map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'bottom-right');
 function addSource(id,source){if(!map.getSource(id))map.addSource(id,source);}
 function addLayer(obj,before){
@@ -108,13 +126,23 @@ function updateLayers(){
   visible(ids.poi,true);
 }
 map.on('style.load',()=>{
-  try{prepareStyle();setStatus('● SICILIA 3D v10.1 · Gelände + Kartenansicht');}
-  catch(e){console.warn('3D-Layer',e);setStatus('Karte teilweise geladen · Relief nicht verfügbar');}
+  styleReady=true;
+  try{
+    prepareStyle();
+    setStatus('● SICILIA 3D v10.1 · Karte sichtbar');
+  }catch(error){
+    console.warn('3D-Layer eingeschränkt:',error);
+    // A healthy 2D map must remain accessible when DEM/3D layers fail.
+    setStatus('● Basiskarte geladen · 3D-Gelände teilweise eingeschränkt');
+  }
 });
 map.on('load',()=>{
   state.loaded=true;setStatus('● V10.1 · Kartenatlas geladen');
 });
-map.on('error',e=>{console.warn('Externe Kartenkachel:',e.error?.message||e);});
+map.on('error',e=>{
+  console.warn('Externe Kartenkachel:',e.error?.message||e);
+  if(!styleReady)setStatus('Kartenquelle lädt noch · Satelliten-Ersatzkarte wird bei Bedarf aktiviert');
+});
 function flyingWalkHref(){
   const c=state.selected||{lat:map.getCenter().lat,lon:map.getCenter().lng,name:'Kartenausschnitt Sizilien'};
   $('walking').href='./walk.html?'+new URLSearchParams({
@@ -306,4 +334,6 @@ async function loadWeather(obj,key){
   }
 }
 flyingWalkHref();
-centerPlace(PLACES[0]);
+// Start with the entire island in view, instead of a very close-up
+// potentially not-yet-rendered village view.
+setStatus('Lade Sizilien · 2D-Basiskarte zuerst, 3D-Daten danach …');
