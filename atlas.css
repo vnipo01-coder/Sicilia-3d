@@ -77,3 +77,18 @@ background:#187481;border-color:#73decc;color:white;font-weight:700}
   #legend{bottom:78px;right:8px;font-size:9px;max-width:175px}
   .maplibregl-ctrl-bottom-right{display:none}
 }
+
+/* v9: precise orbit controls for desktop and touchscreen */
+.camera-pad{position:fixed;right:14px;top:126px;z-index:15;width:148px;
+ border-radius:14px;padding:10px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.camera-pad strong{grid-column:span 2;font-size:11px;color:#cde7ea;text-align:center}
+.camera-pad button{background:#204e60;color:#fff;border:1px solid #82bfc354;
+ border-radius:9px;padding:9px 5px;min-height:34px;font-size:12px}
+.camera-pad button:hover{background:#236c79}
+.camera-pad .wide{grid-column:span 2}
+.camera-pad small{grid-column:span 2;font-size:10px;text-align:center;color:#b8cbd8}
+@media(max-width:640px){
+ .camera-pad{width:105px;right:8px;top:112px;padding:6px;gap:3px}
+ .camera-pad strong{font-size:9px}.camera-pad button{padding:5px 2px;font-size:11px;min-height:32px}
+ .camera-pad small{display:none}
+}
