@@ -137,20 +137,37 @@ export function propertyRows(tags={}){
   return fields.filter(([,v])=>v!==undefined&&v!==null&&String(v).trim()!=='');
 }
 export async function getLocalOSM(lat,lon,radius=360){
-  // Direct calls to community Overpass are a preview-only fallback. For production use a cached backend.
+  // One browser cache per source location helps respect public Overpass limits.
+  // A production deployment will require a server-side cached OSM extract.
+  const cacheKey='sicilia-v10-osm:'+lat.toFixed(4)+':'+lon.toFixed(4)+':'+radius;
+  try{
+    const raw=localStorage.getItem(cacheKey);
+    if(raw){
+      const cached=JSON.parse(raw);
+      if(Date.now()-cached.timestamp<24*60*60*1000&&Array.isArray(cached.elements)){
+        return{elements:cached.elements,endpoint:'Lokaler Browser-Cache (OSM)',
+          queriedAt:new Date(cached.timestamp).toISOString()};
+      }
+    }
+  }catch(error){/* localStorage may be blocked; continue without caching */}
   const q='[out:json][timeout:12];(way(around:'+radius+','+lat+','+lon+
     ')["building"];way(around:'+radius+','+lat+','+lon+')["highway"];' +
     'way(around:'+radius+','+lat+','+lon+')["amenity"="place_of_worship"];);out geom;';
-  let errors=[];
-  for(const endpoint of ['https://overpass.kumi.systems/api/interpreter',
+  const errors=[];
+  for(const endpoint of ['https://overpass.private.coffee/api/interpreter',
                          'https://overpass-api.de/api/interpreter']){
     try{
-      const r=await timeoutFetch(endpoint+'?data='+encodeURIComponent(q),13000,{
+      const r=await timeoutFetch(endpoint+'?data='+encodeURIComponent(q),13500,{
         headers:{'Accept':'application/json'}});
       if(!r.ok)throw Error('HTTP '+r.status);
       const data=await r.json();
       if(!Array.isArray(data.elements))throw Error('ungültige Daten');
-      return{elements:data.elements,endpoint,queriedAt:new Date().toISOString()};
+      const timestamp=Date.now();
+      try{
+        const serialized=JSON.stringify({timestamp,elements:data.elements});
+        if(serialized.length<1500000)localStorage.setItem(cacheKey,serialized);
+      }catch(error){/* Ignore quota or storage restrictions */}
+      return{elements:data.elements,endpoint,queriedAt:new Date(timestamp).toISOString()};
     }catch(err){errors.push(String(err));}
   }
   throw new Error('OSM-Server derzeit nicht erreichbar: '+errors.join('; ').slice(0,180));
