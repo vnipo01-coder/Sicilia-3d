@@ -330,6 +330,13 @@ function findWalkableSpawn(){
   const tryPoints=[[0,0],[7,0],[-7,0],[0,-9],[12,12],[-12,-12],[24,0],[0,24],[35,30]];
   for(const [x,z] of tryPoints)
     if(!state.buildings.some(b=>polygonContains(x,z,b.poly)))return {x,z};
+  // Scan free space around the initial GPS coordinate if the centre is inside a building.
+  for(let radius=12;radius<=140;radius+=8){
+    for(let angle=0;angle<Math.PI*2;angle+=Math.PI/12){
+      const x=radius*Math.cos(angle),z=radius*Math.sin(angle);
+      if(!hitBuilding(x,z))return {x,z};
+    }
+  }
   return {x:0,z:0};
 }
 function avatarModel(){
@@ -368,9 +375,11 @@ function updateCamera(){
   avatar.rotation.y=state.yaw;
   avatar.visible=state.thirdPerson;
   if(state.thirdPerson){
-    camera.position.set(state.x-Math.sin(state.yaw)*5.2,y+2.15,
-      state.z+Math.cos(state.yaw)*5.2);
-    camera.lookAt(state.x,y-.3,state.z);
+    const dist=6.0,vertical=2.3-Math.sin(state.pitch)*4.8;
+    camera.position.set(state.x-Math.sin(state.yaw)*dist,
+      Math.max(ground(state.x,state.z)+0.8,y+vertical),
+      state.z+Math.cos(state.yaw)*dist);
+    camera.lookAt(state.x,y+.15,state.z);
   }else{
     camera.position.set(state.x,y,state.z);
     camera.lookAt(camera.position.clone().add(dir));
@@ -390,8 +399,12 @@ function move(dt){
   const dx=(Math.sin(state.yaw)*forward+Math.cos(state.yaw)*sideways)*speed/norm;
   const dz=(-Math.cos(state.yaw)*forward+Math.sin(state.yaw)*sideways)*speed/norm;
   const nx=state.x+dx,nz=state.z+dz;
-  if(Math.hypot(nx,nz)<310&&!hitBuilding(nx,nz)){
-    state.x=nx;state.z=nz;
+  if(Math.hypot(nx,nz)>=310)return;
+  // Slide along building edges instead of freezing when the view hits a wall.
+  if(!hitBuilding(nx,nz)){state.x=nx;state.z=nz;}
+  else{
+    if(!hitBuilding(nx,state.z))state.x=nx;
+    if(!hitBuilding(state.x,nz))state.z=nz;
   }
 }
 const keyMap={w:'forward',W:'forward',ArrowUp:'forward',s:'back',S:'back',ArrowDown:'back',
