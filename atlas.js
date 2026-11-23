@@ -279,21 +279,36 @@ function drawKnowledge(){
   c.append(links);host.append(c);
   const wiki=box('📖 Geschichte und Ortswissen','Suche nach einem passenden Artikel aus offenen Wissensquellen …');
   wiki.id='wiki-article';host.append(wiki);
-  const specific=wikiNumber;
-  loadWiki(obj,specific,wiki);
+  if(obj.kind==='Gebäude' && !props.wikipedia && !props.wikidata){
+    wiki.replaceChildren(mk('h3','','📖 Gebäude-Geschichte nicht dokumentiert'),
+      mk('p','','Für dieses Haus ist keine eindeutige Wikipedia-Verknüpfung in den verfügbaren Kartendaten vorhanden. Die Baugeschichte darf nicht aus einem bloss ähnlichen Namen abgeleitet werden. Nutze Bauakten, Denkmalinventare oder die weiterführenden Quellenlinks.'));
+  }else{
+    const specific=wikiNumber;loadWiki(obj,specific,wiki);
+  }
   if(obj.kind==='Gebäude')loadOverpassBuilding(obj,host);
 }
 async function loadWiki(obj,key,card){
   const name=obj.name==='Piazza Chiesa'?'Casalvecchio Siculo':obj.name;
   for(const lang of ['de','it']){
     try{
-      const params=new URLSearchParams({action:'query',prop:'extracts|pageimages|info',
+      const params=new URLSearchParams({action:'query',prop:'extracts|pageimages|info|coordinates',
         inprop:'url',exintro:'1',explaintext:'1',piprop:'thumbnail',pithumbsize:'320',
         redirects:'1',titles:name,format:'json',origin:'*'});
       const r=await fetch('https://'+lang+'.wikipedia.org/w/api.php?'+params);
       if(!r.ok)continue;
       const page=Object.values((await r.json()).query?.pages||{})[0];
       if(key!==wikiNumber||!page||page.missing!==undefined)continue;
+      const point=page.coordinates?.[0];
+      if(point && Number.isFinite(point.lat)&&Number.isFinite(point.lon)){
+        const km=Math.hypot((point.lat-obj.lat)*111,(point.lon-obj.lng)*88);
+        const radius=obj.kind==='Berggipfel'?3:obj.kind==='Gebäude'?0.35:15;
+        if(km>radius){
+          card.replaceChildren(mk('h3','','📚 Artikel nicht geografisch bestätigt'),
+            mk('p','','Ein gleichnamiger Wikipedia-Artikel liegt rund '+num(km,1)+' km entfernt. Er wird daher nicht automatisch diesem Kartenobjekt zugeordnet.'));
+          card.append(ext('Wikipedia-Suche prüfen ↗',wikiSearch(obj.name)));
+          return;
+        }
+      }
       card.replaceChildren(mk('h3','','📚 '+page.title));
       if(page.thumbnail?.source){
         const image=mk('img');image.src=page.thumbnail.source;image.alt=page.title;
@@ -301,6 +316,7 @@ async function loadWiki(obj,key,card){
         card.append(image);
       }
       card.append(mk('p','',(page.extract||'').slice(0,680)||'Artikel vorhanden, keine Kurzfassung verfügbar.'));
+      card.append(mk('small','',point?'Geografische Artikelkoordinaten geprüft.':'Zuordnung nur über Artikelname; nicht geografisch verifiziert.'));
       card.append(ext('Vollständigen Artikel öffnen ↗',page.fullurl||
         'https://'+lang+'.wikipedia.org/wiki/'+encodeURIComponent(page.title)));
       return;
