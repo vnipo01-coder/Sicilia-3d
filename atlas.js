@@ -477,8 +477,8 @@ function initialize(){
     const next=Math.min(75,Math.max(0,map.getPitch()+Math.sign(e.deltaY)*4));
     map.easeTo({pitch:next,duration:100});
   },{capture:true,passive:false});
-  map.on('style.load',()=>{try{prepareLayers();status('● SICILIA 3D v8.0 · Kartenatlas');}catch(error){status('Einige Kartenebenen nicht verfügbar',true);console.warn(error);}});
-  map.on('load',()=>{mapLoaded=true;status('● SICILIA 3D v8.0 · Online');});
+  map.on('style.load',()=>{try{prepareLayers();status('● SICILIA 3D v9.2 · Kartenatlas');}catch(error){status('Einige Kartenebenen nicht verfügbar',true);console.warn(error);}});
+  map.on('load',()=>{mapLoaded=true;status('● SICILIA 3D v9.2 · Online');});
   map.on('click',handleClick);
   map.on('error',error=>{console.warn('Externe Kartenquelle:',error.error?.message||error);});
   $('quick-casalvecchio').onclick=()=>viewPlace(PLACES[0]);
