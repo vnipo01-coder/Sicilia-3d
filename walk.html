@@ -62,5 +62,22 @@ button,a{font:inherit}button{cursor:pointer}a{color:inherit}
 </div>
 <div class="credit">© OpenStreetMap / Mapzen-AWS · illustrativ modellierte Fassaden</div>
 <div id="loading"><div><div class="loader"></div><strong>CASALVECCHIO · 3D WALK</strong><p id="load-status">Wir bauen deine begehbare 3D-Umgebung auf. Gebäudedaten und Gelände werden nach Möglichkeit aus echten Geodaten geladen.</p></div></div>
+<script>
+window.addEventListener('unhandledrejection',function(event){
+  const msg=document.getElementById('load-status');
+  if(msg)msg.textContent='Die 3D-Engine oder eine externe Datenquelle konnte nicht geladen werden. Prüfe die Internetverbindung und lade die Seite erneut.';
+});
+setTimeout(function(){
+  const loading=document.getElementById('loading');
+  if(!loading||loading.style.display==='none')return;
+  const status=document.getElementById('load-status');
+  if(status)status.textContent='Die 3D-Welt lädt ungewöhnlich lange. Externe Karten- oder 3D-Server könnten blockiert sein. Versuche neu zu laden.';
+  if(!document.getElementById('walk-retry')){
+    const b=document.createElement('button');b.id='walk-retry';b.textContent='↻ Erneut laden';
+    b.style.cssText='padding:11px 16px;border:1px solid #a6e8e5;border-radius:9px;background:#1d6370;color:white;margin-top:12px';
+    b.onclick=function(){location.reload()};loading.querySelector('div:last-child')?.appendChild(b);
+  }
+},18000);
+</script>
 <script type="module" src="./walk.js?v=70"></script>
 </body></html>
