@@ -86,3 +86,9 @@ footer{position:fixed;right:12px;bottom:8px;color:#eff7f1;font-size:9px;text-sha
  .inspector{right:7px;bottom:67px;top:auto}
  .osm-refresh{font-size:11px;padding:8px}
 }
+
+.city-pills{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0}
+.city-pills button{font-size:11px;color:#dbf8f2;border:1px solid #a6dbd648;
+ background:#1b4a59;padding:6px 8px;border-radius:8px}
+.city-pills button:hover{background:#266e76;border-color:#83ebdc}
+@media(max-width:750px){.city-pills button{font-size:10px;padding:5px}}
