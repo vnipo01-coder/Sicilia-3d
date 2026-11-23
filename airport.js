@@ -81,7 +81,7 @@ function planeModel(){
 }
 function clearPlanes(){
   for(const p of planeItems){scene.remove(p.group);p.group.traverse(obj=>{
-    if(obj.geometry)obj.geometry.dispose();
+    if(obj.geometry && !obj.geometry.userData?.shared)obj.geometry.dispose();
   });}
   planeItems.length=0;
 }
@@ -115,7 +115,7 @@ function renderList(){
     const name=document.createElement('strong');name.textContent='✈ '+a.id;
     const info=document.createElement('small');
     info.textContent=a.demo?'3D-Simulation · '+Math.round(a.alt)+' m Beispielhöhe':
-      'ADS-B Position · '+(a.age??'–')+' s alt · '+Math.round(a.alt)+' m';
+      'ADS-B Position · '+(a.age??'–')+' s alt · Höhe '+(a.altKnown?Math.round(a.alt)+' m':'nicht gemeldet');
     b.append(name,info);b.onclick=()=>selectPlane(a);list.appendChild(b);
   }
 }
@@ -146,20 +146,22 @@ async function loadLive(){
     clearPlanes();
     for(const a of aircraft.slice(0,30)){
       const local=loc(a.lon,a.lat);
-      const altFeet=Number(a.alt_baro??a.alt_geom);
-      const alt=Number.isFinite(altFeet)?Math.max(20,altFeet*.3048):400;
+      const rawAlt=a.alt_baro??a.alt_geom;
+      const altFeet=(rawAlt===null||rawAlt===undefined||rawAlt==='ground')?NaN:Number(rawAlt);
+      const knownAltitude=Number.isFinite(altFeet);
+      const alt=knownAltitude?Math.max(20,altFeet*.3048):null;
       const heading=Number.isFinite(a.track)?a.track:0;
-      const group=planeModel();group.position.set(local.x,alt,local.z);
+      const group=planeModel();group.position.set(local.x,alt??400,local.z);
       // Model forward is -Z, heading is measured clockwise from North.
       group.rotation.y=heading*Math.PI/180;
       group.scale.setScalar(2); // visual enhancement: airplanes are enlarged for visibility
-      putPlane({group,id:String(a.flight||a.r||a.hex||'Unbekannt').trim(),alt,demo:false,
+      putPlane({group,id:String(a.flight||a.r||a.hex||'Unbekannt').trim(),alt,altKnown:knownAltitude,demo:false,
         age:Number.isFinite(a.seen)?Math.round(a.seen):null,
         speed:Number.isFinite(a.gs)?a.gs*1.852:0,heading:heading*Math.PI/180,
         note:'Flugzeugmodell ist zur Sichtbarkeit vergrössert'});
     }
     mode='live';chosen=null;renderList();
-    $('status').textContent='🟢 '+planeItems.length+' empfangene ADS-B-Positionen · Zeitstempel/Verzögerung möglich. Flugzeugmodelle sind zur Sichtbarkeit vergrössert.';
+    $('status').textContent='🟢 '+planeItems.length+' empfangene ADS-B-Positionen · Zeitstempel/Verzögerung möglich. Flugzeugmodelle sind zur Sichtbarkeit vergrössert; bei unbekannter Flughöhe wird nur eine Visualisierungshöhe verwendet.';
   }catch(error){
     // Keep no purported live aircraft on screen.
     clearPlanes();mode='live';chosen=null;renderList();
