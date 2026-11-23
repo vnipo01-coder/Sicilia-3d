@@ -1,4 +1,4 @@
-/* SICILIA 3D v7.0 – Clean Geo Atlas
+/* SICILIA 3D v8.0 – Desktop GIS and precise object details
    Real DEM + OpenMapTiles vector features, OSM object links, Open-Meteo weather.
    Links to dedicated Three.js street walk and 3D flight visualizer.
 */
@@ -23,7 +23,7 @@ const PLACES=[
 ];
 const TERRA='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
 const SAT='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-let map,mode='relief',terrainExag=1.1,shading=true,buildings=true,selected=null,
+let map,mode='relief',terrainExag=1.0,shading=true,buildings=true,showPeaks=false,selected=null,
   currentPane='',wikiNumber=0,weatherNumber=0,cloudOn=false,cloudData=null,cloudHour=0,cloudAt=0,
   mapLoaded=false;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -126,14 +126,20 @@ function drawLayers(){
   card.append(label,slider);
   for(const [labelText,state,fn] of [
     ['3D-Gebäude anzeigen',buildings,()=>{buildings=!buildings;applyLayers();openPane('layers');}],
-    ['Geländeschattierung',shading,()=>{shading=!shading;applyLayers();openPane('layers');}]
+    ['Geländeschattierung',shading,()=>{shading=!shading;applyLayers();openPane('layers');}],
+    ['Benannte Gipfel anzeigen',showPeaks,()=>{showPeaks=!showPeaks;applyLayers();openPane('layers');}]
   ]){
     const line=mk('div','row'),toggle=btn(state?'An':'Aus',fn);line.append(mk('span','',labelText),toggle);card.append(line);
   }
   host.append(card);
   host.append(box('Warum nicht jedes Haus fotorealistisch aussieht',
     '3D-Körper werden aus Gebäudegrundrissen und verfügbaren Höhen erzeugt. Fassadenfotos, historische Baujahre und Dachdetails sind nicht flächendeckend vorhanden.'));
-  host.append(mk('p','note','Relief und Satellit benötigen externe Kacheldienste. Satellitenbilder sind Bilddaten, nicht live.'));
+  host.append(mk('p','note','Desktop: Mausrad = Zoom; Shift + Mausrad = Neigen; rechte Maustaste ziehen = Drehen/Neigen. Satellitenbilder sind nicht live.'));
+  const ctl=box('🎛️ Kamerasteuerung','Neigung und Blickrichtung unabhängig vom Kartenzoom.');
+  const pitch=mk('input','input-range');pitch.type='range';pitch.min=0;pitch.max=75;pitch.step=1;pitch.value=String(Math.round(map.getPitch()));
+  const pitchText=mk('p','','Neigung: '+Math.round(map.getPitch())+'°');
+  pitch.oninput=()=>{map.easeTo({pitch:Number(pitch.value),duration:0});pitchText.textContent='Neigung: '+pitch.value+'°';};
+  ctl.append(pitchText,pitch,btn('🧭 Nach Norden',()=>map.easeTo({bearing:0,duration:450}),'primary'));host.append(ctl);
 }
 const IDs={sat:'atlas-sat',hill:'atlas-shade',building:'atlas-buildings',places:'atlas-places',peaks:'atlas-peaks',pois:'atlas-pois',clouds:'atlas-clouds'};
 function layer(id){return map?.getLayer(id);}
@@ -167,8 +173,9 @@ function prepareLayers(){
         'fill-extrusion-base':['coalesce',['to-number',['get','render_min_height']],0],
         'fill-extrusion-opacity':.94
       }},label);
-    addLayer({id:IDs.peaks,type:'circle',source:v,'source-layer':'mountain_peak',minzoom:8,
-      paint:{'circle-radius':5,'circle-color':'#e7bb81','circle-stroke-width':2,'circle-stroke-color':'#1e4654'}},label);
+    addLayer({id:IDs.peaks,type:'circle',source:v,'source-layer':'mountain_peak',minzoom:12.5,
+      filter:['all',['has','name'],['>=',['to-number',['get','ele'],0],700]],
+      paint:{'circle-radius':4.5,'circle-color':'#ebc895','circle-stroke-width':1.2,'circle-stroke-color':'#23495a'}},label);
     addLayer({id:IDs.places,type:'circle',source:v,'source-layer':'place',minzoom:7,
       paint:{'circle-radius':12,'circle-opacity':.006}},label);
     addLayer({id:IDs.pois,type:'circle',source:v,'source-layer':'poi',minzoom:13,
@@ -184,7 +191,7 @@ function applyLayers(){
   toggle(IDs.sat,mode==='sat');
   toggle(IDs.hill,shading&&mode!=='map');
   toggle(IDs.building,buildings);
-  toggle(IDs.peaks,true);toggle(IDs.places,true);toggle(IDs.pois,true);
+  toggle(IDs.peaks,showPeaks);toggle(IDs.places,true);toggle(IDs.pois,true);
   toggle(IDs.clouds,cloudOn);
   $('legend').hidden=mode==='map';
   $('legend').textContent=mode==='sat'?'🛰️ Esri & Partner · Luft-/Satellitenbilder':
@@ -248,6 +255,8 @@ function drawKnowledge(){
     c.append(mk('p','note','Baujahr unbekannt. Eine präzise Schätzung wäre ohne historische Bauakten nicht seriös. 3D-Höhen können modellierte Annahmen sein.'));
   }
   const links=mk('div','');
+  const walkUrl='./walk.html?'+new URLSearchParams({lat:String(obj.lat),lng:String(obj.lng),name:obj.name});
+  links.append(ext('🚶 3D Walk an diesem Ort',walkUrl));
   links.append(ext('🗺️ OpenStreetMap',osmLink(obj.lng,obj.lat)),
     ext('📚 Wikipedia suchen',wikiSearch(obj.name)),
     ext('🔗 Wikidata suchen','https://www.wikidata.org/w/index.php?search='+encodeURIComponent(obj.name)),
@@ -256,6 +265,8 @@ function drawKnowledge(){
     links.append(ext('🏛️ Gemeinde Casalvecchio','https://comune.casalvecchiosiculo.me.it/'));
     links.append(ext('🚶 Vor Ort in 3D erkunden','./walk.html'));
   }
+  if(obj.kind==='Gebäude' && props.wikidata && /^Q[0-9]+$/.test(props.wikidata))
+    links.append(ext('🔗 Verknüpftes Wikidata-Objekt','https://www.wikidata.org/wiki/'+props.wikidata));
   c.append(links);host.append(c);
   const wiki=box('📖 Geschichte und Ortswissen','Suche nach einem passenden Artikel aus offenen Wissensquellen …');
   wiki.id='wiki-article';host.append(wiki);
@@ -403,8 +414,15 @@ function initialize(){
   map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/bright',
     center:[14.05,37.55],zoom:7.3,pitch:36,bearing:0,antialias:true,maxPitch:78});
   map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'bottom-right');
-  map.on('style.load',()=>{try{prepareLayers();status('● SICILIA 3D v7.0 · Kartenatlas');}catch(error){status('Einige Kartenebenen nicht verfügbar',true);console.warn(error);}});
-  map.on('load',()=>{mapLoaded=true;status('● SICILIA 3D v7.0 · Online');});
+  // Keep plain-wheel zoom. Shift+wheel changes pitch (desktop request).
+  map.getCanvasContainer().addEventListener('wheel',e=>{
+    if(!e.shiftKey)return;
+    e.preventDefault();e.stopImmediatePropagation();
+    const next=Math.min(75,Math.max(0,map.getPitch()+Math.sign(e.deltaY)*4));
+    map.easeTo({pitch:next,duration:100});
+  },{capture:true,passive:false});
+  map.on('style.load',()=>{try{prepareLayers();status('● SICILIA 3D v8.0 · Kartenatlas');}catch(error){status('Einige Kartenebenen nicht verfügbar',true);console.warn(error);}});
+  map.on('load',()=>{mapLoaded=true;status('● SICILIA 3D v8.0 · Online');});
   map.on('click',handleClick);
   map.on('error',error=>{console.warn('Externe Kartenquelle:',error.error?.message||error);});
   $('quick-casalvecchio').onclick=()=>viewPlace(PLACES[0]);
