@@ -58,14 +58,24 @@ const map=new maplibregl.Map({
 });
 // If OpenFreeMap cannot deliver a style at all, the atlas remains usable
 // with an independent raster satellite base map.
-setTimeout(()=>{
-  if(styleReady)return;
-  setStatus('Kartendienst antwortet nicht · wechsle automatisch auf Satellitenkarte …');
+let fallbackUsed=false;
+function showSatelliteFallback(){
+  if(fallbackUsed)return;
+  fallbackUsed=true;
+  setStatus('Kartenserver nicht erreichbar · Satellitenkarte wird als Ersatz geladen …');
   try{map.setStyle(fallbackStyle);}catch(error){
-    console.warn('Fallback style failed',error);
+    console.warn('Satellite fallback failed',error);
     $('error').hidden=false;
   }
-},11500);
+}
+setTimeout(()=>{
+  if(!styleReady)showSatelliteFallback();
+},10500);
+// A parsed style can still fail to provide the actual map tiles. Detect
+// stalled rendering separately, instead of showing a forever-empty map.
+setTimeout(()=>{
+  if(!map.loaded()&&!fallbackUsed)showSatelliteFallback();
+},19000);
 map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'bottom-right');
 function addSource(id,source){if(!map.getSource(id))map.addSource(id,source);}
 function addLayer(obj,before){
@@ -137,7 +147,7 @@ map.on('style.load',()=>{
   }
 });
 map.on('load',()=>{
-  state.loaded=true;setStatus('● V10.1 · Kartenatlas geladen');
+  state.loaded=true;setStatus(fallbackUsed?'● Satelliten-Ersatzkarte geladen':'● SICILIA 3D · Sizilien sichtbar');
 });
 map.on('error',e=>{
   console.warn('Externe Kartenkachel:',e.error?.message||e);
