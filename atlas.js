@@ -23,7 +23,7 @@ const PLACES=[
 ];
 const TERRA='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
 const SAT='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-let map,mode='relief',terrainExag=1.0,shading=true,buildings=true,showPeaks=false,selected=null,
+let map,mode='relief',terrainExag=1.0,shading=true,buildings=true,showPeaks=false,wheelTilts=false,selected=null,
   currentPane='',wikiNumber=0,weatherNumber=0,cloudOn=false,cloudData=null,cloudHour=0,cloudAt=0,
   mapLoaded=false;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -134,7 +134,10 @@ function drawLayers(){
   host.append(card);
   host.append(box('Warum nicht jedes Haus fotorealistisch aussieht',
     '3D-Körper werden aus Gebäudegrundrissen und verfügbaren Höhen erzeugt. Fassadenfotos, historische Baujahre und Dachdetails sind nicht flächendeckend vorhanden.'));
-  host.append(mk('p','note','Desktop: Mausrad = Zoom; Shift + Mausrad = Neigen; rechte Maustaste ziehen = Drehen/Neigen. Satellitenbilder sind nicht live.'));
+  host.append(mk('p','note','Desktop: Mausrad = Zoom; Shift + Mausrad = Neigen; rechte Maustaste ziehen = Drehen/Neigen.'));
+  host.append(btn(wheelTilts?'🖱️ Mausrad neigt die Karte (aktiv)':'🖱️ Mausrad zum Neigen verwenden',()=>{
+    wheelTilts=!wheelTilts;openPane('layers');
+  },wheelTilts?'primary':''));
   const ctl=box('🎛️ Kamerasteuerung','Neigung und Blickrichtung unabhängig vom Kartenzoom.');
   const pitch=mk('input','input-range');pitch.type='range';pitch.min=0;pitch.max=75;pitch.step=1;pitch.value=String(Math.round(map.getPitch()));
   const pitchText=mk('p','','Neigung: '+Math.round(map.getPitch())+'°');
@@ -451,7 +454,7 @@ function initialize(){
   map.on('moveend',updateWalkLink);updateWalkLink();
   // Keep plain-wheel zoom. Shift+wheel changes pitch (desktop request).
   map.getCanvasContainer().addEventListener('wheel',e=>{
-    if(!e.shiftKey)return;
+    if(!e.shiftKey && !wheelTilts)return;
     e.preventDefault();e.stopImmediatePropagation();
     const next=Math.min(75,Math.max(0,map.getPitch()+Math.sign(e.deltaY)*4));
     map.easeTo({pitch:next,duration:100});
