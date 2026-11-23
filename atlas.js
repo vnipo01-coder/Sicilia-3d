@@ -8,6 +8,7 @@ const $=id=>document.getElementById(id);
 const PLACES=[
 ['🏘️','Casalvecchio Siculo',15.3222,37.9573,14.2],
 ['⛪','Piazza Chiesa',15.32230,37.95736,16.8],
+['⛪','Chiesa di Sant’Onofrio',15.32220,37.95714,17.4],
 ['🏛️','Palermo',13.3615,38.1157,15.2],
 ['🏙️','Catania',15.0873,37.5028,15.4],
 ['🌋','Ätna',14.9934,37.751,11.5],
@@ -274,6 +275,11 @@ function drawKnowledge(){
     ext('🔗 Wikidata suchen','https://www.wikidata.org/w/index.php?search='+encodeURIComponent(obj.name)),
     ext('🏛️ Italienische Kulturarchive','https://www.google.com/search?q='+encodeURIComponent('site:cultura.gov.it '+obj.name+' Sicilia')));
   if(Math.hypot(obj.lng-15.3223,obj.lat-37.95736)<.012){
+    const local=box('🏛️ Casalvecchio – lokale Originalquellen',
+      'Die Hauptkirche Sant’Onofrio ist dem Schutzpatron gewidmet; die Gemeinde dokumentiert die Verehrung bereits für das Jahr 1117. Gebäudeeigenschaften der umliegenden Häuser dürfen daraus nicht abgeleitet werden.');
+    local.append(ext('Offizielle Gemeinde: Kirchen','https://comune.casalvecchiosiculo.me.it/tipi_luogo/chiesa/'),
+      ext('Sant’Onofrio (ital. Wikipedia)','https://it.wikipedia.org/wiki/Chiesa_di_Sant%27Onofrio_%28Casalvecchio_Siculo%29'));
+    host.append(local);
     links.append(ext('🏛️ Gemeinde Casalvecchio','https://comune.casalvecchiosiculo.me.it/'));
     links.append(ext('🚶 Vor Ort in 3D erkunden','./walk.html'));
   }
@@ -291,7 +297,8 @@ function drawKnowledge(){
   if(obj.kind==='Gebäude')loadOverpassBuilding(obj,host);
 }
 async function loadWiki(obj,key,card){
-  const name=obj.name==='Piazza Chiesa'?'Casalvecchio Siculo':obj.name;
+  const name=obj.name==='Piazza Chiesa'?'Casalvecchio Siculo':
+    obj.name.includes('Sant’Onofrio')?"Chiesa di Sant'Onofrio (Casalvecchio Siculo)":obj.name;
   for(const lang of ['de','it']){
     try{
       const params=new URLSearchParams({action:'query',prop:'extracts|pageimages|info|coordinates',
