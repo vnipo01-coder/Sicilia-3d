@@ -438,7 +438,7 @@ function drawFlights(){
   const c=box('✈️ 3D Catania Flight Explorer',
     'Sieh dir echte 3D-Flugzeugmodelle im räumlichen Flughafenmodell an. Demoflugbewegungen sind klar als Simulation gekennzeichnet.');
   c.append(ext('3D-Flughafen öffnen ↗','./airport.html'));
-  const b=btn('✈️ Zur Flughafenkarte',()=>viewPlace(PLACES[10]),'primary');
+  const b=btn('✈️ Zur Flughafenkarte',()=>viewPlace(PLACES.find(p=>p[1]==='Flughafen Catania')),'primary');
   c.append(b);host.append(c);
   host.append(box('📡 Tatsächliche Flugzeugpositionen',
     'Browser können die öffentliche ADS-B-API häufig nicht direkt lesen (CORS). Die 3D-Flughafenseite hat einen separaten echten Abrufversuch und zeigt bei Fehlschlag ausdrücklich keine angeblichen Live-Flugzeuge.'));
