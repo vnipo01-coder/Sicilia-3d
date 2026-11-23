@@ -54,7 +54,7 @@ test('Road widths and empty building properties',()=>{
 test('Preview shell links all required modules',()=>{
   const index=readFileSync(new URL('../index.html',import.meta.url),'utf8');
   const walk=readFileSync(new URL('../walk.html',import.meta.url),'utf8');
-  assert.match(index,/atlas\.js\?v=102/);
-  assert.match(walk,/walk\.js\?v=102/);
+  assert.match(index,/atlas\.js\?v=105/);
+  assert.match(walk,/walk\.js\?v=104/);
   assert.match(index,/Hier in 3D laufen/);
 });
