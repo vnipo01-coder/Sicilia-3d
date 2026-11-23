@@ -1,6 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
 import {readLocation,GeoFrame,TerrainDEM,getLocalOSM,polygonArea,pointInPolygon,
-  getRoadWidth,getBuildingHeight,propertyRows,validateGeo} from './geo.js?v=101';
+  getRoadWidth,getBuildingHeight,propertyRows,validateGeo} from './geo.js?v=102';
 
 /* Walk v10.1: OSM building geometry + single shared DEM. No fictional replacement city. */
 validateGeo();
