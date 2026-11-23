@@ -1,3 +1,42 @@
+# SICILIA 3D v10.5 – Santa Teresa di Riva Küsten- und Wissensmodell
+
+**Version:** 10.5 (Release 116) · **Pilotort:** Santa Teresa di Riva · **Bereitstellung:** statische GitHub Pages mit externen Quellen
+
+## Schnellstart
+- Atlas: https://vnipo01-coder.github.io/Sicilia-3d/v10/?release=116
+- 3D Küstenerkundung: https://vnipo01-coder.github.io/Sicilia-3d/v10/explore.html?lat=37.94533&lng=15.36830&name=Santa%20Teresa%20di%20Riva&release=116
+- Detaillierter 3D Walk: https://vnipo01-coder.github.io/Sicilia-3d/v10/walk.html?lat=37.94533&lng=15.36830&name=Santa%20Teresa%20di%20Riva&release=116
+
+## In dieser Fassung implementiert
+1. **Multi-Source-Ortswissen:** amtliche Gemeinde-Kurzinformationen, Interbus-Mitteilung, OSM-Gebäudetags, nach Quellenidentität/geografisch kontrollierte Wikipedia- und Wikidata-Abfragen. Keine Vermischung von Ortschronik und Haus-Baujahr.
+2. **Wetter:** Open-Meteo current-Felder, Wettercode, Temperatur, Wind, Wolken, Niederschlag, gefühlte Temperatur, 6-Stunden-Vorschau, Zeitstempel, Aktualisierung ca. alle sechs Minuten. Aktuelle Wettermodellwerte, keine Live-Sensor-Messungen.
+3. **Öffentlicher Verkehr:** verortete Bushaltestellen an Lungomare Barracca und Via Savoca aus einem Haltestellenverzeichnis. Lungomare Pozzo Lazzaro / Municipio nur ungefähr verortet, gestützt auf eine Interbus-Mitteilung vom 25.06.2026. Keine Behauptung minutengenauer Echtzeitabfahrten.
+4. **Bessere Ortserkundung:** Stadt wird im Atlas als Startposition geöffnet; 3D-Küstenmodus nutzt MapLibre-3D-Bebauung und Gelände. Separate Three.js-Ortsszene ist in vier Ortssektoren erreichbar.
+5. **Echte Strassenbilder prüfen:** Mapillary-Suchlink mit den ausgewählten Koordinaten. Ob dort Aufnahmen existieren, wird erst beim Anbieter sichtbar; keine generierten Fotos als reale Aufnahmen bezeichnet.
+6. **3D-Strassenmodell:** vergrösserter Küstensektor, Strassen nach OSM, Fassaden- und Dachfarben aus OSM-Tags soweit vorhanden, zusätzliche kartierte Strassenlampen, als Modell gekennzeichnete Fassadenfenster und dokumentierte Bauinformationen.
+7. **Stabilität:** alte v9-Fassung bleibt erhalten; v10-Stile mit eigenständigen 3D-Gebäudequellen und optionalen OSM-Nachladequellen. Fehlende Daten liefern beschriftete Lücken statt erfundener Fakten.
+
+## Technische und Daten-Grenzen
+- **Die Fassaden sind nicht photogrammetrisch vermessen.** Anders als Street View ist Three.js WALK ein mit echten OSM-Grundrissen und DEM aufgebautes **prozedurales Modell**, dessen Dachformen, Fenster und bei fehlenden Tags auch Gebäudehöhen geschätzt sind.
+- Der Küsten-Walk lädt lokal begrenzte Sektoren (bis etwa 1 km). Für weitere Strassen und Orte: Sektorwechsel oder kontinuierlich navigierbaren 3D-Kartenmodus nutzen.
+- **Abfahrtsminuten** brauchen eine verifizierte Fahrplan-/Echtzeit-API und dürfen nicht aus statischen Haltestellenlisten geschätzt werden. Interbus beschreibt die aktuell geltenden Fahrpläne über die eigene Buchungssuche.
+- Mehrere Netzwerkdienste werden direkt im Browser angesprochen; deren Ausfall oder Limitierung kann einzelne Datenebenen deaktivieren. Dauerhaft stabile Produktqualität erfordert ein Backend mit validiertem Cache.
+- Die Bereitstellung, externe API-Ladung, Grafikdarstellung und Street-Imagery-Abdeckung müssen zusätzlich in einem echten Browser getestet werden. Quellcode-Syntax und UI-Referenztests ersetzen keinen End-to-End-Test.
+
+## Verifizierte Quellen
+- Gemeinde – Santa Teresa und Stadtgeschichte: https://www.comune.santateresadiriva.me.it/it/vivere/municipio
+- Gemeinde – Sacro Cuore: https://comune.santateresadiriva.me.it/it/vivere/753098
+- Gemeinde – Tourismus: https://www.comune.santateresadiriva.me.it/it/topics/turismo
+- Gemeinde – Sacra Famiglia: https://www.comune.santateresadiriva.me.it/it/vivere/chiesa-della-sacra-famiglia
+- Interbus – Haltestellenmitteilung 25.06.2026: https://www.interbus.it/santateresa-mofidica-fermata25giugno2026/
+- Interbus – Fahrplanabfrage: https://www.interbus.it/travel-plan/ticket.php
+- Buscenter – dokumentierte Stoppositionsliste: https://buscenter.travel/wp-content/themes/bcenter/controller/get_orari.php?cmd=lista_fermate
+- Trenitalia – digitale regionale Fahrpläne: https://www.trenitalia.com/it/informazioni/orari-regionali-digitali.html
+- Mapillary – Strassenbildsuche: https://www.mapillary.com/app/
+- Open-Meteo – Wetter-API: https://open-meteo.com/en/docs
+
+---
+
 # SICILIA 3D v10.1 – erste separate Vorschau
 Stand: 23. November 2026
 
