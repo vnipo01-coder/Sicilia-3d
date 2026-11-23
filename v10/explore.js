@@ -298,10 +298,11 @@ async function refreshWeather(){
     $('weather-live').textContent='🌦️ Wetter nicht verfügbar – erneute Abfrage später';
   }finally{weatherBusy=false;}
 }
-map.on('load',()=>{initStops();renderLocalPanel();refreshWeather();});
+map.on('load',()=>{initStops();renderLocalPanel();});
 map.on('moveend',()=>{renderLocalPanel();refreshStops();});
 setInterval(()=>{
   if(!document.hidden)refreshWeather();
 },6*60*1000);
 
+renderLocalPanel();refreshWeather();
 updateCoords();
