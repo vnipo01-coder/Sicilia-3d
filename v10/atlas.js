@@ -59,9 +59,12 @@ const fallbackStyle={
   layers:[{id:'safe-imagery-layer',type:'raster',source:'safe-imagery'}]
 };
 let styleReady=false;
+const startWholeIsland=new URLSearchParams(location.search).get('island')==='1';
 const map=new maplibregl.Map({
   container:'map',style:'https://tiles.openfreemap.org/styles/bright',
-  center:[14.15,37.55],zoom:7.45,pitch:32,bearing:-6,
+  center:startWholeIsland?[14.15,37.55]:[SANTA.lon,SANTA.lat],
+  zoom:startWholeIsland?7.45:15.5,pitch:startWholeIsland?32:61,
+  bearing:startWholeIsland?-6:-22,
   maxPitch:80,antialias:true
 });
 // If OpenFreeMap cannot deliver a style at all, the atlas remains usable
@@ -627,6 +630,6 @@ $('walking').title='Bei Inselübersicht zuerst Casalvecchio; nach Ortsauswahl de
 $('detail-walk').title='Detaillierter 3D Walk mit tatsächlichen OSM-Gebäuden soweit vorhanden';
 // Start with the entire island in view, instead of a very close-up
 // potentially not-yet-rendered village view.
-setStatus('Lade Sizilien · 2D-Basiskarte zuerst, 3D-Daten danach …');
+setStatus(startWholeIsland?'Lade Sizilien – Inselatlas …':'Lade Santa Teresa di Riva – Küste und 3D-Gebäude …');
 state.weatherRequest++;
 loadWeather(currentWeatherObj,state.weatherRequest);
