@@ -4,13 +4,14 @@
 <meta name="description" content="SICILIA 3D v10.1 – 3D-Terrain, Orte, Gebäude und begehbare 3D-Welten auf Sizilien.">
 <title>SICILIA 3D v10.4 | Geo Atlas – Gebäude & Wissen</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.css">
-<link rel="stylesheet" href="./atlas.css?v=111">
+<link rel="stylesheet" href="./atlas.css?v=115">
 </head>
 <body>
 <div id="map"></div>
 <header class="top">
-  <div class="brand glass"><strong>SICILIA <em>3D</em> <span>V10</span></strong><small>GEOSPATIAL EXPLORER · V10.4 · 3D-GEBÄUDE + WALK</small></div>
+  <div class="brand glass"><strong>SICILIA <em>3D</em> <span>V10</span></strong><small>GEOSPATIAL EXPLORER · V10.5 · SANTA TERESA · WISSEN + WETTER</small></div>
   <div class="quicklinks">
+    <button id="santateresa" title="Santa Teresa di Riva – Lungomare">🌊 Santa Teresa</button>
     <button id="casal" title="Nach Casalvecchio Siculo springen">⛪ Casalvecchio</button>
     <button id="overview" title="Inselübersicht">🌍 Insel</button>
     <a id="walking" href="./explore.html" title="An jedem Ort bodennah die echte 3D-Karte erkunden">🎮 3D-Erkundung</a>
@@ -20,6 +21,10 @@
   </div>
 </header>
 <div id="state" class="glass">Karte wird geladen …</div>
+<div id="live-weather" class="glass" role="status" aria-live="polite">
+  <span id="weather-summary">🌦️ Wetter wird geladen …</span>
+  <button id="weather-update" title="Aktuelle Modellwetterdaten erneut abrufen">↻</button>
+</div>
 <section id="tools" class="glass">
   <div class="tools-head"><span>🗺️ SICILIA KARTENSTUDIO</span><button id="tools-toggle" aria-label="Kartenstudio ein- oder ausklappen">−</button></div>
   <div id="tools-body">
@@ -33,11 +38,13 @@
     <div class="options">
       <label><input type="checkbox" id="buildings" checked> 3D-Gebäude</label>
       <label><input type="checkbox" id="peaks"> Gipfelpunkte</label>
+      <label><input type="checkbox" id="stops" checked> 🚌 Haltestellen</label>
       <label><input type="checkbox" id="shade" checked> Geländeschattierung</label>
     </div>
     <div class="search"><input id="search" type="search" placeholder="Ort suchen, z. B. Ragusa …" aria-label="Ort suchen">
       <button id="search-go">Suchen</button></div>
     <div id="quickplaces" class="city-pills" aria-label="Schnellziele">
+      <button data-place="Santa Teresa di Riva">🌊 Santa Teresa</button>
       <button data-place="Casalvecchio Siculo">⛪ Casalvecchio</button>
       <button data-place="Catania">🏙️ Catania</button>
       <button data-place="Taormina">🌅 Taormina</button>
@@ -68,6 +75,10 @@
   <div class="information" id="related"><strong>📚 Weitere Quellen</strong>
     <p>Historische Angaben werden nur bei klarer Zuordnung als Fakten angezeigt.</p></div>
   <div class="weather" id="weather"><strong>🌦️ Wetter</strong><p>Wähle einen Ort.</p></div>
+  <div class="information" id="transport"><strong>🚌 Bus & Bahn</strong>
+    <p>Wähle eine Haltestelle für Fahrplanquellen und Betreiberhinweise.</p></div>
+  <div class="information" id="street-imagery"><strong>📷 Echte Strassenbilder</strong>
+    <p>Die Verfügbarkeit von Aufnahmen wird beim externen Anbieter geprüft.</p></div>
 </section>
 <footer>© OpenStreetMap-Mitwirkende · Mapzen/AWS · OpenFreeMap · Esri · Open-Meteo · Wikimedia · Pilotphase v10.1</footer>
 <div id="error" hidden class="error">
@@ -92,5 +103,5 @@
 })();
 </script>
 <script src="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.js"></script>
-<script type="module" src="./atlas.js?v=111"></script>
+<script type="module" src="./atlas.js?v=115"></script>
 </body></html>
