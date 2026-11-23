@@ -39,6 +39,16 @@ const camera=new THREE.PerspectiveCamera(73,innerWidth/innerHeight,.06,3200);
 const buildings=[],roads=[],churches=[],targets=[],palette=['#dbc7b0','#c9b6a7','#d0bdac','#e5d2b7','#bbaca0'];
 const mats=new Map();
 function material(color){if(!mats.has(color))mats.set(color,new THREE.MeshStandardMaterial({color,roughness:.94,side:THREE.DoubleSide}));return mats.get(color);}
+function sourceColor(raw,fallback){
+  const name=String(raw||'').trim().toLowerCase();
+  const standards={white:'#eee5d4',beige:'#d5c6ae',cream:'#ead7b4',
+    yellow:'#d4ba86',orange:'#bb8665',red:'#af6856',
+    brown:'#9b765d',grey:'#a8a5a0',gray:'#a8a5a0',
+    sandstone:'#c1ab8b',stone:'#b8ad9a',brick:'#b0775e',
+    terracotta:'#b77255',concrete:'#bab9b1',plaster:'#d9c9ab'};
+  if(/^#[0-9a-f]{6}$/.test(name))return name;
+  return standards[name]||fallback;
+}
 const state={x:0,z:0,yaw:.42,pitch:0,third:false,speed:7,keys:new Set(),
   ready:false,drag:false,pointer:null,last:0,stamp:0,weatherCover:null};
 const height=(x,z)=>dem.height(x,z)??0;
@@ -137,7 +147,11 @@ function addRoad(points,tags){
   if(!v.length)return;
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));g.computeVertexNormals();
   const path=['footway','path','steps','pedestrian'].includes(tags.highway);
-  world.add(new THREE.Mesh(g,material(path?'#c1b7a2':'#939a95')));
+  const surface=tags.surface;
+  const roadColour=surface==='paving_stones'?'#b8aca1':
+    surface==='sett'?'#aba399':surface==='concrete'?'#9da19d':
+    surface==='gravel'?'#c2b59e':path?'#c1b7a2':'#939a95';
+  world.add(new THREE.Mesh(g,material(roadColour)));
   roads.push({points:samples,tags});
 }
 function addLabel(text,x,y,z){
@@ -174,12 +188,18 @@ function addBuilding(poly,tags,id,index){
   geom.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geom.computeVertexNormals();
   const church=tags.building==='church'||tags.building==='cathedral'||tags.amenity==='place_of_worship';
   const obj={tags,id,poly,cx,cz,roofY,modelHeight,church};
-  const wall=new THREE.Mesh(geom,material(church?'#d9cfb4':palette[index%palette.length]));
+  const facadeColour=sourceColor(tags['building:colour'],
+  tags['building:material']==='stone'?'#c3b49e':
+    church?'#d9cfb4':palette[index%palette.length]);
+  const wall=new THREE.Mesh(geom,material(facadeColour));
   wall.userData.object=obj;world.add(wall);targets.push(wall);
   const shape=new THREE.Shape();
   poly.forEach((p,i)=>i?shape.lineTo(p.x,-p.z):shape.moveTo(p.x,-p.z));shape.closePath();
   const roofGeo=new THREE.ShapeGeometry(shape);roofGeo.rotateX(-Math.PI/2);
-  const roof=new THREE.Mesh(roofGeo,material('#b47b5e'));roof.position.y=roofY+.07;
+  const roofColour=sourceColor(tags['roof:colour'],
+  tags['roof:material']==='metal'?'#777d7d':
+    tags['roof:material']==='tiles'?'#b47b5e':'#b47b5e');
+  const roof=new THREE.Mesh(roofGeo,material(roofColour));roof.position.y=roofY+.07;
   roof.userData.object=obj;world.add(roof);targets.push(roof);
   // Schematic near-field windows, NOT documented facades.
   if(Math.hypot(cx,cz)<110){
@@ -372,7 +392,7 @@ function inspect(x=0,y=0){
   for(const [k,v] of propertyRows(obj.tags))line(k,v);
   line('Grundriss','aus OSM');
   line('3D-Höhe',obj.modelHeight.metres.toFixed(1)+' m ('+obj.modelHeight.source+')');
-  line('Fassaden','illustrative Modellierung');
+  line('Fassaden','illustrative Modellierung; Farbe nur bei entsprechendem OSM-Tag belegt');
   if(!obj.tags.start_date&&!obj.tags['building:year_built'])
     line('Baujahr','nicht dokumentiert');
   const a=document.createElement('a');a.target='_blank';a.rel='noopener noreferrer';
@@ -461,6 +481,25 @@ function townBusSymbols(){
   }
   $('santa-bus-status').textContent=count+' lokal verortete Haltestelle(n) in diesem Sektor. Zeiten nur über offizielle Betreiberquellen; keine erfundenen Live-Abfahrten.';
 }
+function addMappedStreetLamps(elements){
+  let added=0;
+  for(const obj of elements){
+    if(obj.type!=='node'||obj.tags?.highway!=='street_lamp')continue;
+    if(!Number.isFinite(obj.lat)||!Number.isFinite(obj.lon))continue;
+    const p=frame.local(obj.lon,obj.lat);
+    if(Math.hypot(p.x,p.z)>sceneRadius)continue;
+    const y=height(p.x,p.z);
+    const pole=new THREE.Mesh(new THREE.CylinderGeometry(.11,.16,4.1,6),material('#586776'));
+    pole.position.set(p.x,y+2.05,p.z);world.add(pole);
+    const light=new THREE.Mesh(new THREE.SphereGeometry(.29,8,8),
+      new THREE.MeshBasicMaterial({color:'#fff3bb'}));
+    light.position.set(p.x,y+4.25,p.z);world.add(light);
+    // Glow uses emissive geometry; no hundreds of costly dynamic lights.
+    added++;
+    if(added>=90)break;
+  }
+  return added;
+}
 async function loadOSM(){
   $('osm-status').textContent='Lade OpenStreetMap-Grundrisse und Wege …';
   try{
@@ -479,9 +518,10 @@ async function loadOSM(){
       addBuilding(poly,e.tags,e.id,index++);
       if(buildings.length>=(isSanta?400:250))break;
     }
+    const lightCount=addMappedStreetLamps(data.elements);
     $('osm-status').textContent='✓ '+buildings.length+' OSM-Gebäude · '+roads.length+
-      ' Wege · '+new Date(data.queriedAt).toLocaleTimeString('de-CH')+
-      '. Dächer und Fenster sind Modelle.';
+      ' Wege · '+lightCount+' kartierte Strassenlampen · '+new Date(data.queriedAt).toLocaleTimeString('de-CH')+
+      '. Dachformen und Fenster sind Modelle; dokumentierte Materialfarben aus OSM.';
     townBusSymbols();
     if(collision(state.x,state.z)){const p=spawn();state.x=p.x;state.z=p.z;}
     $('toast').textContent='✓ '+buildings.length+' echte Grundrisse und '+roads.length+' Wege geladen';
