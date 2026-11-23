@@ -1,9 +1,12 @@
-import {isSicily,getBuildingHeight,propertyRows,getLocalOSM} from './geo.js?v=108';
+import {isSicily,getBuildingHeight,propertyRows,getLocalOSM} from './geo.js?v=115';
+import {SANTA,STOPS,LOCAL_REFERENCES,LINKS,inSantaTeresa,contextualSources,streetImageryUrl,stopDetails} from './local-sources.js?v=115';
+import {getWeather,formatWeather,weatherLabel,weatherDescription} from './weather.js?v=115';
 
 /* SICILIA 3D v10.1 ATLAS PREVIEW – isolated from v9 main site.
    Grounded map source labels and source-aware object inspector. */
 const $=id=>document.getElementById(id);
 const PLACES=[
+  {name:'Santa Teresa di Riva',lat:SANTA.lat,lon:SANTA.lon,zoom:16.1,icon:'🌊'},
   {name:'Casalvecchio Siculo',lat:37.95736,lon:15.32230,zoom:14.6,icon:'⛪'},
   {name:'Palermo',lat:38.1157,lon:13.3615,zoom:15.2,icon:'🏛️'},
   {name:'Catania',lat:37.5028,lon:15.0873,zoom:15.2,icon:'🏙️'},
@@ -25,7 +28,7 @@ const src={
 const ids={sat:'s10-satellite',color:'s10-color',shade:'s10-shade',build:'s10-buildings',
   peaks:'s10-peaks',poi:'s10-poi',cloud:'s10-cloud',local:'s10-local-buildings'};
 const state={mode:'relief',exaggeration:1,shade:true,buildings:true,peaks:false,
-  selected:null,articleRequest:0,weatherRequest:0,loaded:false,wheelMode:'zoom',
+  selected:null,articleRequest:0,weatherRequest:0,loaded:false,wheelMode:'zoom',stops:true,
   localBusy:false,localAt:0,localPosition:null,localCount:0,vectorSource:null};
 const create=(tag,cls,text)=>{
   const el=document.createElement(tag);if(cls)el.className=cls;
@@ -262,7 +265,7 @@ map.on('error',e=>{
 });
 function flyingWalkHref(){
   const c=state.selected||
-    (map.getZoom()<11.5?PLACES[0]:
+    (map.getZoom()<11.5?PLACES.find(p=>p.name==='Santa Teresa di Riva'):
       {lat:map.getCenter().lat,lon:map.getCenter().lng,name:'Kartenausschnitt Sizilien'});
   const params=new URLSearchParams({
     lat:c.lat.toFixed(6),lng:c.lon.toFixed(6),name:c.name});
@@ -279,7 +282,8 @@ map.on('dragstart',()=>{
   flyingWalkHref();
 });
 $('walking').addEventListener('click',flyingWalkHref);
-$('casal').onclick=()=>centerPlace(PLACES[0]);
+$('santateresa').onclick=()=>centerPlace(PLACES.find(p=>p.name==='Santa Teresa di Riva'));
+$('casal').onclick=()=>centerPlace(PLACES.find(p=>p.name==='Casalvecchio Siculo'));
 $('overview').onclick=()=>{
   state.selected=null;map.flyTo({center:[14.1,37.55],zoom:7.7,pitch:40,bearing:0,duration:1300});
   $('inspector').hidden=true;flyingWalkHref();
@@ -296,6 +300,7 @@ $('exaggeration').oninput=e=>{
 $('buildings').onchange=e=>{state.buildings=e.target.checked;updateLayers();};
 $('peaks').onchange=e=>{state.peaks=e.target.checked;updateLayers();};
 $('shade').onchange=e=>{state.shade=e.target.checked;updateLayers();};
+$('stops').onchange=e=>{state.stops=e.target.checked;updateStopMarkers();};
 $('refresh-osm').onclick=()=>{
   state.localAt=0;state.localCount=0;
   const src=map.getSource('s10-local-src');
@@ -452,6 +457,8 @@ function select(obj){
     related.append(link('OSM-Gebäude '+obj.props.osm_id,
       'https://www.openstreetmap.org/way/'+obj.props.osm_id));
   }
+  showTransport(obj);
+  showStreetImagery(obj);
   loadArticle(obj,state.articleRequest);
   loadWeather(obj,state.weatherRequest);
 }
@@ -514,6 +521,72 @@ async function loadWeather(obj,key){
       create('p','','Der Wetterdienst ist momentan nicht erreichbar.'));
   }
 }
+
+// Two verifiable bus stops from the Buscenter feed and a clearly approximate
+// Interbus notice location. Mapillary imagery is discovered, never faked.
+const santaMarkers=[];
+function makeStopMarkers(){
+  if(santaMarkers.length)return;
+  for(const stop of STOPS){
+    const el=create('button','santa-stop-marker','🚌');
+    el.type='button';
+    el.title=stop.name+(stop.approximate?' · Position ungefähr':' · Kartenkoordinate');
+    el.setAttribute('aria-label','Bushaltestelle '+stop.name);
+    el.addEventListener('click',e=>{
+      e.stopPropagation();
+      select({name:stop.name,kind:'Bushaltestelle',lat:stop.lat,lon:stop.lon,
+        props:{},source:stop.origin,stop});
+    });
+    const marker=new maplibregl.Marker({element:el,anchor:'bottom'})
+      .setLngLat([stop.lon,stop.lat]).addTo(map);
+    santaMarkers.push(marker);
+  }
+  updateStopMarkers();
+}
+function updateStopMarkers(){
+  const c=map.getCenter(),near=inSantaTeresa({lat:c.lat,lon:c.lng},8500);
+  for(const marker of santaMarkers)
+    marker.getElement().style.display=(state.stops&&near&&map.getZoom()>12.5)?'grid':'none';
+}
+map.on('load',()=>{makeStopMarkers();updateStopMarkers();});
+map.on('moveend',updateStopMarkers);
+function showTransport(obj){
+  const target=$('transport');
+  target.replaceChildren(create('strong','','🚌 Bus & Bahn'));
+  if(obj.stop){
+    const stop=obj.stop;
+    const header=create('div','stop-notice');
+    header.append(create('strong','',stop.name));
+    for(const p of stopDetails(stop))
+      header.append(create('p','',p.label+': '+p.value));
+    target.append(header);
+    target.append(
+      link('Betreiber – Fahrpläne',LINKS.transport),
+      link('Aktuelle Haltestellen-Mitteilung',LINKS.transportNotice),
+      link('Haltestellenverzeichnis',stop.url));
+    target.append(create('p','','Hinweis: Es liegen keine verifizierten minutengenauen Live-Abfahrten vor. Zeiten können sich ändern.'));
+    return;
+  }
+  if(inSantaTeresa(obj)){
+    target.append(create('p','',
+      'Santa Teresa di Riva: Bei Interbus gilt eine Haltestellenmitteilung vom 25. Juni 2026. Bitte vor der Fahrt den aktuellen Fahrplan und mögliche weitere Änderungen prüfen.'));
+    target.append(link('Interbus – Mitteilung',LINKS.transportNotice),
+      link('Interbus – Betreiber',LINKS.transport),
+      link('Trenitalia – Regionalfahrpläne',LINKS.trains));
+    target.append(create('p','','Bushaltestellen auf der Karte mit 🚌 auswählen. Die Markierung beim Municipio ist eine ungefähre Lage, keine vermessene Mastposition.'));
+  }else{
+    target.append(create('p','','Haltestelleninformationen: weitere Orte werden über örtliche und OSM-Quellen ergänzt. Noch keine allgemeine Echtzeit-Schnittstelle angeschlossen.'));
+    target.append(link('Fahrpläne – Trenitalia',LINKS.trains),
+      link('Bus – Interbus',LINKS.transport));
+  }
+}
+function showStreetImagery(obj){
+  const target=$('street-imagery');
+  target.replaceChildren(create('strong','','📷 Strassenansichten'));
+  target.append(create('p','','Mapillary bietet echte, von Menschen aufgenommene Strassenfotos. Der Link öffnet die Aufnahmeübersicht an den gewählten Koordinaten. Aufnahmen sind weder live noch überall vorhanden.'));
+  target.append(link('📷 Vorhandene Aufnahmen prüfen',streetImageryUrl(obj.lat,obj.lon)));
+}
+
 flyingWalkHref();
 // A full-island overview otherwise starts EXPLORE in empty countryside.
 // The first quick-entry intentionally defaults to the Casalvecchio pilot.
