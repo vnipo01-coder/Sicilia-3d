@@ -60,7 +60,7 @@ test('Preview links and recovery paths are present',()=>{
   assert.match(index,/3D-Erkundung/);
   assert.match(index,/Ortsmodell/);
   assert.match(walk,/map-explore-link/);
-  assert.match(explore,/explore\.js\?v=108/);
+  assert.match(explore,/explore\.js\?v=109/);
 });
 test('3D buildings survive raster fallback and have an independent vector source',()=>{
   const code=readFileSync(new URL('../atlas.js',import.meta.url),'utf8');
