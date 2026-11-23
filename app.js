@@ -533,5 +533,9 @@
     loadPinWeather();
     setInterval(()=>{if(!document.hidden){weatherFor(S.selected||pickPlace(S.place),true);loadPinWeather(true);}},15*60*1000);
   }
+  window.SICILIA_API={
+    PLACES, focusPlace, openDetails, weatherFor, applyModes,
+    get map(){return S.map;}, get state(){return S;}
+  };
   start();
 })();
