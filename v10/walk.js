@@ -271,6 +271,7 @@ function updateLocation(){
   const p=frame.geo(state.x,state.z),absolute=dem.absolute(p.lat,p.lon);
   $('altitude').textContent=absolute===null?'⛰️ Höhe nicht verfügbar':'⛰️ '+Math.round(absolute)+' m ü. M.';
   $('location').textContent='📍 '+p.lat.toFixed(5)+' / '+p.lon.toFixed(5);
+  $('mapillary-current').href=streetImageryUrl(p.lat,p.lon);
 }
 function tick(now){
   requestAnimationFrame(tick);
@@ -435,8 +436,10 @@ function initTownTools(){
   }
   $('santa-bus-status').textContent='Interbus-Haltestellen und Betreiberquellen: anklickbare 🚌-Symbole erscheinen an dokumentierten bzw. klar als ungefähr gekennzeichneten Orten.';
 }
+let busSymbolsBuilt=false;
 function townBusSymbols(){
-  if(!isSanta)return;
+  if(!isSanta||busSymbolsBuilt)return;
+  busSymbolsBuilt=true;
   let count=0;
   for(const stop of STOPS){
     const p=frame.local(stop.lon,stop.lat);
@@ -491,16 +494,26 @@ async function loadOSM(){
 }
 $('retry-data').onclick=loadOSM;
 async function loadWeather(){
+  const target=$('weather');
+  target.textContent='Aktuelle Wettermodellwerte werden aktualisiert …';
   try{
-    const p=new URLSearchParams({latitude:String(loc.lat),longitude:String(loc.lon),
-      current:'temperature_2m,cloud_cover,wind_speed_10m',timezone:'Europe/Rome'});
-    const r=await fetch('https://api.open-meteo.com/v1/forecast?'+p);
-    if(!r.ok)throw Error('Wetterquelle');
-    const json=await r.json(),v=json.current;
-    $('weather').textContent=v.temperature_2m+' °C · '+v.cloud_cover+' % Wolken · Wind '+
-      v.wind_speed_10m+' km/h · '+v.time+' (Italien). Modellwerte.';
-  }catch(e){$('weather').textContent='Wetter zurzeit nicht verfügbar.';}
+    const data=await getWeather(loc.lat,loc.lon,{fresh:true});
+    const v=formatWeather(data);
+    target.textContent=weatherDescription(data)+' · gefühlt '+v.feels+
+      ' · Niederschlag '+v.precipitation+' · Quelle: Open-Meteo, Modellzeit '+
+      v.time+' (Italien); zuletzt abgerufen '+
+      new Date(data.fetched).toLocaleTimeString('de-CH')+
+      (data.stale?' · vorheriger Cachewert':'');
+    if(Number.isFinite(data.current.cloud_cover)){
+      const clouds=data.current.cloud_cover;
+      scene.background.set(clouds>=75?'#9db5c0':clouds<=15?'#86b9ce':'#93b8c4');
+    }
+  }catch(e){
+    target.textContent='Wettermodell im Moment nicht erreichbar. Die 3D-Szene bleibt nutzbar.';
+  }
 }
+setInterval(()=>{if(!document.hidden)loadWeather();},6*60*1000);
+
 window.addEventListener('resize',()=>{
   camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
   renderer.setSize(innerWidth,innerHeight);
