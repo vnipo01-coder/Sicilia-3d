@@ -58,10 +58,60 @@ map.on('load', () => {
       attribution: 'Elevation data: Mapzen/AWS and source contributors'
     });
 
+    
+map.setTerrain({
+  source: 'sicilia-terrain',
+  exaggeration: 1.5
+});
+
+// Interaktive Höhensteuerung für SICILIA 3D
+const terrainControl = document.createElement('div');
+
+terrainControl.style.cssText = `
+  position: fixed;
+  bottom: 20px;
+  left: 15px;
+  z-index: 1000;
+  background: rgba(12, 30, 45, 0.94);
+  color: white;
+  padding: 15px;
+  border-radius: 12px;
+  font-family: Arial, sans-serif;
+  box-shadow: 0 4px 20px #0005;
+`;
+
+terrainControl.innerHTML = `
+  <label for="etnaHeight">
+    🌋 3D-Geländehöhe:
+    <strong id="etnaValue">1.5×</strong>
+  </label>
+  <div style="margin-top:10px">
+    <input
+      id="etnaHeight"
+      type="range"
+      min="0"
+      max="3"
+      step="0.1"
+      value="1.5"
+      style="width:180px"
+    >
+  </div>
+`;
+
+document.body.appendChild(terrainControl);
+
+document.getElementById('etnaHeight')
+  .addEventListener('input', (event) => {
+    const height = Number(event.target.value);
+
+    document.getElementById('etnaValue')
+      .textContent = height.toFixed(1) + '×';
+
     map.setTerrain({
       source: 'sicilia-terrain',
-      exaggeration: 1.5
+      exaggeration: height
     });
+  });
 
     setStatus('● Karte + 3D-Gelände aktiviert');
   } catch (error) {
