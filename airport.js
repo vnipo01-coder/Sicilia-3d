@@ -4,6 +4,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.m
  * DEMO is visually simulated and never labelled live.
  * Live ADS-B works only when the provider permits cross-origin requests.
  */
+document.body.dataset.airportReady='1';
 const LAT=37.4668,LNG=15.0664,MX=111320*Math.cos(LAT*Math.PI/180),MZ=111320;
 const $=id=>document.getElementById(id),center=()=>({x:0,z:0});
 const loc=(lon,lat)=>({x:(lon-LNG)*MX,z:-(lat-LAT)*MZ});
