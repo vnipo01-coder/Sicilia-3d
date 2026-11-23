@@ -115,8 +115,10 @@ function renderList(){
     const b=document.createElement('button');b.className='flight';
     const name=document.createElement('strong');name.textContent='✈ '+a.id;
     const info=document.createElement('small');
-    info.textContent=a.demo?'3D-Simulation · '+Math.round(a.alt)+' m Beispielhöhe':
-      'ADS-B Position · '+(a.age??'–')+' s alt · Höhe '+(a.altKnown?Math.round(a.alt)+' m':'nicht gemeldet');
+    info.textContent=a.demo?
+      (a.idx===0?'Simulierter Landeanflug · 3D-Animation':'3D-Simulation · '+Math.round(a.alt)+' m Beispielhöhe'):
+      'ADS-B-Meldung · '+(a.age??'–')+' s alt · '+(a.altKnown?Math.round(a.alt)+' m':'Höhe unbekannt')+
+      (a.predicted?' · mögliche Annäherung':'');
     b.append(name,info);b.onclick=()=>selectPlane(a);list.appendChild(b);
   }
 }
@@ -126,7 +128,8 @@ function selectPlane(a){
   $('card-title').textContent='✈ '+a.id;
   $('card-text').textContent=a.demo?
     'Dies ist ein modelliertes Beispiel. Flugroute und Höhe sind nicht real.':
-    'Bestätigte empfangene ADS-B-Positionsmeldung. Zuletzt gemeldet vor '+(a.age??'–')+' Sekunden. Lage und Höhe können ungenau sein.';
+    'Empfangene ADS-B-Positionsmeldung vor '+(a.age??'–')+
+    ' Sekunden. 3D-Modell zur Sichtbarkeit vergrössert. '+(a.predicted||'Keine belastbare Landeschätzung für dieses Flugzeug.');
   $('card').classList.add('open');
   const target=a.group.position;
   lookAt.copy(target);
@@ -136,41 +139,86 @@ function selectPlane(a){
 $('close').onclick=()=>{$('card').classList.remove('open');chosen=null;};
 $('demo').onclick=demoPlanes;
 $('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'▶ Weiter':'⏸ Pause';};
+const AIRPORT_LIVE={key:'',refreshed:0,busy:false};
+function bearingToAirport(lon,lat){
+  const phi1=lat*Math.PI/180,phi2=LAT*Math.PI/180,dLon=(LNG-lon)*Math.PI/180;
+  const bearing=Math.atan2(Math.sin(dLon)*Math.cos(phi2),
+    Math.cos(phi1)*Math.sin(phi2)-Math.sin(phi1)*Math.cos(phi2)*Math.cos(dLon));
+  return (bearing*180/Math.PI+360)%360;
+}
+function proximityEstimate(lon,lat,heading,speedKnots,alt,verticalRate){
+  const dx=(lon-LNG)*MX,dz=(lat-LAT)*MZ,distKm=Math.hypot(dx,dz)/1000;
+  const target=bearingToAirport(lon,lat);
+  const difference=Math.abs(((heading-target+540)%360)-180);
+  if(!(distKm>1&&distKm<18&&difference<25&&
+       speedKnots>65&&speedKnots<270&&alt!==null&&alt<1500&&
+       Number.isFinite(verticalRate)&&verticalRate<0))return null;
+  const minutes=distKm/(speedKnots*1.852)*60;
+  return 'Annäherung möglich · rechnerisch ca. '+Math.max(1,Math.round(minutes))+
+    ' Min. bis Flughafennähe. Kein bestätigter Anflug oder Landetermin.';
+}
 async function loadLive(){
-  $('live').classList.add('active');$('demo').classList.remove('active');
-  $('status').textContent='📡 Prüfe öffentliche ADS-B-Positionsdaten …';
+  const key=String($('fly-key')?.value||'').trim();
+  if(!key){
+    $('status').textContent='🔑 Für tatsächliche Flugzeugpositionen bitte einen eigenen FlyItalyADSB-Schlüssel eingeben. Bis dahin bleibt die ausdrücklich simulierte 3D-Ansicht nutzbar.';
+    return;
+  }
+  if(AIRPORT_LIVE.busy)return;
+  AIRPORT_LIVE.busy=true;
+  AIRPORT_LIVE.key=key;
+  $('status').textContent='📡 Lade empfangene ADS-B-Positionen rund um Catania …';
   try{
-    const response=await fetch('https://opendata.adsb.fi/api/v3/lat/37.4668/lon/15.0664/dist/55',{cache:'no-store'});
-    if(!response.ok)throw Error('HTTP '+response.status);
+    const endpoint='https://api.flyitalyadsb.com/v2/lat/37.4668/lon/15.0664/dist/55';
+    const response=await fetch(endpoint,{headers:{'X-Api-Key':key,'Accept':'application/json'},cache:'no-store'});
+    if(!response.ok)throw Error('API HTTP '+response.status);
     const data=await response.json();
-    const aircraft=(data.ac||[]).filter(a=>Number.isFinite(a.lat)&&Number.isFinite(a.lon)&&!a.ground);
+    const aircraft=(data.ac||[]).filter(a=>
+      Number.isFinite(a.lat)&&Number.isFinite(a.lon)&&!a.ground);
     clearPlanes();
     for(const a of aircraft.slice(0,30)){
       const local=loc(a.lon,a.lat);
       const rawAlt=a.alt_baro??a.alt_geom;
-      const altFeet=(rawAlt===null||rawAlt===undefined||rawAlt==='ground')?NaN:Number(rawAlt);
+      const altFeet=(rawAlt==null||rawAlt==='ground')?NaN:Number(rawAlt);
       const knownAltitude=Number.isFinite(altFeet);
-      const alt=knownAltitude?Math.max(20,altFeet*.3048):null;
-      const heading=Number.isFinite(a.track)?a.track:0;
-      const group=planeModel();group.position.set(local.x,alt??400,local.z);
-      // Model forward is -Z, heading is measured clockwise from North.
+      const alt=knownAltitude?Math.max(8,altFeet*.3048):null;
+      const heading=Number.isFinite(a.track)?a.track:
+        Number.isFinite(a.true_heading)?a.true_heading:0;
+      const group=planeModel();
+      group.position.set(local.x,alt??400,local.z);
       group.rotation.y=heading*Math.PI/180;
-      group.scale.setScalar(2); // visual enhancement: airplanes are enlarged for visibility
-      putPlane({group,id:String(a.flight||a.r||a.hex||'Unbekannt').trim(),alt,altKnown:knownAltitude,demo:false,
-        age:Number.isFinite(a.seen)?Math.round(a.seen):null,
-        speed:Number.isFinite(a.gs)?a.gs*1.852:0,heading:heading*Math.PI/180,
-        note:'Flugzeugmodell ist zur Sichtbarkeit vergrössert'});
+      group.scale.setScalar(2.7); // visibility scale, not physical aircraft size
+      const speedKnots=Number.isFinite(a.gs)?a.gs:0;
+      const baroRate=Number.isFinite(a.baro_rate)?a.baro_rate:
+        Number.isFinite(a.geom_rate)?a.geom_rate:NaN;
+      const predicted=proximityEstimate(a.lon,a.lat,heading,speedKnots,alt,baroRate);
+      putPlane({group,id:String(a.flight||a.r||a.hex||'Unbekannt').trim(),
+        alt,altKnown:knownAltitude,lat:a.lat,lon:a.lon,
+        demo:false,age:Number.isFinite(a.seen)?Math.round(a.seen):null,
+        speed:speedKnots*1.852,heading:heading*Math.PI/180,
+        speedMS:speedKnots*.514444,verticalMPS:Number.isFinite(baroRate)?baroRate*.00508:0,
+        trackAge:Math.max(0,Number.isFinite(a.seen)?a.seen:0),
+        seenAt:performance.now(),predicted,
+        note:'Gemeldete Position; 3D-Modell zur Sichtbarkeit vergrössert'});
     }
-    mode='live';chosen=null;renderList();
-    $('status').textContent='🟢 '+planeItems.length+' empfangene ADS-B-Positionen · Zeitstempel/Verzögerung möglich. Flugzeugmodelle sind zur Sichtbarkeit vergrössert; bei unbekannter Flughöhe wird nur eine Visualisierungshöhe verwendet.';
+    mode='live';chosen=null;renderList();AIRPORT_LIVE.refreshed=Date.now();
+    const stamp=new Date().toLocaleTimeString('de-CH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    $('status').textContent='🟢 '+planeItems.length+' gemeldete Flugzeuge · empfangen '+stamp+
+      '. Positionen können verzögert sein. Bewegung zwischen Messungen wird höchstens 20 Sekunden geschätzt; keine garantierte Landung.';
   }catch(error){
-    // Keep no purported live aircraft on screen.
+    // Never show simulated aircraft under the live label.
     clearPlanes();mode='live';chosen=null;renderList();
-    $('status').textContent='⚠️ Live-Flugdaten nicht erreichbar (wahrscheinlich Browser-CORS/Rate-Limit). Es werden keine erfundenen Live-Flugzeuge angezeigt. Wähle 3D-Demo oder das externe Flugradar.';
-    console.warn('ADS-B blocked/unavailable:',error);
-  }
+    $('status').textContent='⚠️ Keine Live-Positionsdaten verfügbar ('+
+      String(error.message||'Dienstfehler')+
+      '). Prüfe deinen Schlüssel bzw. API-Limits oder öffne das externe Radar. Keine erfundenen Live-Positionen.';
+    console.warn('FlyItalyADSB failed:',error);
+  }finally{AIRPORT_LIVE.busy=false;}
 }
 $('live').onclick=loadLive;
+setInterval(()=>{
+  if(mode==='live'&&!document.hidden&&AIRPORT_LIVE.key&&
+     Date.now()-AIRPORT_LIVE.refreshed>40000)loadLive();
+},45000);
+
 const canvas=renderer.domElement;
 canvas.addEventListener('pointerdown',e=>{dragged=false;px=e.clientX;py=e.clientY;canvas.setPointerCapture(e.pointerId);});
 canvas.addEventListener('pointermove',e=>{
@@ -205,14 +253,36 @@ function render(now){
     for(const p of planeItems){
       const i=p.idx,speed=p.speed,t=time*speed;
       // Deliberately simulated approach/holding patterns, NOT actual flights.
-      const x=((t+i*650)%5000)-2500;
-      const z=Math.sin((x+i*120)/1600)*330+(i-1.5)*360;
-      const y=p.alt+Math.sin(time*.15+i)*65;
-      p.group.position.set(x,y,z);
-      p.group.rotation.y=(i%2===0)?-Math.PI/2:Math.PI/2;
+      if(i===0){
+        // Fictional approach in the direction of CTA RWY 08.
+        // The 3D model descends, touches down, and rolls out.
+        const x=((time*100+300)%4100)-2200;
+        const z=-0.16*x;
+        const y=x< -50?Math.max(4,(-x-50)*.075):4;
+        p.group.position.set(x,y,z);
+        p.group.rotation.y=-Math.PI/2-.16;
+      }else{
+        const x=((t+i*650)%5000)-2500;
+        const z=Math.sin((x+i*120)/1600)*330+(i-1.5)*360;
+        const y=p.alt+Math.sin(time*.15+i)*65;
+        p.group.position.set(x,y,z);
+        p.group.rotation.y=(i%2===0)?-Math.PI/2:Math.PI/2;
+      }
     }
   }
-  if(chosen&&mode==='demo')lookAt.lerp(chosen.group.position,.08);
+  if(mode==='live' && !paused){
+    for(const p of planeItems){
+      const seconds=Math.min(20,Math.max(0,(now-p.seenAt)/1000));
+      const speed=p.speedMS||0;
+      const east=Math.sin(p.heading)*speed*seconds;
+      const north=Math.cos(p.heading)*speed*seconds;
+      const anchor=loc(p.lon,p.lat);
+      p.group.position.x=anchor.x+east;
+      p.group.position.z=anchor.z-north;
+      if(p.altKnown)p.group.position.y=Math.max(5,p.alt+p.verticalMPS*seconds);
+    }
+  }
+  if(chosen)lookAt.lerp(chosen.group.position,.08);
   updateCamera();
   renderer.render(scene,camera);
 }
