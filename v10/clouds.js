@@ -75,12 +75,17 @@ export class CloudVisual{
     }
     if(Number.isFinite(weather.wind_speed_10m))this.wind=clamp(weather.wind_speed_10m,0,160);
     if(Number.isFinite(weather.wind_direction_10m))this.direction=weather.wind_direction_10m;
+    if(this.reducedMotion&&this.enabled)this.draw(0);
   }
   setDemo(enabled){
     this.demo=Boolean(enabled);
     this.cover=this.demo?68:this.modelCover;
+    if(this.reducedMotion&&this.enabled)this.draw(0);
   }
-  setIntensity(value){this.intensity=clamp(value,0,1);}
+  setIntensity(value){
+    this.intensity=clamp(value,0,1);
+    if(this.reducedMotion&&this.enabled)this.draw(0);
+  }
   setEnabled(value){
     this.enabled=Boolean(value);
     this.canvas.hidden=!this.enabled;
