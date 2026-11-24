@@ -3,7 +3,7 @@
  * Exact heights are taken from feature tags when available; otherwise default
  * heights are visualization assumptions. */
 export const BUILDING_THEMES=Object.freeze([
-  {id:'architecture',label:'🏛️ Architektur',description:'Nutzung und Höhe farblich unterscheiden'},
+  {id:'architecture',label:'🏛️ Architektur',description:'Bekannte Funktion farblich codieren, fehlende Nutzungen dekorativ variieren'},
   {id:'height',label:'🌈 Gebäudehöhe',description:'Höhenklassen als Farblegende'},
   {id:'stone',label:'🪨 Naturstein',description:'Ruhige mediterrane Materialpalette'}
 ]);
@@ -17,6 +17,21 @@ export function heightExpression(local=false){
     ['>',toNum('building:levels'),0],['*',toNum('building:levels'),3.1],
     9.5];
 }
+/* A missing building tag used to make whole villages nearly beige. Use a
+ * deterministic CARTOGRAPHIC fallback by actual feature ID, never as facade
+ * measurement. At minimum the fallback is an obvious coral color. */
+export function fallbackColorExpression(local=false){
+  const id=['to-number',['coalesce',
+    ['id'],['get','osm_id'],0],0];
+  const color=['match',['%',id,7],
+    0,'#f07f68',1,'#53bdd5',2,'#e9b74f',3,'#ad83d6',
+    4,'#69c591',5,'#df84ae',6,'#83a9ee','#f07f68'];
+  const knownHeight=heightExpression(local);
+  return ['case',
+    ['>',knownHeight,24],['interpolate',['linear'],knownHeight,
+      24,'#a08bd5',45,'#648ad4',90,'#4e70a8'],
+    color];
+}
 export function architectureColorExpression(local=false){
   const height=heightExpression(local);
   const type=['downcase',['to-string',['coalesce',prop('building'),prop('type'),'yes']]];
@@ -29,8 +44,7 @@ export function architectureColorExpression(local=false){
     'hotel','#df9baf','office','#cf9bad',
     'apartments','#d8898c','residential','#eab49d','house','#eac09d',
     'detached','#e4bd9b','farm','#bda96e','garage','#abb6ad',
-    ['interpolate',['linear'],height,
-      0,'#eac49b',10,'#e5b189',20,'#d89a91',40,'#ae92bb',85,'#669dc4']
+    fallbackColorExpression(local)
   ];
   if(!local)return color;
   const material=['downcase',['to-string',['coalesce',prop('building:material'),'']]];
@@ -61,7 +75,7 @@ export const BUILDING_LEGENDS={
  architecture:[
   ['#ead486','Kirchen & Kapellen'],['#d8898c','Wohn- und Mehrfamilienhäuser'],
   ['#edaa83','Handel & Gewerbe'],['#7cbac8','Bildung & öffentliche Bauten'],
-  ['#779dbd','Industrie & Lager'],['#ae92bb','Höhere, nicht kategorisierte Bauten']],
+  ['#779dbd','Industrie & Lager'],['#f07f68','Nicht zugeordnet: illustrative Farbvariation']],
  height:[
   ['#a7d5bc','Niedrige Baukörper'],['#6abfbb','Mittlere Höhen'],
   ['#4b9ac4','Höhere Gebäude'],['#8479c8','Sehr hohe Gebäude']],
@@ -74,5 +88,5 @@ export function colorNote(theme='architecture'){
     ?'Farben zeigen relative Gebäudehöhen; fehlende Höhenangaben bleiben kartografische Schätzwerte.'
     :theme==='stone'
     ?'Ästhetische Materialpalette; keine Aussage über tatsächlich verwendeten Stein oder Fassadenfarbe.'
-    :'Farben unterscheiden Gebäudefunktionen aus Kartentags, wo bekannt, sonst Höhenklassen. Keine photorealistischen Fassaden.';
+    :'Gebäudenutzung aus Kartentags, soweit bekannt. Bei unvollständigen Tags erzeugen Gebäude-IDs rein dekorative Farbunterschiede – keine tatsächliche Funktion oder Fassadenfarbe.';
 }
