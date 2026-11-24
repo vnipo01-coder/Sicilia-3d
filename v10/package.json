@@ -4,6 +4,6 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check geo.js && node --check city-pages.js && node --check local-sources.js && node --check knowledge.js && node --check weather.js && node --check building-styles.js && node --check architecture.js && node --check clouds.js && node --check flight-tour.js && node --check atlas.js && npm test"
+    "check": "node --check geo.js && node --check city-pages.js && node --check local-sources.js && node --check knowledge.js && node --check weather.js && node --check building-styles.js && node --check architecture.js && node --check clouds.js && node --check flight-tour.js && node --check history.js && node --check atlas.js && npm test"
   }
 }
