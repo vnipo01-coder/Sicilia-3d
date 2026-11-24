@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#092739">
+<meta name="description" content="SICILIA 3D Cesium-Labor: Santa Teresa di Riva als georeferenzierte, quellenbasierte 3D-Referenzwelt mit OSM und optionalen hochwertigen 3D Tiles.">
+<title>SICILIA 3D · Santa Teresa Cesium Pilot</title>
+<link rel="preconnect" href="https://cesium.com">
+<link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.146/Build/Cesium/Widgets/widgets.css">
+<link rel="stylesheet" href="./style.css?v=1">
+</head>
+<body>
+<div id="cesiumContainer" aria-label="Interaktive 3D-Welt Santa Teresa di Riva"></div>
+<header class="topbar panel">
+  <div class="brand">
+    <span class="mark">S<span>3</span></span>
+    <div><strong>SICILIA <em>3D</em></strong><small>CESIUM LAB · SANTA TERESA DI RIVA</small></div>
+  </div>
+  <div class="top-right">
+    <div class="build-indicator"><span class="dot"></span><span id="stage">Referenzgebiet · Phase 1</span></div>
+    <a class="top-link" href="../v10/?release=141">← Zum bisherigen Atlas</a>
+  </div>
+</header>
+<aside class="sidebar panel" aria-label="3D-Welt steuern">
+  <div class="intro"><div class="eyebrow">REFERENZGEBIET 01 / IONISCHE KÜSTE</div>
+    <h1>Santa Teresa<br><span>di Riva.</span></h1>
+    <p>Eine neue, datenbasierte 3D-Welt. Diesmal steht die <strong>Qualität eines Ortes</strong> im Vordergrund.</p>
+  </div>
+  <section class="section">
+    <h2><span class="index">01</span> Wohin möchtest du?</h2>
+    <div class="locations" id="locations">
+      <button data-place="municipio" class="selected">🏛️ Ortszentrum <small>Municipio</small></button>
+      <button data-place="lungomare">🌊 Lungomare <small>Küstenpromenade</small></button>
+      <button data-place="savoca">🛣️ Via Savoca <small>Strassenraum</small></button>
+      <button data-place="overview">⛰️ Küstenübersicht <small>Stadt und Hinterland</small></button>
+    </div>
+  </section>
+  <section class="section">
+    <h2><span class="index">02</span> 3D-Datenqualität</h2>
+    <div class="quality-line"><span class="status-disc"></span><span id="quality-label">Satellitenbasis wird geladen</span></div>
+    <div class="quality-metrics">
+      <div><strong id="building-count">–</strong><small>OSM-Bauwerke</small></div>
+      <div><strong id="road-count">–</strong><small>Strassen</small></div>
+      <div><strong id="measured-count">–</strong><small>Höhenwerte direkt dokumentiert</small></div>
+    </div>
+    <div class="control-row">
+      <label class="switchline"><input type="checkbox" id="osm-layer" checked> <span>3D-Gebäude anzeigen</span></label>
+      <label class="switchline"><input type="checkbox" id="roads-layer" checked> <span>Strassen und Haltestellen</span></label>
+    </div>
+    <p class="explainer">Ohne Zugangsschlüssel: Satellitenbild + echte OSM-Grundrisse, aber <strong>vereinfachte 3D-Körper auf einem flachen Erdmodell</strong>. Diese Darstellung ist noch kein digitaler Zwilling.</p>
+    <button class="button primary" id="quality-open">✦ Hochwertige 3D-Daten verbinden</button>
+  </section>
+  <section class="section">
+    <h2><span class="index">03</span> Quellen und Verlässlichkeit</h2>
+    <div class="data-state" role="status" id="data-state">Initialisierung der 3D-Welt …</div>
+    <div class="source-links">
+      <a href="https://www.openstreetmap.org/#map=16/37.94533/15.36830" target="_blank" rel="noopener noreferrer">OSM-Grundrisse ↗</a>
+      <a href="https://www.comune.santateresadiriva.me.it/" target="_blank" rel="noopener noreferrer">Offizielle Gemeinde ↗</a>
+      <a href="https://www.dati.gov.it/node/view-dataset/dataset?id=ffad6512-1854-4e4d-bfec-bd867d8b18dc" target="_blank" rel="noopener noreferrer">Italienisches LiDAR-Register ↗</a>
+    </div>
+  </section>
+  <div class="bottom-note">PILOT 0.1 · Gemessene Angaben und Modellannahmen werden getrennt angezeigt. © OpenStreetMap-Mitwirkende · Esri/Datenanbieter · Cesium</div>
+</aside>
+<div class="hud panel">
+ <span class="hud-label">KAMERA</span>
+ <button id="zoom-in" title="Näher">＋</button>
+ <button id="zoom-out" title="Weiter weg">－</button>
+ <button id="reset" title="Zur Ortsübersicht">◎</button>
+ <button id="help" title="Kamerasteuerung">?</button>
+</div>
+<div class="place-overlay panel" id="place-overlay" hidden aria-live="polite">
+ <button class="close" id="place-close" aria-label="Details schliessen">×</button>
+ <div class="eyebrow" id="place-source">OPENSTREETMAP · ATTRIBUTIERTE DATEN</div>
+ <h2 id="place-title">Gebäude</h2>
+ <div id="place-detail"></div>
+ <div id="place-links"></div>
+</div>
+<div class="loader panel" id="loading" role="status">
+ <div class="spinner"></div>
+ <strong>3D-Referenzwelt wird vorbereitet</strong>
+ <span id="loading-detail">CesiumJS und Luftbilddaten werden geladen …</span>
+</div>
+<dialog id="quality-dialog" aria-labelledby="quality-title">
+ <form method="dialog" id="quality-form">
+  <button value="close" class="dialog-close" aria-label="Fenster schliessen">×</button>
+  <span class="eyebrow">OPTIONALER QUALITÄTSAUSBAU</span>
+  <h2 id="quality-title">Echte 3D-Daten zuschalten</h2>
+  <p>Für <strong>Cesium World Terrain</strong>, <strong>Cesium OSM Buildings</strong> und optional <strong>Google Photorealistic 3D Tiles</strong> ist ein gültiger Cesium-ion-Zugang mit passenden Berechtigungen erforderlich. Photorealistische Abdeckung von Santa Teresa ist nicht garantiert.</p>
+  <label class="token-label" for="ion-token">Cesium-ion-Access-Token (wird nicht in GitHub oder im Browser gespeichert)</label>
+  <input type="password" id="ion-token" autocomplete="off" spellcheck="false" placeholder="Token aus Cesium ion einfügen">
+  <div class="token-options">
+    <button type="button" id="terrain-enable">⛰️ Echtes Gelände aktivieren</button>
+    <button type="button" id="tiles-enable">🏘️ Cesium OSM 3D Tiles aktivieren</button>
+    <button type="button" id="photo-enable">📷 Photorealistische 3D Tiles testen</button>
+  </div>
+  <p class="token-state" id="token-state" role="status">Ohne Token bleibt die kostenlose Referenzansicht nutzbar.</p>
+  <p class="token-warning">Wichtig: Ein Token in einer öffentlich ausgeführten Website kann über Browser-Netzwerkanfragen sichtbar sein. Verwende nur einen zweckgebundenen Token mit minimalen Rechten, Nutzungsbeschränkungen und Budgetkontrolle. Keine persönlichen geheimen Schlüssel verwenden.</p>
+  <div class="dialog-links">
+    <a href="https://ion.cesium.com/tokens" target="_blank" rel="noopener noreferrer">Cesium-ion-Tokens verwalten ↗</a>
+    <a href="https://cesium.com/learn/cesiumjs-learn/cesiumjs-quickstart/" target="_blank" rel="noopener noreferrer">Offizielle Anleitung ↗</a>
+  </div>
+ </form>
+</dialog>
+<div class="help-pop panel" id="help-pop" hidden>Linke Maustaste ziehen: drehen · Mausrad: zoomen · mittlere Maustaste/Strg ziehen: neigen · Klick auf Gebäude: Fakten und Datenherkunft.</div>
+<noscript><div class="noscript">Bitte JavaScript aktivieren, um die Cesium-3D-Welt zu öffnen.</div></noscript>
+<script>window.CESIUM_BASE_URL="https://cesium.com/downloads/cesiumjs/releases/1.146/Build/Cesium/";</script>
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.146/Build/Cesium/Cesium.js"></script>
+<script type="module" src="./app.js?v=1"></script>
+</body>
+</html>
