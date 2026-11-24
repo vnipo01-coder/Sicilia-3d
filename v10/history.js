@@ -85,7 +85,10 @@ export function createHistoricalExplorer(map,controls={}){
   const sourceId='sicilia-wayback-source',layerId='sicilia-wayback-imagery';
   function show(text){onStatus(text);}
   function stopPlayback(){
-    if(playTimer){clearTimeout(playTimer);playTimer=0;}
+    if(playTimer){
+      clearTimeout(playTimer);playTimer=0;
+      onActive({active,playing:false});
+    }
   }
   function ensureRaster(item){
     if(!map.isStyleLoaded?.())return false;
