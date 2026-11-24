@@ -293,3 +293,49 @@ font-weight:650;background:#194f60;border:1px solid #8fdbd153;overflow-wrap:anyw
 .sky-sliders .sky-demo{grid-column:1 / -1;display:flex;align-items:center;
  gap:7px;font-size:10px;color:#defaf6;padding:5px 0;cursor:pointer}
 .sky-demo input{width:14px;height:14px;accent-color:#8bf0d4;flex:none}
+
+/* v10.8 — true dated Esri Wayback satellite snapshots */
+#history-studio{position:fixed;z-index:22;left:50%;bottom:16px;
+ transform:translateX(-50%);width:min(660px,calc(100vw - 32px));
+ border:1px solid #72d9dc80;border-radius:18px;
+ background:#09283df1;box-shadow:0 13px 36px #092132a9;
+ padding:10px 13px;max-height:64dvh;overflow-y:auto;backdrop-filter:blur(17px)}
+#history-studio:not(.is-open){width:max-content;max-width:calc(100vw - 32px);padding:6px}
+#history-studio:not(.is-open) .history-subtitle{display:none}
+#history-studio .history-title{display:flex;align-items:center;gap:11px;justify-content:space-between}
+#history-studio .history-title button{background:#268b88;color:white;border:1px solid #9cf0da;
+ border-radius:11px;padding:10px 15px;font-size:12px;font-weight:800;cursor:pointer}
+#history-studio .history-subtitle{font-size:10px;color:#a8ebe1;letter-spacing:.04em;font-weight:700}
+#history-body[hidden]{display:none}
+.history-description{color:#bedcda;font-size:11px;line-height:1.6;margin:11px 0}
+.history-year-row{display:flex;justify-content:space-between;align-items:center;gap:8px;
+ font-size:11px;color:#b5d8d8;margin:10px 0 3px}
+.history-year-row strong{color:#f2fff8;font-size:15px}
+#history-year{width:100%;height:28px;accent-color:#e3c274;cursor:pointer}
+.history-actions{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:8px;margin:6px 0 12px}
+.history-actions button{border:1px solid #8edcce78;color:#ecfffa;background:#1a6070;
+ padding:10px;border-radius:9px;font-weight:750;font-size:12px;cursor:pointer}
+.history-actions button:disabled{opacity:.36;cursor:not-allowed}
+.history-actions button#history-play:not(:disabled){background:#29948e}
+.history-comparison{display:flex;gap:8px;align-items:center;color:#cfe6e4;font-size:11px}
+.history-comparison input{flex:1;min-width:50px;accent-color:#e3c274}
+#history-blend-label{min-width:90px;text-align:right;color:#f4ead0}
+.history-modern-label{display:flex;gap:8px;align-items:center;font-size:11px;
+ color:#c4dbdf;line-height:1.5;margin:12px 0}
+.history-modern-label input{accent-color:#e3b771}
+.history-status{font-size:11px;line-height:1.5;color:#c8e7e6;background:#ffffff0c;
+ padding:9px 11px;border-radius:8px;margin:10px 0}
+.history-sources{display:flex;gap:8px;flex-wrap:wrap}
+.history-sources a{color:#c9fff1;text-decoration:none;font-size:11px;background:#195461;
+ border:1px solid #95d9ce67;padding:7px 9px;border-radius:8px}
+#building-render-status{font-size:11px;line-height:1.4;color:#c3e1e1;margin:5px 0}
+#building-render-status[data-state="ok"]{color:#a7efc4}
+#building-render-status[data-state="error"]{color:#ffb7a7}
+@media(max-width:750px){
+ #history-studio{bottom:9px;left:8px;right:8px;width:auto;transform:none;max-height:52dvh}
+ #history-studio:not(.is-open){width:max-content;left:50%;right:auto;transform:translateX(-50%);bottom:10px}
+ .history-subtitle{display:none}
+ .history-comparison{gap:5px}
+ .history-comparison span{font-size:10px;min-width:78px}
+ .history-actions button{padding:8px 4px;font-size:10px}
+}
