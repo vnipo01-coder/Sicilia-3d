@@ -509,38 +509,82 @@ function select(obj){
   loadWeather(obj,state.weatherRequest);
 }
 $('inspector-close').onclick=()=>$('inspector').hidden=true;
-function appendKnowledgeCard(root,data,isOfficial=false){
-  const card=create('div','official-fact');
-  card.append(create('strong','',data.title));
-  card.append(create('p','',data.facts||data.text||'Keine Kurzbeschreibung.'));
-  card.append(create('small','source-label',
-    (isOfficial?'Amtliche/Betreiberquelle: ':'Offene Wissensquelle: ')+
-    (data.attribution||'Herkunft dokumentiert')));
-  card.append(link('Originalquelle ↗',data.url));
-  root.append(card);
+function appendKnowledgeCard(root,data,isOfficial=false,expanded=false){
+  const panel=create('details','source-entry');
+  panel.open=expanded;
+  const heading=create('summary','',data.title);
+  panel.append(heading);
+  const body=create('div','source-entry-body');
+  const description=String(data.facts||data.text||'Keine Kurzbeschreibung vorhanden.');
+  body.append(create('p','',description));
+  const sourceName=data.attribution||'Datenquelle angegeben';
+  body.append(create('small','',
+    (isOfficial?'Originalveröffentlichung: ':'Wissensdatenbank: ')+sourceName));
+  if(data.url)body.append(link('Artikel vollständig öffnen ↗',data.url));
+  panel.append(body);root.append(panel);
+}
+function articleCityLinks(root,city){
+  if(!city)return;
+  const wrap=create('div','source-links-grid');
+  wrap.append(link('📘 Wikipedia – Stadtartikel',city.wikipedia));
+  if(city.official)wrap.append(link('🏛️ Offizielle Stadtwebsite',city.official));
+  if(city.wikipediaDe)wrap.append(link('📚 Wikipedia – Deutsch',city.wikipediaDe));
+  root.append(wrap);
 }
 async function loadArticle(obj,key){
-  const target=$('article');
-  target.replaceChildren(create('strong','','📚 Wissen aus mehreren Quellen'));
-  const official=officialKnowledge(obj);
+  const root=$('article');
+  root.replaceChildren(create('strong','','Geschichte, Architektur und Stadtwissen'));
+  const city=cityForObject(obj);
+  const official=officialKnowledge(obj).filter(ref=>ref.type==='amtlich');
+  const isBuilding=obj.kind==='Gebäude';
+  if(city){
+    const intro=isCityObject(obj,city)?
+      'Stadtprofil '+city.name+': Hier findest du offizielle Veröffentlichungen, weitere Wissensdatenbanken und den vollständigen Wikipedia-Stadtartikel.':
+      'Dieses Objekt liegt im Umfeld von '+city.name+
+      '. Die Stadtgeschichte wird nicht automatisch als Baugeschichte des ausgewählten Gebäudes ausgegeben.';
+    root.append(create('p','knowledge-summary',intro));
+    articleCityLinks(root,city);
+    if(!isCityObject(obj,city)){
+      const go=create('button','knowledge-city-button','← Zur Stadtübersicht '+city.name);
+      go.type='button';go.addEventListener('click',()=>openCityProfile(city));
+      root.append(go);
+    }
+  }
   if(official.length){
-    target.append(create('p','','Lokale Originalquellen mit belegten Kurzangaben:'));
-    for(const source of official)appendKnowledgeCard(target,source,true);
-  }else if(obj.kind==='Gebäude'){
-    target.append(create('p','','Für dieses Gebäude ist keine verifizierte Bauchronik hinterlegt. OSM-Gebäudeattribute werden separat angezeigt.'));
+    const bar=create('div','source-section-title');
+    bar.append(create('span','','🏛️ Amtliche Orts- und Kulturquellen'),
+      create('span','source-count',official.length+' Dokumente'));
+    root.append(bar);
+    for(const [i,source] of official.entries())
+      appendKnowledgeCard(root,source,true,i===0);
+  }else if(isBuilding){
+    root.append(create('p','knowledge-summary',
+      'Für dieses Gebäude ist keine verifizierte Bauchronik hinterlegt. Grundriss, Höhe und OSM-Attribute findest du unter «Überblick». Ein fehlendes Baujahr wird nicht geschätzt.'));
   }else{
-    target.append(create('p','','Noch keine amtliche Ortsbeschreibung hinterlegt. Ich prüfe Wikipedia und Wikidata als weitere Quellen …'));
+    root.append(create('p','knowledge-summary',
+      'Keine örtliche Originalbeschreibung direkt hinterlegt. Die offenen Wissensquellen werden zusätzlich geprüft; nicht belegte historische Angaben bleiben leer.'));
   }
   if(obj.kind==='Bushaltestelle')return;
-  if(obj.kind==='Gebäude'&&!obj.props?.wikidata&&!obj.props?.wikipedia)return;
-  const wiki=await lookupWikipedia(obj);
+  if(isBuilding&&!obj.props?.wikidata&&!obj.props?.wikipedia)return;
+  const bar=create('div','source-section-title');
+  bar.append(create('span','','📖 Weitere Wissensquellen'),
+    create('span','source-count','Wikipedia · Wikidata'));
+  root.append(bar);
+  const loading=create('p','source-provider','Prüfe ergänzende Artikel und deren Objektzuordnung …');
+  root.append(loading);
+  const results=await Promise.allSettled([lookupWikipedia(obj),lookupWikidata(obj)]);
   if(key!==state.articleRequest)return;
-  if(wiki){appendKnowledgeCard(target,wiki);return;}
-  const wd=await lookupWikidata(obj);
-  if(key!==state.articleRequest)return;
-  if(wd){appendKnowledgeCard(target,wd);return;}
-  if(!official.length)
-    target.append(create('p','','Kein eindeutig zugeordnetes historisches Dokument gefunden. Unter «Weitere Quellen» kannst du zusätzliche Archive und Karten öffnen.'));
+  loading.remove();
+  let count=0;
+  for(const result of results){
+    if(result.status==='fulfilled'&&result.value){
+      appendKnowledgeCard(root,result.value,false,count===0&&!official.length);
+      count++;
+    }
+  }
+  if(!count)
+    root.append(create('p','source-provider',
+      'Kein eindeutig zugeordnetes zusätzliches Dokument abrufbar. Die direkten Stadtlinks oben bleiben verfügbar.'));
 }
 let currentWeatherObj={name:SANTA.name,kind:'Ort',lat:SANTA.lat,lon:SANTA.lon};
 async function loadWeather(obj,key,force=false){
