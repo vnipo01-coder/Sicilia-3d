@@ -1,43 +1,31 @@
 <!doctype html>
 <html lang="de">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#092535">
-<meta name="description" content="SICILIA 3D – Geografischer Atlas Siziliens mit 3D-Gelände, Orten, Wetter, Gebäudeinformationen, begehbarem Dorfmodell und 3D-Flugzeugen.">
-<title>SICILIA 3D | Digital Island Explorer v8</title>
-<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.css">
-<link rel="stylesheet" href="./atlas.css?v=92">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102e40">
+  <meta name="description" content="SICILIA 3D: eine interaktive 3D-Karte Siziliens mit Stadtwissen, amtlichen Quellen, Wetter, Verkehr und 3D-Gebäuden.">
+  <meta http-equiv="refresh" content="0; url=./v10/?release=120">
+  <title>SICILIA 3D – Atlas & Stadtwissen</title>
+  <style>
+    :root{font:16px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif;color:#eafffa;
+      background:linear-gradient(140deg,#0c2537,#19515a)}
+    body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:24px}
+    main{max-width:480px;text-align:center}
+    h1{font-size:26px;letter-spacing:.05em}
+    p{color:#c6e3e1}
+    a{display:inline-block;padding:12px 20px;color:#eafffa;background:#237c80;
+      border:1px solid #95e6d8;border-radius:12px;text-decoration:none;font-weight:750}
+  </style>
+  <script>
+    location.replace(new URL('./v10/?release=120',location.href));
+  </script>
 </head>
 <body>
-<main id="map" role="application" aria-label="Interaktive 3D-Karte von Sizilien"></main>
-<header class="top">
-  <div class="brand glass"><strong>SICILIA <em>3D</em></strong><small>DIGITAL ISLAND EXPLORER · V9.2</small></div>
-  <div class="quicksearch glass">
-    <input id="search" type="search" placeholder="Stadt, Dorf, Piazza oder Strasse …" aria-label="Ort suchen">
-    <button id="search-go" aria-label="Suchen">⌕</button>
-  </div>
-  <div class="toplinks">
-    <a href="./v10/?release=105" class="glass" title="Neue SICILIA 3D Karte mit restaurierten Gebäuden und Wikipedia-Quellen" style="border-color:#81e3d4;color:#b6fff1">🌊 V10.5</a>
-    <a href="./walk.html" id="walk-launch" class="glass" title="Begehbare 3D-Umgebung an der aktuellen Kartenposition">🚶 Walk hier</a>
-    <a href="./airport.html" class="glass" title="Flugzeuge und Catania in 3D">✈️ Air</a>
-  </div>
-</header>
-<div id="status" class="status glass" role="status">Lade Sizilien …</div>
-<div id="legend" class="glass" hidden>🏔️ 3D-Relief</div>
-<nav class="fab glass" id="dock" aria-label="Kartenmenü">
-  <button data-pane="discover" type="button"><span>🧭</span>Orte</button>
-  <button data-pane="layers" type="button"><span>🗺️</span>Karte</button>
-  <button data-pane="knowledge" type="button"><span>📖</span>Wissen</button>
-  <button data-pane="weather" type="button"><span>🌦️</span>Wetter</button>
-  <button data-pane="flights" type="button"><span>✈️</span>Flüge</button>
-</nav>
-<section class="drawer glass" id="drawer" aria-label="Karteninformationen" hidden>
-  <div class="drawer-head"><h2 id="drawer-title">SICILIA 3D</h2>
-  <button id="drawer-close" class="iconbtn" aria-label="Menü schliessen">×</button></div>
-  <div id="drawer-content"></div>
-</section>
-<div style="display:none"><button id="quick-casalvecchio">Casalvecchio</button><button id="quick-piazza">Piazza Chiesa</button></div>
-<script src="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.js"></script>
-<script src="./atlas.js?v=92"></script>
+<main>
+  <h1>SICILIA 3D</h1>
+  <p>Die interaktive Karte mit 3D-Gebäuden, Stadtgeschichte, Originalquellen, Wetter und Verkehr wird geöffnet.</p>
+  <a href="./v10/?release=120">3D-Karte und Stadtwissen öffnen</a>
+</main>
 </body>
 </html>
