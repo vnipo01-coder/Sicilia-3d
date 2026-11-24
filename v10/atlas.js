@@ -7,6 +7,7 @@ import {architectureProfilesFor,architectureProperties,MATERIAL_NOTE} from './ar
 import {BUILDING_THEMES,BUILDING_LEGENDS,buildingColorExpression,colorNote} from './building-styles.js?v=132';
 import {CloudVisual} from './clouds.js?v=132';
 import {makeFlightTour,FLIGHT_STOPS} from './flight-tour.js?v=132';
+import {createHistoricalExplorer} from './history.js?v=140';
 
 /* SICILIA 3D v10.1 ATLAS PREVIEW – isolated from v9 main site.
    Grounded map source labels and source-aware object inspector. */
@@ -36,7 +37,7 @@ const ids={sat:'s10-satellite',color:'s10-color',shade:'s10-shade',build:'s10-bu
   roofs:'s10-roof-detail',outline:'s10-footprint-outline'};
 const state={mode:'relief',exaggeration:1,shade:true,buildings:true,peaks:false,
   selected:null,articleRequest:0,weatherRequest:0,loaded:false,wheelMode:'zoom',stops:true,
-  buildingTheme:'architecture',clouds:false,
+  buildingTheme:'architecture',clouds:false,historyHideBuildings:false,
   localBusy:false,localAt:0,localPosition:null,localCount:0,vectorSource:null,
   localDetail:false};
 const create=(tag,cls,text)=>{
@@ -143,6 +144,97 @@ $('sky-expand').onclick=()=>{
   $('sky-expand').setAttribute('aria-expanded',String(visible));
   $('sky-expand').textContent=visible?'⚙ Einstellungen schliessen':'⚙ Einstellungen';
 };
+
+
+// Actual history comes from Esri's published World Imagery Wayback WMTS catalog.
+// 3D GIS buildings always represent TODAY unless explicitly re-enabled.
+let previousHistoryMode='relief',historyLoading=false;
+const history=createHistoricalExplorer(map,{
+  onStatus(message){$('history-status').textContent=message;},
+  onAvailable({annual,releases}){
+    $('history-year').max=String(annual.length-1);
+    $('history-year').value=String(annual.length-1);
+    $('history-year').disabled=false;
+    $('history-back').disabled=false;
+    $('history-next').disabled=false;
+    $('history-play').disabled=false;
+    $('history-first').textContent=annual[0]?.date.slice(0,4)||'2014';
+    $('history-last').textContent=annual.at(-1)?.date.slice(0,4)||'Heute';
+    $('history-status').textContent=releases.length+
+      ' echte Archivveröffentlichungen verfügbar; '+annual.length+
+      ' jährliche Kartenstände für den Zeitraffer ausgewählt.';
+  },
+  onSelection({index,total,item}){
+    $('history-year').value=String(index);
+    $('history-current').textContent='Kartenstand '+item.date;
+    $('history-back').disabled=index===0;
+    $('history-next').disabled=index>=total-1;
+  },
+  onHistoryMode({active,keepModern}){
+    state.historyHideBuildings=active&&!keepModern;
+    if(active){
+      if(state.mode!=='sat'){
+        state.mode='sat';
+        for(const b of $('modes').querySelectorAll('button'))
+          b.classList.toggle('selected',b.dataset.mode==='sat');
+      }
+      if(clouds)clouds.setEnabled(false);
+    }else if(clouds&&state.clouds)clouds.setEnabled(true);
+    updateLayers();
+  },
+  onActive({active,playing}){
+    $('history-toggle').textContent=active?'✕ Zeitreise beenden':'🕰️ Zeitreise starten';
+    $('history-toggle').setAttribute('aria-expanded',String(active));
+    $('history-play').textContent=playing?'⏸ Zeitraffer pausieren':'▶ Zeitraffer';
+    $('history-studio').classList.toggle('is-open',active);
+    $('history-body').hidden=!active;
+  }
+});
+$('history-toggle').onclick=async()=>{
+  if(historyLoading)return;
+  if(history.active){history.deactivate();return;}
+  historyLoading=true;
+  $('history-body').hidden=false;
+  $('history-studio').classList.add('is-open');
+  $('history-toggle').textContent='⏳ Lade historische Bilder …';
+  previousHistoryMode=state.mode;
+  try{
+    // Keep controls usable while history loads; old Esri releases
+    // never include historically correct current 3D buildings.
+    await history.activate();
+    $('tools-body').hidden=true;$('tools-toggle').textContent='+';
+    if(!$('inspector').hidden){
+      $('inspector').hidden=true;document.body.classList.remove('has-inspector');
+    }
+  }catch(error){
+    $('history-toggle').textContent='↻ Zeitreise erneut versuchen';
+    // Preserve failure message and direct fallback to official Esri viewer.
+  }finally{historyLoading=false;}
+};
+$('history-year').oninput=e=>{
+  history.stopPlayback();
+  history.choose(Number(e.target.value));
+};
+$('history-back').onclick=()=>{
+  history.stopPlayback();
+  const index=history.annual.indexOf(history.selected);
+  history.choose(index-1);
+};
+$('history-next').onclick=()=>{
+  history.stopPlayback();
+  const index=history.annual.indexOf(history.selected);
+  history.choose(index+1);
+};
+$('history-play').onclick=()=>{
+  if(history.playing){history.stopPlayback();$('history-play').textContent='▶ Zeitraffer';}
+  else history.play(2000);
+};
+$('history-blend').oninput=e=>{
+  const opacity=Number(e.target.value);
+  history.setOpacity(opacity/100);
+  $('history-blend-label').textContent=opacity+' % Archivbild';
+};
+$('history-modern-buildings').onchange=e=>history.setModernBuildings(e.target.checked);
 
 // If OpenFreeMap cannot deliver a style at all, the atlas remains usable
 // with an independent raster satellite base map.
@@ -263,10 +355,10 @@ function updateLayers(){
   visible(ids.sat,state.mode==='sat');
   visible(ids.color,state.mode==='relief');
   visible(ids.shade,state.shade&&state.mode!=='map');
-  visible(ids.build,state.buildings);
-  visible(ids.local,state.buildings&&!state.localDetail);
-  visible(ids.roofs,state.buildings);
-  visible(ids.outline,state.buildings);
+  visible(ids.build,state.buildings&&!state.historyHideBuildings);
+  visible(ids.local,state.buildings&&!state.localDetail&&!state.historyHideBuildings);
+  visible(ids.roofs,state.buildings&&!state.historyHideBuildings);
+  visible(ids.outline,state.buildings&&!state.historyHideBuildings);
   visible(ids.peaks,state.peaks);
   visible(ids.poi,true);
 }
@@ -376,6 +468,7 @@ map.on('style.load',()=>{
   styleReady=true;
   try{
     prepareStyle();
+    history.styleReloaded();
     queueLocalBuildings();
     setStatus('● SICILIA 3D · Karte + 3D-Gebäude geladen');
   }catch(error){
