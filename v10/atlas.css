@@ -215,3 +215,11 @@ font-weight:650;background:#194f60;border:1px solid #8fdbd153;overflow-wrap:anyw
  .source-links-grid{gap:5px}
  .inspector-note{padding:7px 11px!important}
 }
+
+.knowledge-city-button{display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid #88e7d5;background:#25727d;color:#f2fffc;font:650 11px/1.4 inherit;
+  border-radius:9px;padding:9px 11px;cursor:pointer;margin:8px 4px 8px 0}
+.knowledge-city-button:hover{background:#2d8790}
+.knowledge-city-button:focus-visible,.info-tabs button:focus-visible,
+.city-navigation a:focus-visible,.source-entry summary:focus-visible{
+  outline:2px solid #b5fff0;outline-offset:2px}
