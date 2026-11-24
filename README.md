@@ -1,10 +1,16 @@
-# SICILIA 3D – 3D-Atlas, Architektur & Wetterwelt (v10.7)
+# SICILIA 3D – 3D-Atlas, historische Satellitenbilder & Stadtwissen (v10.8)
 
 **Öffnen:** https://vnipo01-coder.github.io/Sicilia-3d/
 
-Die GitHub-Pages-Startseite leitet automatisch zur aktuellen, einzigen Hauptanwendung unter \`/v10/\` weiter. Die Karte zeigt Sizilien mit 3D-Gebäuden, Geländemodell, Relief, Satellit, Stadtinformationen, Wetter und Bushaltestellen.
+Die GitHub-Pages-Startseite leitet automatisch zur aktuellen, einzigen Hauptanwendung unter \`/v10/\` weiter. Die Karte zeigt Sizilien mit farbigen 3D-Gebäuden, Geländemodell, Relief, Satellit, datierten Archiv-Luftbildern, Stadtinformationen, Wetter und Bushaltestellen.
 
 ## Was es jetzt gibt
+
+- **Sichtbare 3D-Gebäudefarben (v10.8):** Gebäude ohne verifizierte Kategorie werden jetzt anhand ihrer Feature-ID deutlich farblich unterschieden. Solche dekorativen Farben dürfen nicht als Fassadenfarbe oder Gebäudenutzung interpretiert werden. Ein Diagnosefeld meldet, ob 3D-Baukörper tatsächlich gerendert werden.
+- **Interaktive Gebäudeauswahl (v10.8):** Anklickbare 3D-Gebäude werden im Stadtatlas transparent goldfarben hervorgehoben.
+- **Echte Zeitreise seit 2014 (v10.8):** Esri World Imagery Wayback mit jährlichen archivierten Kartenständen, Zeitraffer-Wiedergabe und Vergleichsregler zwischen Archiv und aktuellem Satellitenhintergrund. Standardmässig sind die heutigen 3D-Gebäude während einer historischen Luftbildansicht ausgeblendet.
+- **Archiv-Ersatz bei Katalogausfällen:** drei öffentlich dokumentierte Wayback-Kartenstände von 2014, 2019 und 2023; eingeschränkter Modus wird im UI markiert. Zusätzlicher Link zu historischen gedruckten Karten (OldMapsOnline).
+
 
 - **Neu v10.7:** lebendigere Topografie, drei kartografische 3D-Gebäudefarbstile, zusätzliche OSM-Dachmerkmale und Konturlinien bei grossem Zoom.
 - **Architekturwissen:** zwölf quellenorientierte Fachprofile über Baugeschichte und Stadtmorphologie, unter anderem für Santa Teresa, Noto, Ragusa, Palermo, Taormina, Siracusa und Agrigento.
