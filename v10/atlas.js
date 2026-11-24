@@ -74,6 +74,69 @@ const map=new maplibregl.Map({
   bearing:startWholeIsland?-6:-22,
   maxPitch:80,antialias:true
 });
+// Clouds float over the MAP VIEW as a labelled atmospheric illustration.
+// They do not claim to reproduce live satellite-observed cloud positions.
+let clouds=null;
+try{
+  clouds=new CloudVisual($('weather-clouds'),map);
+  clouds.setIntensity(.7);
+  clouds.setEnabled(true);
+  state.clouds=true;
+  $('cloud-toggle').textContent='☁️ Wolken ausblenden';
+  $('cloud-toggle').classList.add('is-active');
+  $('cloud-toggle').setAttribute('aria-pressed','true');
+}catch(error){
+  console.warn('Atmospheric canvas unavailable:',error);
+  $('cloud-toggle').disabled=true;
+  $('sky-status').textContent='Wolkenanimation wird von diesem Browser nicht unterstützt.';
+}
+const flightTour=makeFlightTour(map,info=>{
+  const button=$('tour-toggle');
+  button.classList.toggle('is-active',Boolean(info.active));
+  button.setAttribute('aria-pressed',String(Boolean(info.active)));
+  button.textContent=info.active?'⏹ Rundflug stoppen':'🛩️ Inselrundflug';
+  if(info.active){
+    $('sky-status').textContent='🛩️ Station '+(info.index+1)+'/'+info.total+
+      ' · '+info.stop.name+' · Wolken = illustrative Wetteranimation';
+  }else if(info.reason){
+    $('sky-status').textContent=info.reason+
+      ' · Wolken basieren auf Wettermodellwerten, nicht auf Live-Satellitenbildern.';
+  }
+});
+$('cloud-toggle').onclick=()=>{
+  if(!clouds)return;
+  state.clouds=!state.clouds;
+  clouds.setEnabled(state.clouds);
+  $('cloud-toggle').textContent=state.clouds?'☁️ Wolken ausblenden':'☁️ Wolken einschalten';
+  $('cloud-toggle').classList.toggle('is-active',state.clouds);
+  $('cloud-toggle').setAttribute('aria-pressed',String(state.clouds));
+  if(!flightTour.active){
+    $('sky-status').textContent=state.clouds?
+      'Vorbeiziehende Wolken · anschauliche Simulation, nach Open-Meteo-Wind/Bewölkung':
+      'Wolken ausgeblendet · Relief und 3D-Gebäude unverändert.';
+  }
+};
+$('tour-toggle').onclick=()=>{
+  if(flightTour.active){flightTour.stop('Rundflug angehalten');return;}
+  flightTour.start(Number($('tour-speed').value));
+};
+$('tour-speed').oninput=e=>{
+  const speed=Number(e.target.value);
+  flightTour.setSpeed(speed);
+  $('tour-speed-label').textContent=speed.toFixed(2).replace(/0$/,'').replace('.',',')+'×';
+};
+$('cloud-opacity').oninput=e=>{
+  const v=Number(e.target.value);
+  if(clouds)clouds.setIntensity(v/100);
+  $('cloud-opacity-label').textContent=v+' %';
+};
+$('sky-expand').onclick=()=>{
+  const pane=$('sky-sliders'),visible=pane.hidden;
+  pane.hidden=!visible;
+  $('sky-expand').setAttribute('aria-expanded',String(visible));
+  $('sky-expand').textContent=visible?'⚙ Einstellungen schliessen':'⚙ Einstellungen';
+};
+
 // If OpenFreeMap cannot deliver a style at all, the atlas remains usable
 // with an independent raster satellite base map.
 let fallbackUsed=false;
@@ -690,6 +753,13 @@ async function loadWeather(obj,key,force=false){
     const raw=await getWeather(obj.lat,obj.lon,{fresh:force});
     if(key!==state.weatherRequest)return;
     const v=formatWeather(raw);
+    if(clouds)clouds.setWeather(raw.current);
+    if(!flightTour.active&&state.clouds){
+      const cover=Number(raw.current.cloud_cover),wind=Number(raw.current.wind_speed_10m);
+      $('sky-status').textContent='Modellpunkt '+obj.name+': '+(Number.isFinite(cover)?cover+' % Wolken':'Wolken unbekannt')+
+        ' · Wind '+(Number.isFinite(wind)?wind+' km/h':'unbekannt')+
+        ' · animierte, nicht geografisch exakt gemessene Wolkenpositionen';
+    }
     card.replaceChildren(create('strong','','🌦️ Aktuelles Wetter · '+obj.name),
       create('div','weather-main',v.emoji+' '+v.temp+' · '+v.label));
     const grid=create('div','weather-grid');
