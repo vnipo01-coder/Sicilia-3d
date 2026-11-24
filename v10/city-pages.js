@@ -45,8 +45,9 @@ export function cityByName(name){
 }
 export function cityForObject(obj){
   if(!obj||!Number.isFinite(obj.lat)||!Number.isFinite(obj.lon))return null;
-  const direct=cityByName(obj.name);
-  if(direct)return direct;
+  const direct=obj.kind==='Ort'?cityByName(obj.name):null;
+  if(direct&&metres(direct.lat,direct.lon,obj.lat,obj.lon)<=Math.max(direct.radius,1800))
+    return direct;
   const matches=CITY_PAGES.map(c=>({...c,distance:metres(c.lat,c.lon,obj.lat,obj.lon)}))
     .filter(c=>c.distance<=c.radius);
   matches.sort((a,b)=>a.distance-b.distance);
