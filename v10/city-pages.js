@@ -48,6 +48,9 @@ export function cityForObject(obj){
   const direct=obj.kind==='Ort'?cityByName(obj.name):null;
   if(direct&&metres(direct.lat,direct.lon,obj.lat,obj.lon)<=Math.max(direct.radius,1800))
     return direct;
+  // A different named town inside the city buffer is NOT that city.
+  // For example Furci Siculo must not inherit Santa Teresa's Wikipedia page.
+  if(obj.kind==='Ort'&&String(obj.name||'').trim())return null;
   const matches=CITY_PAGES.map(c=>({...c,distance:metres(c.lat,c.lon,obj.lat,obj.lon)}))
     .filter(c=>c.distance<=c.radius);
   matches.sort((a,b)=>a.distance-b.distance);
