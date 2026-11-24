@@ -255,7 +255,7 @@ async function loadOSM(){
 function getIonToken(){
   const t=$("ion-token").value.trim();
   if(t.length<20)throw Error("Bitte einen gültigen Cesium-ion-Token eingeben.");
-  Cesium.Ion.defaultAccessToken=t; // memory only; never GitHub/localStorage
+  Cesium.Ion.defaultAccessToken=t; // only in active JS memory; no persistent storage
   return t;
 }
 function setTokenState(message,error=false){
