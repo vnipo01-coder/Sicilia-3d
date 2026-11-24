@@ -41,6 +41,39 @@
   </div>
   <button id="sky-expand" class="sky-expand" type="button" aria-expanded="false">⚙ Einstellungen</button>
 </section>
+<section id="history-studio" class="glass" aria-label="Historische Satellitenbilder und Zeitreise">
+  <div class="history-title">
+    <button type="button" id="history-toggle" aria-expanded="false">🕰️ Zeitreise starten</button>
+    <span class="history-subtitle">ECHTE LUFTBILD-KARTENSTÄNDE · 2014–HEUTE</span>
+  </div>
+  <div id="history-body" hidden>
+    <p class="history-description">Esri World Imagery Wayback. Die Jahreszahlen kennzeichnen veröffentlichte Kartenstände, nicht zwingend das Aufnahmedatum des Luftbilds.</p>
+    <div class="history-year-row">
+      <span id="history-first">2014</span>
+      <strong id="history-current">Archiv verbinden …</strong>
+      <span id="history-last">Aktuell</span>
+    </div>
+    <input type="range" id="history-year" min="0" max="12" step="1" value="12" disabled
+      aria-label="Historischen Satelliten-Kartenstand auswählen">
+    <div class="history-actions">
+      <button id="history-back" type="button" disabled>‹ Jahr</button>
+      <button id="history-play" type="button" disabled>▶ Zeitraffer</button>
+      <button id="history-next" type="button" disabled>Jahr ›</button>
+    </div>
+    <label class="history-comparison">Vorher <input id="history-blend" type="range"
+      min="0" max="100" value="100" step="5" aria-label="Historisches Bild mit aktuellem Satellitenbild überblenden"> Nachher
+      <span id="history-blend-label">100 % historisch</span></label>
+    <label class="history-modern-label">
+      <input id="history-modern-buildings" type="checkbox">
+      Heutige 3D-Gebäude zusätzlich einblenden (nicht historisch)
+    </label>
+    <p id="history-status" class="history-status">Archiv wird erst beim Start geladen.</p>
+    <div class="history-sources">
+      <a href="https://livingatlas.arcgis.com/wayback/" target="_blank" rel="noopener noreferrer">Esri Wayback öffnen ↗</a>
+      <a href="https://www.oldmapsonline.org/" target="_blank" rel="noopener noreferrer">Historische Landkarten vor 2014 ↗</a>
+    </div>
+  </div>
+</section>
 <section id="tools" class="glass">
   <div class="tools-head"><span>🗺️ SICILIA KARTENSTUDIO</span><button id="tools-toggle" aria-label="Kartenstudio ein- oder ausklappen">−</button></div>
   <div id="tools-body">
