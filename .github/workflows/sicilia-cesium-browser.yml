@@ -1,0 +1,37 @@
+name: SICILIA Cesium visual browser review
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright for this graphical QA run
+        run: npm install --no-save playwright
+        working-directory: cesium
+      - name: Install headless Chromium and dependencies
+        run: npx playwright install --with-deps chromium
+        working-directory: cesium
+      - name: Start local preview server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/sicilia-cesium-server.log 2>&1 &
+          sleep 3
+      - name: Render desktop and mobile screenshots with stable test geometry
+        run: node tests/browser.smoke.mjs
+        working-directory: cesium
+        env:
+          SICILIA_TEST_URL: http://127.0.0.1:4173/cesium/
+          SICILIA_SCREENSHOTS: screenshots
+      - name: Save screenshot evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sicilia-cesium-browser-review
+          path: cesium/screenshots/
+          if-no-files-found: warn
