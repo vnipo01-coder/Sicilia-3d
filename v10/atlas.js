@@ -1,7 +1,8 @@
-import {isSicily,getBuildingHeight,propertyRows,getLocalOSM} from './geo.js?v=116';
-import {SANTA,STOPS,LOCAL_REFERENCES,LINKS,inSantaTeresa,contextualSources,streetImageryUrl,stopDetails} from './local-sources.js?v=116';
-import {getWeather,formatWeather,weatherLabel,weatherDescription} from './weather.js?v=116';
-import {lookupWikipedia,lookupWikidata,officialKnowledge} from './knowledge.js?v=116';
+import {isSicily,getBuildingHeight,propertyRows,getLocalOSM} from './geo.js?v=120';
+import {SANTA,STOPS,LOCAL_REFERENCES,LINKS,inSantaTeresa,contextualSources,streetImageryUrl,stopDetails} from './local-sources.js?v=120';
+import {getWeather,formatWeather,weatherLabel,weatherDescription} from './weather.js?v=120';
+import {lookupWikipedia,lookupWikidata,officialKnowledge} from './knowledge.js?v=120';
+import {CITY_PAGES,cityByName,cityForObject,isCityObject,cityInformation} from './city-pages.js?v=120';
 
 /* SICILIA 3D v10.1 ATLAS PREVIEW – isolated from v9 main site.
    Grounded map source labels and source-aware object inspector. */
@@ -267,30 +268,21 @@ map.on('error',e=>{
   console.warn('Externe Kartenkachel:',e.error?.message||e);
   if(!styleReady)setStatus('Kartenquelle lädt noch · Satelliten-Ersatzkarte wird bei Bedarf aktiviert');
 });
-function flyingWalkHref(){
-  const c=state.selected||
-    (map.getZoom()<11.5?PLACES.find(p=>p.name==='Santa Teresa di Riva'):
-      {lat:map.getCenter().lat,lon:map.getCenter().lng,name:'Kartenausschnitt Sizilien'});
-  const params=new URLSearchParams({
-    lat:c.lat.toFixed(6),lng:c.lon.toFixed(6),name:c.name});
-  $('walking').href='./explore.html?'+params;
-  $('detail-walk').href='./walk.html?'+params;
-}
 map.on('moveend',()=>{
-  if(!state.selected)flyingWalkHref();
   queueLocalBuildings();
 });
-map.on('dragstart',()=>{
-  // Deliberately moving the map changes the target of "Walk here".
-  state.selected=null;
-  flyingWalkHref();
-});
-$('walking').addEventListener('click',flyingWalkHref);
+// All selected places use the same 3D GIS map. There is no separate
+// low-quality 3D Walk / Coastal / Flight route in this release.
+$('city-overview').onclick=()=>{
+  const obj=state.selected;
+  const city=cityForObject(obj)||cityByName('Santa Teresa di Riva');
+  if(city)openCityProfile(city);
+};
 $('santateresa').onclick=()=>centerPlace(PLACES.find(p=>p.name==='Santa Teresa di Riva'));
 $('casal').onclick=()=>centerPlace(PLACES.find(p=>p.name==='Casalvecchio Siculo'));
 $('overview').onclick=()=>{
   state.selected=null;map.flyTo({center:[14.1,37.55],zoom:7.7,pitch:40,bearing:0,duration:1300});
-  $('inspector').hidden=true;flyingWalkHref();
+  $('inspector').hidden=true;
 };
 $('tools-toggle').onclick=()=>{
   $('tools-body').hidden=!$('tools-body').hidden;
@@ -401,9 +393,59 @@ function handleClick(e){
     kind,...location,props:p,source:'OpenStreetMap / OpenMapTiles'});
 }
 map.on('click',handleClick);
+function setInfoTab(tab){
+  const allowed=['overview','knowledge','sources','local'];
+  const active=allowed.includes(tab)?tab:'overview';
+  for(const b of $('info-tabs').querySelectorAll('[data-info-tab]')){
+    const selected=b.dataset.infoTab===active;
+    b.classList.toggle('is-active',selected);
+    b.setAttribute('aria-selected',String(selected));
+  }
+  for(const pane of $('inspector').querySelectorAll('[data-info-pane]'))
+    pane.hidden=pane.dataset.infoPane!==active;
+}
+$('info-tabs').addEventListener('click',event=>{
+  const button=event.target.closest('[data-info-tab]');
+  if(button)setInfoTab(button.dataset.infoTab);
+});
+function openCityProfile(city){
+  map.flyTo({center:[city.lon,city.lat],zoom:15.4,pitch:58,
+    bearing:map.getBearing(),duration:850});
+  select({name:city.name,kind:'Ort',lat:city.lat,lon:city.lon,
+    props:{},source:'Geprüftes Stadtprofil'});
+}
+function updateCityNavigation(obj){
+  const root=$('city-navigation');root.replaceChildren();
+  const city=cityForObject(obj);
+  if(!city){
+    root.append(create('span','source-provider','Kein verifiziertes Stadtprofil für diese Position.'));
+    return;
+  }
+  if(!isCityObject(obj,city)){
+    const button=create('button','','← Stadtprofil '+city.name);
+    button.type='button';button.addEventListener('click',()=>openCityProfile(city));
+    root.append(button);
+  }
+  root.append(link('📘 Wikipedia: '+city.name,city.wikipedia));
+  if(city.official){
+    const official=link('🏛️ Offizielle Stadtseite',city.official);
+    official.classList.add('home-link');root.append(official);
+  }
+}
+
 function select(obj){
   state.selected=obj;state.articleRequest++;state.weatherRequest++;
   $('inspector').hidden=false;$('object-title').textContent=obj.name;
+  setInfoTab('overview');
+  updateCityNavigation(obj);
+  const hint=$('overview-intro');
+  hint.textContent=obj.kind==='Gebäude'?
+    'Gebäudegrundriss und verfügbare Merkmale aus OpenStreetMap. 3D-Höhen ohne Messwert sind gekennzeichnete Modellannahmen.':
+    obj.kind==='Bushaltestelle'?
+    'Haltestellenstandort und Betreiberinformationen. Für Abfahrten den aktuellen Fahrplan prüfen.':
+    obj.kind==='Geländepunkt'?
+    'Gewählte Kartenposition. Hier sind Koordinaten und gegebenenfalls Geländehöhen verfügbar.':
+    'Überblick über den ausgewählten Ort mit verfügbaren Geodaten, Originalquellen, Geschichte und Wetter.';
   $('object-source').textContent=obj.kind+' · '+obj.source;
   const box=$('object-properties');box.replaceChildren();
   row(box,'Koordinaten',obj.lat.toFixed(5)+'° N / '+obj.lon.toFixed(5)+'° E');
@@ -420,47 +462,47 @@ function select(obj){
       row(box,'Baujahr','unbekannt · keine Rekonstruktion als Fakt');
   }
   const links=$('object-links');links.replaceChildren();
-  const visit='./walk.html?'+new URLSearchParams({
-    lat:obj.lat.toFixed(6),lng:obj.lon.toFixed(6),name:obj.name});
-  const walkingLink=create('a','','🎮 Hier 3D-Karte erkunden');
-  walkingLink.href='./explore.html?'+new URLSearchParams({
-    lat:obj.lat.toFixed(6),lng:obj.lon.toFixed(6),name:obj.name});
-  links.append(walkingLink);
-  const detailed=create('a','','🚶 Begehbares Ortsmodell');
-  detailed.href=visit;links.append(detailed);
-  links.append(link('🗺️ OpenStreetMap',
-    'https://www.openstreetmap.org/?mlat='+obj.lat+'&mlon='+obj.lon+'#map=18/'+obj.lat+'/'+obj.lon));
-  links.append(link('📚 Wikipedia-Suche',
-    'https://de.wikipedia.org/w/index.php?search='+encodeURIComponent(obj.name)));
-  if(obj.props?.wikidata&&/^Q\d+$/.test(obj.props.wikidata))
-    links.append(link('🔗 Wikidata','https://www.wikidata.org/wiki/'+obj.props.wikidata));
-  if(obj.props?.wikipedia){
-    const articleId=String(obj.props.wikipedia),parts=articleId.split(':');
-    const language=/^[a-z]{2,3}$/.test(parts[0])?parts.shift():'it';
-    links.append(link('📖 Direkt verknüpfter Wikipedia-Artikel',
-      'https://'+language+'.wikipedia.org/wiki/'+encodeURIComponent(parts.join(':'))));
+  const city=cityForObject(obj);
+  if(city&&!isCityObject(obj,city)){
+    const cityLink=create('button','','📖 Stadtprofil '+city.name);
+    cityLink.type='button';cityLink.className='knowledge-city-button';
+    cityLink.addEventListener('click',()=>openCityProfile(city));
+    links.append(cityLink);
   }
-  if(Math.hypot(obj.lat-37.95736,obj.lon-15.3223)<.014)
-    links.append(link('⛪ Gemeinde – Kirchen',
-      'https://comune.casalvecchiosiculo.me.it/tipi_luogo/chiesa/'));
-  $('detail-walk').href=visit;
-  $('walking').href=walkingLink.href;
-  const related=$('related');related.replaceChildren(
-    create('strong','','📚 Quellen für '+obj.name));
-  related.append(create('p','',
+  if(city?.official)links.append(link('🏛️ Gemeindewebsite',city.official));
+  if(city?.wikipedia)links.append(link('📘 Stadtartikel',city.wikipedia));
+  const related=$('related');
+  related.replaceChildren(create('strong','','Originalquellen und weiterführende Links'));
+  related.append(create('p','source-provider',
     obj.kind==='Gebäude'?
-      'Gebäudespezifische Angaben stammen aus OSM. Eine Ortschronik ist kein Beweis für das Baujahr dieses Hauses.':
-      'Für Orte und Sehenswürdigkeiten kannst du die verfügbaren Geschichts- und Kulturdatenbanken durchsuchen.'));
-  related.append(
-    link('Wikipedia (de)','https://de.wikipedia.org/w/index.php?search='+encodeURIComponent(obj.name)),
-    link('Wikipedia (it)','https://it.wikipedia.org/w/index.php?search='+encodeURIComponent(obj.name)),
-    link('Wikidata','https://www.wikidata.org/w/index.php?search='+encodeURIComponent(obj.name)),
-    link('OpenStreetMap','https://www.openstreetmap.org/?mlat='+obj.lat+'&mlon='+obj.lon+'#map=18/'+obj.lat+'/'+obj.lon)
-  );
-  if(obj.kind==='Gebäude'&&obj.props?.osm_id){
-    related.append(link('OSM-Gebäude '+obj.props.osm_id,
-      'https://www.openstreetmap.org/way/'+obj.props.osm_id));
+    'Gebäudedaten und Ortsgeschichte werden nicht vermischt. Die folgenden Links geben die jeweilige Herkunft an.':
+    'Direkte Stadtartikel und offizielle Websites, soweit zuverlässig bekannt. Weitere Datenquellen sind separat gekennzeichnet.'));
+  const grid=create('div','source-links-grid');
+  if(city){
+    for(const info of cityInformation(city))
+      grid.append(link(info.label+' ↗',info.url));
+  }else{
+    grid.append(link('Wikipedia: Suchergebnisse ↗',
+      'https://it.wikipedia.org/w/index.php?search='+encodeURIComponent(obj.name)));
   }
+  grid.append(link('OpenStreetMap ↗',
+    'https://www.openstreetmap.org/?mlat='+obj.lat+'&mlon='+obj.lon+'#map=18/'+obj.lat+'/'+obj.lon));
+  if(obj.props?.wikidata&&/^Q\d+$/.test(obj.props.wikidata))
+    grid.append(link('Wikidata: Objekt ↗','https://www.wikidata.org/wiki/'+obj.props.wikidata));
+  const rawWiki=String(obj.props?.wikipedia||'');
+  if(/^[a-z]{2,3}:.+/.test(rawWiki)){
+    const colon=rawWiki.indexOf(':'),language=rawWiki.slice(0,colon);
+    const title=rawWiki.slice(colon+1);
+    grid.append(link('Wikipedia: Objektartikel ↗',
+      'https://'+language+'.wikipedia.org/wiki/'+encodeURIComponent(title)));
+  }
+  if(obj.kind==='Gebäude'&&obj.props?.osm_id)
+    grid.append(link('Originales OSM-Gebäude ↗',
+      'https://www.openstreetmap.org/way/'+obj.props.osm_id));
+  if(Math.hypot(obj.lat-37.95736,obj.lon-15.3223)<.014)
+    grid.append(link('Casalvecchio: Kirchen ↗',
+      'https://comune.casalvecchiosiculo.me.it/tipi_luogo/chiesa/'));
+  related.append(grid);
   showTransport(obj);
   showStreetImagery(obj);
   loadArticle(obj,state.articleRequest);
@@ -623,11 +665,7 @@ function showStreetImagery(obj){
   target.append(link('📷 Vorhandene Aufnahmen prüfen',streetImageryUrl(obj.lat,obj.lon)));
 }
 
-flyingWalkHref();
-// A full-island overview otherwise starts EXPLORE in empty countryside.
-// The first quick-entry intentionally defaults to the Casalvecchio pilot.
-$('walking').title='Bei Inselübersicht zuerst Casalvecchio; nach Ortsauswahl der gewählte Ort';
-$('detail-walk').title='Detaillierter 3D Walk mit tatsächlichen OSM-Gebäuden soweit vorhanden';
+// Keep the 3D map as the only first-party immersive surface.
 // Start with the entire island in view, instead of a very close-up
 // potentially not-yet-rendered village view.
 setStatus(startWholeIsland?'Lade Sizilien – Inselatlas …':'Lade Santa Teresa di Riva – Küste und 3D-Gebäude …');
