@@ -33,7 +33,7 @@ export class CloudVisual{
     this.resizeHandler=()=>this.resize();
     window.addEventListener('resize',this.resizeHandler);
     this.visibilityHandler=()=>{
-      if(this.enabled&&!document.hidden&&!this.raf){
+      if(this.enabled&&!this.reducedMotion&&!document.hidden&&!this.raf){
         this.prev=0;this.raf=requestAnimationFrame(this.frame);
       }
     };
@@ -84,7 +84,8 @@ export class CloudVisual{
   setEnabled(value){
     this.enabled=Boolean(value);
     this.canvas.hidden=!this.enabled;
-    if(this.enabled&&!this.raf){this.prev=0;this.raf=requestAnimationFrame(this.frame);}
+    if(this.enabled&&this.reducedMotion){this.prev=0;this.draw(0);}
+    else if(this.enabled&&!this.raf){this.prev=0;this.raf=requestAnimationFrame(this.frame);}
     if(!this.enabled&&this.raf){
       cancelAnimationFrame(this.raf);this.raf=0;
       this.ctx.clearRect(0,0,this.w,this.h);
