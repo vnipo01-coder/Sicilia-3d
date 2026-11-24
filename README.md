@@ -4,6 +4,13 @@
 
 Die GitHub-Pages-Startseite leitet automatisch zur aktuellen, einzigen Hauptanwendung unter \`/v10/\` weiter. Die Karte zeigt Sizilien mit farbigen 3D-Gebäuden, Geländemodell, Relief, Satellit, datierten Archiv-Luftbildern, Stadtinformationen, Wetter und Bushaltestellen.
 
+## Cesium-Referenzwelt – neuer Entwicklungsschwerpunkt
+
+**Neu:** [Santa Teresa di Riva in CesiumJS erkunden](https://vnipo01-coder.github.io/Sicilia-3d/cesium/).
+Die bisherige MapLibre-Anwendung bleibt erhalten. Im `cesium/`-Ordner entsteht ein eigenständiger Qualitäts-Pilot: Satellitenkacheln, echte OSM-Gebäudegrundrisse und Strassen, Architekturwissen mit Quellennachweisen und Live-Wettermodellwerte. Optional können Cesium World Terrain, Cesium OSM Buildings oder Google Photorealistic 3D Tiles über einen eigenen, eingeschränkten Cesium-ion-Token zugeschaltet werden. Das deutsche/i​talienische LiDAR-Register wird zunächst auditiert, nicht als vorhandenes Terrain behauptet. Die Pilotansicht ohne Token ist noch kein fotorealistischer digitaler Zwilling.
+
+**Qualitätsprüfung:** `cesium/package.json`, `cesium/tests/`, automatischer GitHub-Check sowie manuell startbarer Browser-Workflow mit Screenshots. [Daten- und Qualitätshandbuch](cesium/README.md).
+
 ## Was es jetzt gibt
 
 - **Sichtbare 3D-Gebäudefarben (v10.8):** Gebäude ohne verifizierte Kategorie werden jetzt anhand ihrer Feature-ID deutlich farblich unterschieden. Solche dekorativen Farben dürfen nicht als Fassadenfarbe oder Gebäudenutzung interpretiert werden. Ein Diagnosefeld meldet, ob 3D-Baukörper tatsächlich gerendert werden.
