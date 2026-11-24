@@ -18,7 +18,7 @@ export class CloudVisual{
     this.map=map;
     this.ctx=canvas.getContext('2d',{alpha:true});
     if(!this.ctx)throw Error('Kein Canvas-Kontext für Wolken');
-    this.cover=38;this.wind=12;this.direction=280;
+    this.cover=38;this.modelCover=38;this.demo=false;this.wind=12;this.direction=280;
     this.enabled=false;this.intensity=1;this.prev=0;this.raf=0;
     this.sprites=[];
     this.cloudSprite=this.makeCloud();
@@ -69,9 +69,16 @@ export class CloudVisual{
     this.w=innerWidth;this.h=innerHeight;this.scale=scale;
   }
   setWeather(weather={}){
-    if(Number.isFinite(weather.cloud_cover))this.cover=clamp(weather.cloud_cover,0,100);
+    if(Number.isFinite(weather.cloud_cover)){
+      this.modelCover=clamp(weather.cloud_cover,0,100);
+      this.cover=this.demo?68:this.modelCover;
+    }
     if(Number.isFinite(weather.wind_speed_10m))this.wind=clamp(weather.wind_speed_10m,0,160);
     if(Number.isFinite(weather.wind_direction_10m))this.direction=weather.wind_direction_10m;
+  }
+  setDemo(enabled){
+    this.demo=Boolean(enabled);
+    this.cover=this.demo?68:this.modelCover;
   }
   setIntensity(value){this.intensity=clamp(value,0,1);}
   setEnabled(value){
