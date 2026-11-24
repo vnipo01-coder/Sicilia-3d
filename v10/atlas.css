@@ -217,7 +217,7 @@ font-weight:650;background:#194f60;border:1px solid #8fdbd153;overflow-wrap:anyw
 }
 
 .knowledge-city-button{display:inline-flex;align-items:center;justify-content:center;
-  border:1px solid #88e7d5;background:#25727d;color:#f2fffc;font:650 11px/1.4 inherit;
+  border:1px solid #88e7d5;background:#25727d;color:#f2fffc;font-family:inherit;font-size:11px;font-weight:650;line-height:1.4;
   border-radius:9px;padding:9px 11px;cursor:pointer;margin:8px 4px 8px 0}
 .knowledge-city-button:hover{background:#2d8790}
 .knowledge-city-button:focus-visible,.info-tabs button:focus-visible,
