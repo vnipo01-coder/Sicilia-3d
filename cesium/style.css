@@ -116,3 +116,21 @@ dialog p{font-size:12px;color:#c6dfe1;line-height:1.7}
  .sidebar{height:43dvh}
  .quality-metrics strong{font-size:17px}
 }
+
+.weather-indicator{font-size:11px;font-weight:750;color:#c7f4e6;
+ padding:7px 10px;border:1px solid #99d7d05e;border-radius:10px;
+ background:#14455a;text-align:center;white-space:nowrap}
+.place-overlay h3{color:#b9f5dc;font-size:12px;margin:16px 0 8px}
+.architecture-record{border:1px solid #81c7bb6a;border-radius:10px;
+ background:#174151;padding:10px;margin:9px 0}
+.architecture-record summary{cursor:pointer;font-size:12px;line-height:1.5;
+ font-weight:780;color:#f1fff8}
+.architecture-record p{font-size:11px!important;line-height:1.75!important}
+.architecture-record a{display:inline-block;margin:5px 3px;color:#adf5e1;
+ padding:5px 7px;border:1px solid #7bbdb370;border-radius:6px;font-size:10px}
+@media(max-width:850px){
+ .weather-indicator{position:fixed;top:59px;left:7px;
+ font-size:10px;padding:5px 8px}
+ .topbar .top-right{margin-left:auto}
+ .topbar .brand small{max-width:180px}
+}
