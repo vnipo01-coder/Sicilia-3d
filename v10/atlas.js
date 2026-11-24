@@ -32,7 +32,8 @@ const src={
   satellite:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
 };
 const ids={sat:'s10-satellite',color:'s10-color',shade:'s10-shade',build:'s10-buildings',
-  peaks:'s10-peaks',poi:'s10-poi',cloud:'s10-cloud',local:'s10-local-buildings'};
+  peaks:'s10-peaks',poi:'s10-poi',cloud:'s10-cloud',local:'s10-local-buildings',
+  roofs:'s10-roof-detail',outline:'s10-footprint-outline'};
 const state={mode:'relief',exaggeration:1,shade:true,buildings:true,peaks:false,
   selected:null,articleRequest:0,weatherRequest:0,loaded:false,wheelMode:'zoom',stops:true,
   buildingTheme:'architecture',clouds:false,
@@ -113,14 +114,14 @@ function prepareStyle(){
   const labels=layers.find(l=>l.type==='symbol'&&l.layout?.['text-field'])?.id;
   addLayer({id:ids.color,type:'color-relief',source:'s10-shade-dem',
     paint:{'color-relief-color':['interpolate',['linear'],['elevation'],
-      -120,'#207392',0,'#95c3a8',120,'#b2c99c',350,'#90af83',
-      750,'#c4ba87',1300,'#cda889',2100,'#a99b90',2800,'#d1cac0',
-      3500,'#f5f1e8'],'color-relief-opacity':.63}},labels);
+      -120,'#3895bd',0,'#e9dab1',120,'#a4d48b',350,'#74bb82',
+      750,'#66a47d',1300,'#d0b579',2100,'#c49182',2800,'#aba2c0',
+      3500,'#f1ebed'],'color-relief-opacity':.7}},labels);
   addLayer({id:ids.sat,type:'raster',source:'s10-aerial',
     paint:{'raster-opacity':1,'raster-fade-duration':150}},labels);
   addLayer({id:ids.shade,type:'hillshade',source:'s10-shade-dem',
-    paint:{'hillshade-exaggeration':.36,'hillshade-shadow-color':'#50695e',
-      'hillshade-highlight-color':'#f9e8c8','hillshade-accent-color':'#7a8975'}},labels);
+    paint:{'hillshade-exaggeration':.55,'hillshade-shadow-color':'#435b71',
+      'hillshade-highlight-color':'#fff2c9','hillshade-accent-color':'#7d8b6c'}},labels);
   // MapLibre's official 3D buildings example uses an independent OpenFreeMap
   // vector source. Do not assume a raster/satellite style has one.
   const builtIn=Object.entries(map.getStyle().sources||{}).find(
@@ -145,12 +146,11 @@ function prepareStyle(){
     addLayer({id:ids.build,type:'fill-extrusion',source,'source-layer':'building',
       minzoom:13.4,filter:['!=',['get','hide_3d'],true],
       paint:{
-        'fill-extrusion-color':['interpolate',['linear'],guessed,
-          0,'#e5ceae',12,'#ceb9a1',34,'#aeb6ae',85,'#7696a4'],
+        'fill-extrusion-color':buildingColorExpression(state.buildingTheme,false),
         'fill-extrusion-height':['interpolate',['linear'],['zoom'],
           13.4,0,14.1,['*',guessed,0.7],15,guessed],
         'fill-extrusion-base':['coalesce',['to-number',['get','render_min_height']],0],
-        'fill-extrusion-opacity':0.95
+        'fill-extrusion-opacity':0.97,'fill-extrusion-vertical-gradient':true
       }},labels);
     addLayer({id:ids.peaks,type:'circle',source,'source-layer':'mountain_peak',minzoom:12.4,
       filter:['all',['has','name'],['>=',['to-number',['get','ele'],0],700]],
@@ -165,12 +165,27 @@ function prepareStyle(){
     type:'FeatureCollection',features:[]}});
   addLayer({id:ids.local,type:'fill-extrusion',source:'s10-local-src',minzoom:14,
     paint:{
-      'fill-extrusion-color':['case',['get','estimated'],'#bdab95','#a9c4c4'],
+      'fill-extrusion-color':buildingColorExpression(state.buildingTheme,true),
       'fill-extrusion-base':0,
       'fill-extrusion-height':['interpolate',['linear'],['zoom'],14,0,15,
         ['to-number',['get','height_m'],9]],
-      'fill-extrusion-opacity':0.93
+      'fill-extrusion-opacity':0.97,'fill-extrusion-vertical-gradient':true
     }},labels);
+  // A thin cap is rendered ONLY when the original roof:height tag exists.
+  // This does not claim to reproduce an actual roof pitch or facade.
+  addLayer({id:ids.roofs,type:'fill-extrusion',source:'s10-local-src',minzoom:16,
+    filter:['all',['has','roof:height'],['>', ['to-number',['get','roof:height'],0],.3]],
+    paint:{
+      'fill-extrusion-color':['match',['get','roof:material'],
+        'metal','#84949a','tiles','#c27e62','slate','#788aa7',
+        'wood','#b8926d','#d9a17c'],
+      'fill-extrusion-base':['max',0,['-',['to-number',['get','height_m'],9]],
+        ['to-number',['get','roof:height'],0]],
+      'fill-extrusion-height':['to-number',['get','height_m'],9],
+      'fill-extrusion-opacity':.96,'fill-extrusion-vertical-gradient':true
+    }},labels);
+  addLayer({id:ids.outline,type:'line',source:'s10-local-src',minzoom:16.5,
+    paint:{'line-color':'#f6ead9','line-opacity':.5,'line-width':1.3}},labels);
   updateLayers();
 }
 function updateLayers(){
@@ -179,6 +194,8 @@ function updateLayers(){
   visible(ids.shade,state.shade&&state.mode!=='map');
   visible(ids.build,state.buildings);
   visible(ids.local,state.buildings);
+  visible(ids.roofs,state.buildings);
+  visible(ids.outline,state.buildings);
   visible(ids.peaks,state.peaks);
   visible(ids.poi,true);
 }
