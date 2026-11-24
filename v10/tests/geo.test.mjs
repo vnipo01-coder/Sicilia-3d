@@ -54,6 +54,7 @@ test('A mapped landmark links to its nearest city, not every city in Sicily',()=
   assert.equal(santa.name,'Santa Teresa di Riva');
   assert.ok(isCityObject({name:SANTA.name,kind:'Ort'},santa));
   assert.equal(cityForObject({kind:'Geländepunkt',lat:35.8,lon:13.2}),null);
+  assert.equal(cityForObject({kind:'Ort',name:'Furci Siculo',lat:37.954,lon:15.377}),null);
 });
 test('A random home does not inherit town history or invented construction dates',()=>{
   assert.deepEqual(contextualSources({...SANTA,kind:'Gebäude',name:'Unbekanntes Haus'}),[]);
