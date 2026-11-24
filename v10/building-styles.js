@@ -39,7 +39,7 @@ export function architectureColorExpression(local=false){
     'concrete','#b4bac0','plaster','#e4cdb7','wood','#ba9c7d',
     color];
   return ['case',
-    ['==',toNum('estimated'),1],color,
+    ['boolean',prop('estimated'),false],color,
     materialColor];
 }
 export function heightColorExpression(local=false){
