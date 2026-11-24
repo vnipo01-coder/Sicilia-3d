@@ -319,7 +319,11 @@ const cameraActions={
   'tilt-down':()=>map.easeTo({pitch:Math.max(0,map.getPitch()-12),duration:220}),
   'turn-left':()=>map.easeTo({bearing:map.getBearing()-25,duration:230}),
   'turn-right':()=>map.easeTo({bearing:map.getBearing()+25,duration:230}),
-  'camera-reset':()=>map.easeTo({pitch:48,bearing:0,duration:400})
+  'camera-reset':()=>map.easeTo({pitch:48,bearing:0,duration:400}),
+  'street-perspective':()=>map.easeTo({
+    pitch:78,zoom:Math.max(map.getZoom(),17.2),
+    bearing:map.getBearing(),duration:600
+  })
 };
 for(const [key,fn] of Object.entries(cameraActions))$(key).onclick=fn;
 $('wheel-mode').onclick=()=>{
