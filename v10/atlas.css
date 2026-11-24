@@ -223,3 +223,69 @@ font-weight:650;background:#194f60;border:1px solid #8fdbd153;overflow-wrap:anyw
 .knowledge-city-button:focus-visible,.info-tabs button:focus-visible,
 .city-navigation a:focus-visible,.source-entry summary:focus-visible{
   outline:2px solid #b5fff0;outline-offset:2px}
+
+
+/* v10.7 — bright geographic visual system, faithful underlying map features */
+#weather-clouds{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:4}
+#weather-clouds[hidden]{display:none!important}
+#sky-studio{position:fixed;z-index:13;top:176px;left:14px;width:min(375px,calc(100vw - 28px));
+ border-radius:14px;padding:10px 12px;background:#0c3043e6;display:flex;flex-direction:column;gap:7px;
+ border-color:#7debd66b}
+.sky-studio-title{font-size:12px;font-weight:800;color:#e5fff9;display:flex;align-items:center;gap:8px}
+.sky-studio-title span{font-size:9px;font-weight:650;letter-spacing:.07em;color:#7ed8e3}
+.sky-actions{display:flex;gap:7px}
+.sky-actions button{flex:1;min-width:0;cursor:pointer;border:1px solid #89d6da70;
+ border-radius:9px;padding:9px 5px;background:#1c6070;color:#e7fff9;font-size:11px;font-weight:750}
+.sky-actions button:hover{background:#288498}
+.sky-actions button.is-active{background:#277f78;border-color:#a9ffdd;box-shadow:inset 0 0 0 1px #ffffff22}
+.sky-description{font-size:10px;color:#b9d8db;line-height:1.4}
+.sky-sliders{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sky-sliders[hidden]{display:none}
+.sky-sliders label{font-size:10px;color:#e5ffff}
+.sky-sliders strong{float:right;font-size:10px}
+.sky-sliders input{width:100%;accent-color:#8af0d2}
+.sky-expand{align-self:flex-end;color:#95e0d5;background:transparent;border:0;padding:1px 0;
+ font-size:10px;cursor:pointer}
+.building-theme-ui{padding:10px;border:1px solid #92dbcd50;background:#163f4e;
+ border-radius:11px;margin-top:13px}
+.building-theme-ui>label{font-size:12px;font-weight:800;color:#e6fff9;display:block;margin-bottom:7px}
+.building-theme-ui select{width:100%;appearance:auto;padding:10px 9px;border-radius:8px;
+ border:1px solid #8cddcd76;background:#214d5e;color:white;cursor:pointer;font-size:12px}
+.building-legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-top:10px}
+.building-legend .swatch{display:flex;gap:6px;align-items:center;min-width:0;font-size:10px;color:#cfebe7}
+.building-legend .swatch i{width:15px;height:15px;border-radius:4px;display:inline-block;flex:none;border:1px solid #ffffff4d}
+.color-note{margin:9px 0 1px;color:#9fc5c8;font-size:10px;line-height:1.5}
+.arch-essay{padding:13px 12px;margin:11px 0;background:#153f50;border:1px solid #8cc6c14d;border-radius:12px}
+.arch-essay h3{font-size:15px;color:#eafff5;margin:1px 0 7px;letter-spacing:-.02em}
+.arch-essay .arch-era{font-size:10px;color:#a6d9d1;font-weight:750;letter-spacing:.025em;margin-bottom:8px}
+.arch-essay p{font-size:12px!important;line-height:1.8!important;color:#d9e8e8!important;margin:9px 0!important}
+.arch-essay .arch-source-link{display:inline-flex;padding:8px 9px;margin:6px 5px 0 0;
+ font-size:11px;text-decoration:none;border:1px solid #76d6c872;background:#17616d;
+ color:#d8fff5;border-radius:8px}
+.arch-essay .arch-source-link:hover{background:#29818b}
+.arch-category{display:block;color:#8fd7cc;font-size:10px;font-weight:800;margin:7px 0;letter-spacing:.08em}
+.arch-properties{margin:12px 0;border-top:1px solid #ffffff25;padding-top:11px}
+.arch-properties .architecture-attribute{display:flex;justify-content:space-between;
+ gap:8px;border-bottom:1px solid #ffffff1b;padding:8px 0;font-size:11px}
+.arch-properties .architecture-attribute span:first-child{color:#acced1}
+.arch-properties .architecture-attribute span:last-child{font-weight:700;max-width:65%;text-align:right}
+.camera{background:#102e43e8;border-color:#87dac95c}
+#street-perspective{background:#267f74;border-color:#9af5c3}
+@media(min-width:751px){
+ #tools{max-height:53dvh}
+ body.has-inspector .camera{right:466px;top:132px}
+ body.has-inspector #sky-studio{max-width:340px}
+}
+@media(max-width:750px){
+ #sky-studio{top:103px;left:8px;right:auto;width:min(330px,calc(100vw - 16px));
+ padding:8px 9px;gap:4px}
+ .sky-studio-title{font-size:10px}
+ .sky-studio-title span{font-size:8px}
+ .sky-actions button{padding:7px 4px;font-size:10px}
+ .sky-description{font-size:9px}
+ .camera{top:239px;right:8px}
+ #tools{max-height:43dvh}
+ body.has-inspector .camera{display:none}
+ .building-legend{gap:4px}
+ .arch-essay{padding:10px}
+}
