@@ -1,7 +1,7 @@
 /* v10.7 – thematic architecture profiles with factual source attribution.
    Historical explanations are linked to city/landmark; generic architecture
    reading is never described as a documented history of an unnamed house. */
-import {cityForObject} from './city-pages.js?v=131';
+import {cityForObject} from './city-pages.js?v=132';
 const UNESCO_BAROQUE='https://whc.unesco.org/en/list/1024/';
 const UNESCO_NORMAN='https://whc.unesco.org/en/list/1487/';
 const ITALIAN_UNESCO='https://unesco.cultura.gov.it/en/projects/late-baroque-towns-of-the-val-di-noto-south-eastern-sicily/';
