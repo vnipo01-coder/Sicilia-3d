@@ -1,6 +1,6 @@
 # SICILIA 3D v10.7 – Farbiges Relief, Architekturwissen & Wetterwelt
 
-**Release 131 · 24. November 2026**
+**Release 132 · 24. November 2026**
 
 Die öffentliche Hauptseite https://vnipo01-coder.github.io/Sicilia-3d/ leitet weiterhin direkt zur einzigen integrierten Kartenanwendung unter \`/v10/\` weiter. Die zuvor entfernten eigenen Walk-/Coastal-/Flughafenansichten bleiben bewusst entfernt.
 
