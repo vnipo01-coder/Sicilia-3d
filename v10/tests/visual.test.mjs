@@ -44,6 +44,12 @@ test('Architecture readings extend to certified UNESCO cities but not random bui
   assert.ok(architectureProfilesFor({name:'Noto',kind:'Ort',lat:noto.lat,lon:noto.lon})
     .some(p=>p.id==='baroque-noto'));
   assert.match(MATERIAL_NOTE,/keine historischen Befunde/);
+  for(const [place,id] of [['Siracusa','siracusa-strata'],['Taormina','taormina-teatro'],['Agrigento','agrigento-valle']]){
+    const c=cityByName(place);
+    const docs=architectureProfilesFor({name:place,kind:'Ort',lat:c.lat,lon:c.lon});
+    assert.ok(docs.some(p=>p.id===id),place+' architectural source dossier');
+    assert.ok(docs.some(p=>p.sources.some(x=>x.url.startsWith('https://'))));
+  }
 });
 test('Real building metadata is distinguished from missing roof dimensions',()=>{
   const props=architectureProperties({
