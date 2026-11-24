@@ -14,7 +14,7 @@ export function weatherLabel(code){return code===null||code===undefined?['ðŸŒ¡ï¸
 export function weatherParams(lat,lon){
   return new URLSearchParams({
     latitude:String(lat),longitude:String(lon),
-    current:'temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,cloud_cover,wind_speed_10m,precipitation,is_day',
+    current:'temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,cloud_cover,wind_speed_10m,wind_direction_10m,precipitation,is_day',
     hourly:'temperature_2m,precipitation_probability,weather_code,cloud_cover',
     forecast_days:'2',timezone:'Europe/Rome'
   });
