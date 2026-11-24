@@ -1,8 +1,12 @@
-import {isSicily,getBuildingHeight,propertyRows,getLocalOSM} from './geo.js?v=121';
-import {SANTA,STOPS,LOCAL_REFERENCES,LINKS,inSantaTeresa,contextualSources,streetImageryUrl,stopDetails} from './local-sources.js?v=121';
-import {getWeather,formatWeather,weatherLabel,weatherDescription} from './weather.js?v=121';
-import {lookupWikipedia,lookupWikidata,officialKnowledge} from './knowledge.js?v=121';
-import {CITY_PAGES,cityByName,cityForObject,isCityObject,cityInformation} from './city-pages.js?v=121';
+import {isSicily,getBuildingHeight,propertyRows,getLocalOSM} from './geo.js?v=130';
+import {SANTA,STOPS,LOCAL_REFERENCES,LINKS,inSantaTeresa,contextualSources,streetImageryUrl,stopDetails} from './local-sources.js?v=130';
+import {getWeather,formatWeather,weatherLabel,weatherDescription} from './weather.js?v=130';
+import {lookupWikipedia,lookupWikidata,officialKnowledge} from './knowledge.js?v=130';
+import {CITY_PAGES,cityByName,cityForObject,isCityObject,cityInformation} from './city-pages.js?v=130';
+import {architectureProfilesFor,architectureProperties,MATERIAL_NOTE} from './architecture.js?v=130';
+import {BUILDING_THEMES,BUILDING_LEGENDS,buildingColorExpression,colorNote} from './building-styles.js?v=130';
+import {CloudVisual} from './clouds.js?v=130';
+import {makeFlightTour,FLIGHT_STOPS} from './flight-tour.js?v=130';
 
 /* SICILIA 3D v10.1 ATLAS PREVIEW – isolated from v9 main site.
    Grounded map source labels and source-aware object inspector. */
@@ -31,6 +35,7 @@ const ids={sat:'s10-satellite',color:'s10-color',shade:'s10-shade',build:'s10-bu
   peaks:'s10-peaks',poi:'s10-poi',cloud:'s10-cloud',local:'s10-local-buildings'};
 const state={mode:'relief',exaggeration:1,shade:true,buildings:true,peaks:false,
   selected:null,articleRequest:0,weatherRequest:0,loaded:false,wheelMode:'zoom',stops:true,
+  buildingTheme:'architecture',clouds:false,
   localBusy:false,localAt:0,localPosition:null,localCount:0,vectorSource:null};
 const create=(tag,cls,text)=>{
   const el=document.createElement(tag);if(cls)el.className=cls;
