@@ -1,12 +1,12 @@
-import {isSicily,getBuildingHeight,propertyRows,getLocalOSM} from './geo.js?v=130';
-import {SANTA,STOPS,LOCAL_REFERENCES,LINKS,inSantaTeresa,contextualSources,streetImageryUrl,stopDetails} from './local-sources.js?v=130';
-import {getWeather,formatWeather,weatherLabel,weatherDescription} from './weather.js?v=130';
-import {lookupWikipedia,lookupWikidata,officialKnowledge} from './knowledge.js?v=130';
-import {CITY_PAGES,cityByName,cityForObject,isCityObject,cityInformation} from './city-pages.js?v=130';
-import {architectureProfilesFor,architectureProperties,MATERIAL_NOTE} from './architecture.js?v=130';
-import {BUILDING_THEMES,BUILDING_LEGENDS,buildingColorExpression,colorNote} from './building-styles.js?v=130';
-import {CloudVisual} from './clouds.js?v=130';
-import {makeFlightTour,FLIGHT_STOPS} from './flight-tour.js?v=130';
+import {isSicily,getBuildingHeight,propertyRows,getLocalOSM} from './geo.js?v=131';
+import {SANTA,STOPS,LOCAL_REFERENCES,LINKS,inSantaTeresa,contextualSources,streetImageryUrl,stopDetails} from './local-sources.js?v=131';
+import {getWeather,formatWeather,weatherLabel,weatherDescription} from './weather.js?v=131';
+import {lookupWikipedia,lookupWikidata,officialKnowledge} from './knowledge.js?v=131';
+import {CITY_PAGES,cityByName,cityForObject,isCityObject,cityInformation} from './city-pages.js?v=131';
+import {architectureProfilesFor,architectureProperties,MATERIAL_NOTE} from './architecture.js?v=131';
+import {BUILDING_THEMES,BUILDING_LEGENDS,buildingColorExpression,colorNote} from './building-styles.js?v=131';
+import {CloudVisual} from './clouds.js?v=131';
+import {makeFlightTour,FLIGHT_STOPS} from './flight-tour.js?v=131';
 
 /* SICILIA 3D v10.1 ATLAS PREVIEW – isolated from v9 main site.
    Grounded map source labels and source-aware object inspector. */
