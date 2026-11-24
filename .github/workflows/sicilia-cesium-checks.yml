@@ -1,0 +1,36 @@
+name: SICILIA Cesium reference pilot checks
+on:
+  push:
+    paths:
+      - 'cesium/**'
+      - '.github/workflows/sicilia-cesium-checks.yml'
+  pull_request:
+    paths:
+      - 'cesium/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cesium-pilot:
+    name: Source integrity and geometry
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cesium
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and deterministic geometry tests
+        run: npm run check
+      - name: Verify no tracked access token
+        run: |
+          if grep -R -n -E 'Ion\.defaultAccessToken[[:space:]]*=[[:space:]]*["\x27][A-Za-z0-9._-]{40,}' \
+            --include='*.js' --include='*.html' .; then
+            echo "A hardcoded Cesium token may be present"; exit 1
+          fi
+      - name: Validate dataset source audit
+        run: node -e "const a=require('./data-audit.json');if(!a.sources?.length||a.sources.some(x=>!x.status||!x.license))process.exit(1)"
