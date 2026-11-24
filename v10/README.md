@@ -22,10 +22,13 @@ Die öffentliche Hauptseite https://vnipo01-coder.github.io/Sicilia-3d/ leitet w
 - **Wichtige Grenze:** Farben sind kartografische Kategorien, **keine echten Fassadenrekonstruktionen**; auch die Dachzonen sind vereinfacht. Nicht alle OpenMapTiles-Vektorkacheln enthalten detaillierte Typen.
 
 ### 3. Ausführlicheres Architekturwissen
-Separates Modul \`architecture.js\` mit neun quellenorientierten Fachprofilen für:
+Separates Modul \`architecture.js\` mit zwölf quellenorientierten Fachprofilen für:
 - Santa Teresa di Riva: Chiesa del Sacro Cuore, Chiesa della Sacra Famiglia, Villa Crisafulli-Ragno, Torre Catalmo und Küsten-Stadtmorphologie
 - Noto, Ragusa, Catania: spätbarocke Architektur im Val di Noto mit UNESCO-Quellen
 - Palermo: arabisch-normannische Architektur mit UNESCO-Quellen
+- Taormina: antikes Theater mit Originalquelle der Regione Siciliana
+- Siracusa/Ortigia: UNESCO-Welterbe und architektonische Zeitschichten
+- Agrigento: dorische Tempelarchitektur mit UNESCO- und archäologischer Parkquelle
 
 Jedes Profil enthält mehrere ausführliche Absätze zu Baugeschichte, städtebaulichem Zusammenhang, möglicher Methodik der Architekturbeobachtung und Datenlimits, mit direkten Quellen. Bei OSM-Gebäuden werden dokumentierte \`height\`, \`building:levels\`, \`building:material\`, \`building:colour\`, \`roof:shape\`, \`roof:material\`, \`roof:height\`, \`start_date\`, \`historic\` etc. angezeigt, soweit vorhanden. **Ein allgemeines Stadtprofil gilt nie als Nachweis eines einzelnen Haus-Baujahrs.**
 
