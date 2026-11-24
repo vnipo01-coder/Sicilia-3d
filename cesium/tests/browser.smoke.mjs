@@ -32,7 +32,7 @@ try{
  await page.locator("#cesiumContainer canvas").first().waitFor({state:"visible",timeout:60000});
  await page.waitForFunction(
   ()=>document.querySelector("#building-count")?.textContent==="2",
-  {timeout:60000});
+  null,{timeout:60000});
  assert.equal(await page.locator("#building-count").textContent(),"2");
  assert.equal(await page.locator("#road-count").textContent(),"1");
  assert.equal(await page.locator("#measured-count").textContent(),"1");
