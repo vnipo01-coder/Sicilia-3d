@@ -99,6 +99,6 @@ test('The published app has no broken links to removed mini apps',()=>{
     assert.ok(!html.includes(route),'old mini-app route '+route);
     assert.ok(!js.includes("'./"+route),'old JS mini-app route '+route);
   }
-  assert.match(html,/atlas\.js\?v=132/);
-  assert.match(html,/atlas\.css\?v=132/);
+  assert.match(html,/atlas\.js\?v=141/);
+  assert.match(html,/atlas\.css\?v=141/);
 });
