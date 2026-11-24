@@ -378,6 +378,10 @@ function wireUI(){
   $("terrain-enable").onclick=()=>runIon("terrain");
   $("tiles-enable").onclick=()=>runIon("tiles");
   $("photo-enable").onclick=()=>runIon("photo");
+  $("osm-mode").onclick=()=>{
+    setMode("osm");
+    setTokenState("Zur freien OSM-Kartenansicht zurückgekehrt. Hochwertige Geländedaten bleiben aktiv, sofern sie bereits erfolgreich geladen wurden.");
+  };
   $("quality-form").addEventListener("submit",e=>{e.preventDefault();$("quality-dialog").close();});
 }
 try{
