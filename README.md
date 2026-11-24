@@ -1,64 +1,37 @@
-# SICILIA 3D – Professional Geo Atlas v9.0
+# SICILIA 3D – 3D-Atlas und Stadtwissen (v10.6)
 
-Ein geografischer 3D-Atlas von Sizilien mit Kartenansicht, lokal begehbaren 3D-Modellen und einem Flight Explorer.
+**Öffnen:** https://vnipo01-coder.github.io/Sicilia-3d/
 
-## Ansichten
+Die GitHub-Pages-Startseite leitet automatisch zur aktuellen, einzigen Hauptanwendung unter \`/v10/\` weiter. Die Karte zeigt Sizilien mit 3D-Gebäuden, Geländemodell, Relief, Satellit, Stadtinformationen, Wetter und Bushaltestellen.
 
-- Kartenatlas: https://vnipo01-coder.github.io/Sicilia-3d/
-- Orts-Spaziergang: https://vnipo01-coder.github.io/Sicilia-3d/walk.html
-- Flughafen in 3D: https://vnipo01-coder.github.io/Sicilia-3d/airport.html
+## Was es jetzt gibt
 
-## Dateien
+- **Eine 3D-Karte statt drei fehleranfälliger Spezialansichten.** Die separat entwickelten Walking-, Küsten- und Flughafen-Explorer wurden auf ausdrücklichen Wunsch aus der öffentlichen Website und dem aktuellen Main-Branch gelöscht. Der frühere Stand ist im Zweig \`archive-pre-v10-6-walk-air\` erhalten.
+- **Schnelle Ortsnavigation:** Städte direkt auswählen oder suchen. Standardansicht ist Santa Teresa di Riva, über «Insel» die Übersicht.
+- **3D-Kamera:** Mausrad zoomt oder lässt sich per Schalter auf Neigen umstellen; Shift kehrt die Funktion um. Mit der rechten Maustaste ziehen, separate Dreh- und Neigebuttons, sowie «Bodennahe 3D-Ansicht» für hohen Pitch und Nahzoom.
+- **Strukturierte Wissensansicht:** Überblick, Geschichte, Quellen, Alltag. Stadtübersicht direkt aus einer Sehenswürdigkeit oder einem Objekt öffnen.
+- **Direkte Stadthomepages:** Statt lediglich Suchergebnisse zu zeigen, öffnen sichtbare Links den Wikipedia-Stadtartikel und – wo geprüft – die offizielle Gemeindewebsite. Ein Stadtprofil wird nur nach geografisch plausibler Zuordnung angeboten.
+- **Belegte Quellen:** Einzelne aufklappbare Originalquellen; amtliche und Wikipedia-/Wikidata-Informationen klar getrennt. Baujahre und Höhen werden nicht als sichere Fakten erfunden.
+- **Wetter und Verkehr:** Open-Meteo-Modellwerte mit Zeitstempel und Sechs-Stunden-Trend; Santa-Teresa-Haltestellen mit Betreiberlinks. Keine ungesicherten Live-Buszeiten.
 
-- index.html, atlas.css, atlas.js: MapLibre-Karte, 3D-Gelände, Höhenfarben, Satellitenbild, Wetter, OSM-Objekte und Wissensfenster.
-- walk.html, walk.js: Three.js-Ortsmodell für frei wählbare Sizilien-Koordinaten über die URL-Parameter lat, lng und name.
-- airport.html, airport.js: 3D-Flugzeuge, klar bezeichnete Landedemo und optional echte ADS-B-Daten mit eigenem FlyItalyADSB-Schlüssel.
-- app.js, v5.js, v6.js, style.css: alte Versionen, im Atlas v8 nicht mehr eingebunden.
+## Genauigkeit und Grenzen
 
-## Änderungen in Version 9
-- 3D Walk: Standardtempo 9 m/s statt 2.4 m/s; frei einstellbar (2–22 m/s), Shift für doppelte Geschwindigkeit, Mausrad für Tempo, Maus einfangen für FPS-Blicksteuerung und verbesserte Kollisionen an Hauswänden.
-- Desktop-Karte: separate kompakte Buttons zum Neigen, Senken, Drehen und Zurücksetzen der Kamera; Mausradwahl weiterhin im Kartenmenü.
-- Catania: 2'436 × 45 m Startbahn 08/26 als schematische Basis, modellierte Vorfelder, Rollwege, Parkpositionen und zusätzliche OSM-Layer, sofern diese geladen werden können.
-- Flugbewegungen: längere Annäherung aus der Entfernung, klar erkennbare simulierte Landung und Ausrollphase. Keine Simulation wird als Live-Messung bezeichnet.
-- ADS-B: sichtbarer Button «API-Schlüssel aktivieren & Live verbinden», Verbindungsanzeige, Details zu Fehlern sowie FlyItalyADSB als dokumentierter Dienst mit gültigem Schlüssel. Ohne Schlüssel kein echter Live-Datensatz.
+Die **3D-Gebäude sind GIS-Volumenmodelle** aus OSM-/OpenMapTiles-Daten, keine vollständigen fotorealistischen Fassadenaufnahmen. Eine bodennahe Kartenperspektive ist deshalb nicht Google Street View. Wo Daten fehlen, bleibt die Information ausdrücklich offen.
 
-## Steuerung am Computer
+Die statische Website nutzt externe Karten- und Wissensdienste. Wenn diese langsam oder blockiert sind, kann sich der betreffende Datenbereich verzögern; die restliche Anwendung soll benutzbar bleiben. Verlässliche öffentliche Skalierung würde ein eigenes Datenbackend und Caching benötigen.
 
-- Mausrad: Karte zoomen; Shift + Mausrad: Kartenneigung verändern.
-- Rechte Maustaste halten und ziehen: Karte drehen/neigen (MapLibre).
-- Karte > Kamerasteuerung: Pitchregler und Nordausrichtung.
-- Orte oder Gebäude anklicken: verfügbare Attribute, Links, Herkunft und lokaler 3D-Spaziergang.
-- Gipfel-Punkte sind wegen Überfüllung standardmässig deaktiviert. Im Menü Karte können sie eingeschaltet werden; bei niedrigen Zoomstufen erscheinen keine Gipfelmarker.
+## Entwicklung und Tests
 
-## Begehbares Modell
+Code unter \`v10/\`, Tests mit \`cd v10 && npm run check\` (Node.js 22).
+Der Workflow \`.github/workflows/sicilia-v10-checks.yml\` kontrolliert die Syntax und die Unit-Tests. Browser-Rendering und tatsächlich erreichbare öffentliche Datenendpunkte müssen zusätzlich praktisch getestet werden.
 
-Die Walking-Engine lädt OSM-Baugrundrisse und Wege für einen lokalen Umkreis von bis zu etwa 370 Metern, ausserdem Terrain-Kacheln von Mapzen/AWS. Kein vollständiger fotorealistischer Zwilling: Fassaden, Turmgeometrie, Dächer, Fenster und unbekannte Gebäudehöhen werden teilweise prozedural erzeugt. Ein gezeigter Kirchenturm ist ausdrücklich eine illustrative Form, auch wenn die Kirchenfunktion aus OSM stammt.
+**Geprüfte Quellen** für Stadtprofile und Architektur:
+- https://www.comune.santateresadiriva.me.it/
+- https://www.comune.palermo.it/
+- https://www.comune.catania.it/
+- https://www.comune.taormina.me.it/
+- https://it.wikipedia.org/wiki/Santa_Teresa_di_Riva
+- https://www.wikidata.org/wiki/Q498938
+- https://open-meteo.com/en/docs
 
-Die Szene funktioniert auch ausserhalb von Casalvecchio mit gültigen Sizilien-Koordinaten. Wenn keine OpenStreetMap-Daten laden, zeigt die Anwendung eine als schematisch gekennzeichnete Ersatzszene. Nicht alle Gebäude sind erfasst, nicht alle Informationen liegen vor.
-
-## Flugverkehr
-
-Der Flight Explorer zeigt zunächst eine modellierte, ausdrücklich nicht reale Landung. Für echte gemeldete Positionen kann eine Person einen eigenen FlyItalyADSB-API-Schlüssel eingeben. Die App fragt https://api.flyitalyadsb.com/v2/lat/37.4668/lon/15.0664/dist/55 direkt im Browser ab. Der Schlüssel wird nicht im GitHub-Repository gespeichert oder serverseitig verwaltet; er ist während Netzwerkanfragen in den Browser-Werkzeugen sichtbar. API-Limits, CORS und Bedingungen des Dienstes bleiben relevant.
-
-Bei erlaubten ADS-B-Antworten wird maximal 20 Sekunden Bewegung aus aktueller Richtung und Bodengeschwindigkeit extrapoliert. Eine eventuelle Annäherungszeit ist eine grobe Rechnung aus empfangenen Messungen; keine bestätigte Landezeit oder Flugplaninformation. Offizielle Ankunfts- und Abflugtafeln des Flughafens Catania sind verlinkt. Ohne Schlüssel bzw. gültige Daten werden keine Flüge als live ausgegeben.
-
-## Herkunft und Unsicherheit
-
-- Höhen: Mapzen/AWS Terrarium DEM, bei fehlenden Daten eine als Modell bezeichnete Ersatz-Topografie.
-- Kartenobjekte: OpenStreetMap / OpenMapTiles, regionale Abdeckung und Attributvollständigkeit variieren.
-- Luftbild: Esri und Datenpartner, nicht live.
-- Wetter und Wolken: Open-Meteo-Modellwerte und grobe räumliche Bewölkungsstichprobe, keine echten Wolkenbilder.
-- Ortswissen: Wikipedia/Wikidata/OSM und amtliche Kulturquellen, soweit öffentlich. Titelgleichheit ist kein Beweis für die Objektzuordnung.
-- Fehlende Baujahre werden nicht erfunden; modellierte Gebäudehöhen sind nicht als amtliche Messwerte zu verstehen.
-
-## Nächste technische Schritte
-
-1. Sichtprüfung im Browser (Chrome/Firefox) und mit den Entwicklertools auf Fehler, WebGL und externe APIs.
-2. Für bestimmte Gemeinden amtliche sizilianische LiDAR-/Orthofotodaten aufbereiten, reprojizieren und als Cloud-Optimized GeoTIFF und 3D Tiles bereitstellen.
-3. Quellen- und Qualitätsdatenbank pro Gebäude (OSM-ID, Wikidata-ID, amtliche Kennung, Dokumentationsstatus, Vertrauensniveau).
-4. Lizensierte Photogrammetrie und genaue Architekturmodelle für einzelne Orte statt beliebiger Schätzungen.
-5. Ein eigenes Backend für Live-Daten mit Caching, CORS, API-Schlüsseln, Datenschutz und Monitoring.
-
-## Nutzung / Nachweise
-
-© OpenStreetMap-Mitwirkende, OpenFreeMap, Mapzen/AWS, Esri und Bilddatenpartner, Open-Meteo, Wikimedia-Mitwirkende, Three.js. Vor einer kommerziellen Nutzung müssen die jeweiligen API- und Datenlizenzen geprüft werden.
+Mehr technische Details: [v10/README.md](v10/README.md).
