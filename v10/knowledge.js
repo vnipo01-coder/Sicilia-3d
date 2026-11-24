@@ -1,6 +1,6 @@
 /* v10.5 open knowledge: official municipality cards, Wikipedia, Wikidata.
  * Titles alone are not proof of matching a building. */
-import {contextualSources} from './local-sources.js?v=132';
+import {contextualSources} from './local-sources.js?v=141';
 export function officialKnowledge(obj){return contextualSources(obj);}
 async function jsonFetch(url,timeoutMs=7500){
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeoutMs);
