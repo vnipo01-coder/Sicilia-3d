@@ -1,4 +1,4 @@
-# SICILIA 3D – 3D-Atlas und Stadtwissen (v10.6)
+# SICILIA 3D – 3D-Atlas, Architektur & Wetterwelt (v10.7)
 
 **Öffnen:** https://vnipo01-coder.github.io/Sicilia-3d/
 
@@ -6,6 +6,10 @@ Die GitHub-Pages-Startseite leitet automatisch zur aktuellen, einzigen Hauptanwe
 
 ## Was es jetzt gibt
 
+- **Neu v10.7:** lebendigere Topografie, drei kartografische 3D-Gebäudefarbstile, zusätzliche OSM-Dachmerkmale und Konturlinien bei grossem Zoom.
+- **Architekturwissen:** zwölf quellenorientierte Fachprofile über Baugeschichte und Stadtmorphologie, unter anderem für Santa Teresa, Noto, Ragusa, Palermo, Taormina, Siracusa und Agrigento.
+- **Wetterwelt:** animierte Wolkendarstellung aus Open-Meteo-Windrichtung und Modellbewölkung, jederzeit abschaltbar; ausdrücklich gekennzeichneter Demomodus bei klarem Himmel. Die Wolkenpositionen sind illustrativ, nicht beobachtet.
+- **Inselrundflug:** geführte Kameraansicht über elf Orte, mit variablem Tempo und jederzeitiger Unterbrechung.
 - **Eine 3D-Karte statt drei fehleranfälliger Spezialansichten.** Die separat entwickelten Walking-, Küsten- und Flughafen-Explorer wurden auf ausdrücklichen Wunsch aus der öffentlichen Website und dem aktuellen Main-Branch gelöscht. Der frühere Stand ist im Zweig \`archive-pre-v10-6-walk-air\` erhalten.
 - **Schnelle Ortsnavigation:** Städte direkt auswählen oder suchen. Standardansicht ist Santa Teresa di Riva, über «Insel» die Übersicht.
 - **3D-Kamera:** Mausrad zoomt oder lässt sich per Schalter auf Neigen umstellen; Shift kehrt die Funktion um. Mit der rechten Maustaste ziehen, separate Dreh- und Neigebuttons, sowie «Bodennahe 3D-Ansicht» für hohen Pitch und Nahzoom.
