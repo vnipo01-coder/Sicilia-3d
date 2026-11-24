@@ -8,6 +8,17 @@ export const WAYBACK_CONFIGS=[
   'https://config.maptiles.arcgis.com/waybackconfig.json'
 ];
 export const WAYBACK_APP='https://livingatlas.arcgis.com/wayback/';
+/* These three release identifiers are documented in public Esri/Wayback
+   sources. This is an intentionally SMALL fallback, not an annual archive. */
+export const VERIFIED_FALLBACK=Object.freeze([
+  {itemTitle:'World Imagery (Wayback 2014-02-20)',releaseNum:10},
+  {itemTitle:'World Imagery (Wayback 2019-05-15)',releaseNum:9598},
+  {itemTitle:'World Imagery (Wayback 2023-12-07)',releaseNum:56102}
+].map(item=>({
+  ...item,
+  itemURL:'https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/'+item.releaseNum+'/{level}/{row}/{col}'
+})));
+
 const DATE=/((?:19|20)\d{2})-(\d{2})-(\d{2})/;
 export function parseWaybackConfig(raw){
   let rows=[];
@@ -61,7 +72,10 @@ export async function loadWaybackCatalog(){
     }catch(e){last=e;}
     finally{clearTimeout(id);}
   }
-  throw new Error('Esri-Wayback-Katalog nicht erreichbar: '+String(last?.message||'unbekannt'));
+  const fallback=parseWaybackConfig(VERIFIED_FALLBACK);
+  fallback.limited=true;
+  fallback.reason='Vollständiger Esri-Katalog nicht erreichbar: '+String(last?.message||'unbekannt');
+  return fallback;
 }
 export function createHistoricalExplorer(map,controls={}){
   const {onStatus=()=>{},onSelection=()=>{},onAvailable=()=>{},
@@ -134,6 +148,8 @@ export function createHistoricalExplorer(map,controls={}){
     }
     active=true;
     choose(index);
+    if(catalog.limited)show('Nur '+catalog.length+
+      ' verifizierte Archiv-Kartenstände verfügbar (2014, 2019, 2023). Vollständiger Esri-Katalog im Browser nicht erreichbar.');
     onHistoryMode({active,keepModern});
     onActive({active,playing:false});
   }
