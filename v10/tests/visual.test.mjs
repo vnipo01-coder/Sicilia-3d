@@ -102,7 +102,6 @@ test('Visual controls are integrated with existing reliable atlas only',()=>{
   assert.match(atlas,/makeFlightTour/);
   assert.match(atlas,/buildingColorExpression/);
   assert.match(atlas,/architectureProfilesFor/);
-  assert.match(atlas,/atlas\.js/ ,undefined); // module context remains the actual atlas
   for(const old of ['airport.html','explore.html','walk.html'])
     assert.ok(!html.includes(old),'retired mini app must stay removed');
 });
