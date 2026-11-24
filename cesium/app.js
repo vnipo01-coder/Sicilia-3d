@@ -4,6 +4,8 @@
  * quality classes. We label every one and never fake detailed facades.
 */
 import {PILOT,PLACES,fetchPilotOsm,SOURCE_LINKS} from "./core.js?v=1";
+import {architectureProfilesFor,architectureProperties} from "../v10/architecture.js?v=132";
+import {getWeather,formatWeather} from "../v10/weather.js?v=132";
 const $=id=>document.getElementById(id);
 const Cesium=window.Cesium;
 if(!Cesium){
@@ -158,6 +160,45 @@ function showFeature(info){
     if(info.tags?.ref)infoRow(detail,"Referenz",info.tags.ref);
     const p=document.createElement("p");p.textContent="Abfahrtszeiten werden nicht erfunden: Vor der Fahrt aktuelle Betreiberfahrpläne prüfen.";detail.append(p);
   }
+  if(info.type==="building"){
+    const centre=info.ring?.reduce((acc,p)=>({
+      lat:acc.lat+p.lat/info.ring.length,
+      lon:acc.lon+p.lon/info.ring.length
+    }),{lat:0,lon:0});
+    if(centre){
+      const papers=architectureProfilesFor({
+        name:info.name,kind:"Gebäude",lat:centre.lat,lon:centre.lon
+      });
+      if(papers.length){
+        const heading=document.createElement("h3");
+        heading.textContent="Quellenorientiertes Architekturwissen";detail.append(heading);
+        for(const paper of papers){
+          const section=document.createElement("details");
+          section.className="architecture-record";
+          section.open=true;
+          const summary=document.createElement("summary");
+          summary.textContent=paper.title+" · "+paper.era;section.append(summary);
+          for(const para of paper.paragraphs){
+            const p=document.createElement("p");p.textContent=para;section.append(p);
+          }
+          for(const src of paper.sources){
+            const a=addLink("Originalquelle: "+src.title,src.url);
+            if(a)section.append(a);
+          }
+          detail.append(section);
+        }
+      }
+    }
+    const known=architectureProperties(info.tags);
+    if(known.length){
+      const h=document.createElement("h3");h.textContent="Weitere dokumentierte OSM-Bauattribute";
+      detail.append(h);
+      for(const p of known){
+        if(!["Bauwerkstyp","Geschosse","Messhöhe","Dachform"].includes(p.label))
+          infoRow(detail,p.label,p.value);
+      }
+    }
+  }
   const match=/^(way|node)\/(\d+)$/.exec(info.id);
   if(match)links.append(addLink("Originales OSM-Objekt",SOURCE_LINKS.osm+match[1]+"/"+match[2]));
   links.append(addLink("Offizielle Gemeinde",SOURCE_LINKS.comune));
@@ -301,6 +342,22 @@ async function runIon(action){
     for(const id of ["terrain-enable","tiles-enable","photo-enable"])$(id).disabled=false;
   }
 }
+let weatherBusy=false;
+async function refreshPilotWeather(){
+  if(weatherBusy)return;weatherBusy=true;
+  try{
+    const data=await getWeather(PILOT.lat,PILOT.lon,{fresh:true});
+    const v=formatWeather(data);
+    $("pilot-weather").textContent=v.emoji+" "+v.temp+" · "+
+      v.label+" · "+v.wind;
+    $("pilot-weather").title="Open-Meteo-Wettermodell · Modellzeit "+
+      v.time+" (Italien), abgerufen "+new Date(data.fetched).toLocaleTimeString("de-CH")+
+      (data.stale?" (ältere Cachewerte)":"");
+  }catch(e){
+    $("pilot-weather").textContent="🌦️ Wetter momentan nicht verfügbar";
+    $("pilot-weather").title="Externer Wetterdienst fehlgeschlagen, 3D-Viewer bleibt nutzbar";
+  }finally{weatherBusy=false;}
+}
 function wireUI(){
   document.querySelectorAll("[data-place]").forEach(button=>{
     button.onclick=()=>viewPlace(button.dataset.place);
@@ -326,6 +383,8 @@ function wireUI(){
 try{
   await initViewer();
   wireUI();
+  refreshPilotWeather(); // independent of imagery and Overpass
+  setInterval(()=>{if(!document.hidden)refreshPilotWeather();},6*60*1000);
   await loadOSM();
 }catch(e){
   loader("3D-Viewer konnte nicht gestartet werden: "+String(e.message||e),true);
