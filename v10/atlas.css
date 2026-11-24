@@ -126,3 +126,92 @@ footer{position:fixed;right:12px;bottom:8px;color:#eff7f1;font-size:9px;text-sha
  #live-weather{top:63px;left:8px;right:42%;max-width:none;padding:6px 8px;font-size:10px}
  #weather .hour-strip div{min-width:65px}
 }
+
+
+/* SICILIA 3D v10.6 — calmer, readable object knowledge interface */
+.inspector{
+  width:min(440px,calc(100vw - 28px));
+  top:108px;bottom:22px;right:14px;
+  padding:0;border-radius:18px;display:flex;flex-direction:column;
+  background:#102c3cf5;box-shadow:0 16px 44px #03152370;
+}
+.inspector[hidden]{display:none}
+.inspector-head{padding:16px 18px 12px;gap:12px;flex:none;align-items:start}
+.inspector-title-group{min-width:0;flex:1}
+.inspector-eyebrow{display:block;font-size:10px;color:#9fc9ce;font-weight:700;letter-spacing:.075em;margin-bottom:4px}
+.inspector-head h2{font-size:21px;line-height:1.28;letter-spacing:-.025em;margin:0 0 10px}
+.inspector-head .close-inspector{font-size:25px;line-height:1;border:1px solid #abdcda45;
+background:#163c4d;border-radius:9px;color:white;width:33px;height:34px;flex:none}
+.city-navigation{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.city-navigation a,.city-navigation button{display:inline-flex;align-items:center;gap:4px;
+font-size:11px;font-weight:650;line-height:1.4;padding:7px 9px;text-decoration:none;color:#dafff8;
+border:1px solid #88e0d16b;border-radius:8px;background:#19586a;max-width:100%}
+.city-navigation a:hover,.city-navigation button:hover{background:#257585}
+.city-navigation button{cursor:pointer}
+.city-navigation .home-link{background:#247178;border-color:#8de5d5}
+.info-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;
+border-top:1px solid #ffffff17;border-bottom:1px solid #ffffff24;background:#102e40;flex:none}
+.info-tabs button{padding:12px 3px;border:0;border-bottom:3px solid transparent;
+background:transparent;color:#b0ced1;font-size:11px;font-weight:650;cursor:pointer;
+text-align:center;white-space:nowrap}
+.info-tabs button:hover{background:#ffffff0d;color:#f1ffff}
+.info-tabs button.is-active{border-bottom-color:#79e4d0;color:white;background:#215361}
+.info-pane{overflow-y:auto;overscroll-behavior:contain;padding:16px 18px;flex:1;min-height:0}
+.info-pane[hidden]{display:none}
+.inspector-note{flex:none;margin:0!important;border-top:1px solid #ffffff1e;
+padding:10px 16px!important;font-size:10px!important;line-height:1.4!important;
+color:#a5c6c8!important;background:#0b2433b8}
+.info-hint{font-size:12px;color:#bad9da;line-height:1.6;margin-bottom:13px;padding:10px 12px;
+border-radius:9px;background:#ffffff0b;border-left:2px solid #7fdcca}
+.object-grid{display:grid;grid-template-columns:1fr;gap:0}
+.object-grid .row{padding:10px 4px;border-bottom:1px solid #ffffff1d;
+align-items:start;font-size:12px;line-height:1.5}
+.object-grid .row span{color:#b5d0d3;min-width:35%}
+.object-grid .row strong{font-weight:650;overflow-wrap:anywhere;max-width:62%;text-align:right}
+.primary-links{display:flex;gap:7px;flex-wrap:wrap;margin:15px 0}
+.primary-links a{background:#22737a!important;color:white!important;
+border:1px solid #8be1d7!important;font-weight:700;padding:9px 12px!important}
+.knowledge-section,.sources-section,.info-pane .information,.info-pane .weather{
+background:transparent!important;border:0!important;padding:0!important;
+margin:0!important;box-shadow:none
+}
+.knowledge-section>strong,.sources-section>strong{display:block;font-size:14px;
+margin:3px 0 10px;color:#edffff}
+.knowledge-summary{background:#164354;border-radius:11px;padding:12px;margin:10px 0 13px;
+font-size:12px;color:#cfebeb;line-height:1.6}
+.source-section-title{display:flex;justify-content:space-between;align-items:center;
+margin:16px 0 9px;font-size:12px;font-weight:800;color:#dcf5f2}
+.source-count{font-size:10px;font-weight:600;color:#a8cbd0}
+.source-entry{margin:8px 0!important;border:1px solid #aed9d343!important;
+border-radius:12px!important;background:#123c4f!important;padding:0!important}
+.source-entry summary{cursor:pointer;padding:12px;list-style:none;display:flex;gap:8px;
+align-items:center;font-size:12px;font-weight:700;color:#e8ffff;line-height:1.5}
+.source-entry summary::-webkit-details-marker{display:none}
+.source-entry summary::after{content:"⌄";margin-left:auto;font-size:15px;color:#9cdfd4}
+.source-entry[open] summary::after{content:"⌃"}
+.source-entry summary:hover{background:#ffffff0a;border-radius:12px}
+.source-entry-body{padding:0 12px 12px}
+.source-entry-body p{font-size:12px;line-height:1.65;margin:4px 0 8px;color:#d3e5e5}
+.source-entry-body small{display:block;color:#b5cdd1;font-size:10px;margin:8px 0}
+.source-entry-body a{display:inline-flex;color:#b5ffee;background:#225c65;
+border:1px solid #83d2c86b;border-radius:7px;text-decoration:none;
+padding:7px 10px;font-size:11px;font-weight:650}
+.source-provider{font-size:10px;color:#a8d1d0;display:block;margin:9px 0 12px}
+.source-links-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:12px 0}
+.source-links-grid a{display:flex;align-items:center;justify-content:center;text-align:center;
+border-radius:10px;padding:10px 8px;text-decoration:none;font-size:11px;color:#dcfff5;
+font-weight:650;background:#194f60;border:1px solid #8fdbd153;overflow-wrap:anywhere}
+.source-links-grid a:hover{background:#236f7d}
+.info-pane[data-info-pane="local"] .information{margin:17px 0!important}
+.info-pane[data-info-pane="local"] .weather{margin:0 0 18px!important}
+.info-pane[data-info-pane="sources"] .information + .information{margin-top:18px!important}
+@media(max-width:750px){
+ .inspector{top:auto;bottom:10px;right:8px;left:8px;width:auto;
+  max-height:68dvh;border-radius:16px}
+ .inspector-head{padding:12px 13px 9px}
+ .inspector-head h2{font-size:18px;margin-bottom:7px}
+ .info-tabs button{font-size:10px;padding:10px 2px}
+ .info-pane{padding:11px 13px}
+ .source-links-grid{gap:5px}
+ .inspector-note{padding:7px 11px!important}
+}
