@@ -179,8 +179,9 @@ function prepareStyle(){
       'fill-extrusion-color':['match',['get','roof:material'],
         'metal','#84949a','tiles','#c27e62','slate','#788aa7',
         'wood','#b8926d','#d9a17c'],
-      'fill-extrusion-base':['max',0,['-',['to-number',['get','height_m'],9]],
-        ['to-number',['get','roof:height'],0]],
+      'fill-extrusion-base':['max',0,['-',
+        ['to-number',['get','height_m'],9],
+        ['to-number',['get','roof:height'],0]]],
       'fill-extrusion-height':['to-number',['get','height_m'],9],
       'fill-extrusion-opacity':.96,'fill-extrusion-vertical-gradient':true
     }},labels);
@@ -199,6 +200,30 @@ function updateLayers(){
   visible(ids.peaks,state.peaks);
   visible(ids.poi,true);
 }
+// Thematic colors preserve actual OSM categories when available.
+function renderBuildingLegend(theme=state.buildingTheme){
+  const root=$('building-legend');root.replaceChildren();
+  for(const [color,label] of BUILDING_LEGENDS[theme]||BUILDING_LEGENDS.architecture){
+    const item=create('div','swatch');
+    const chip=create('i');chip.style.backgroundColor=color;
+    item.append(chip,create('span','',label));root.append(item);
+  }
+  $('building-color-note').textContent=colorNote(theme);
+}
+function setBuildingTheme(theme){
+  if(!BUILDING_THEMES.some(x=>x.id===theme))theme='architecture';
+  state.buildingTheme=theme;
+  renderBuildingLegend(theme);
+  for(const [id,isLocal] of [[ids.build,false],[ids.local,true]]){
+    if(map.getLayer(id)){
+      try{map.setPaintProperty(id,'fill-extrusion-color',
+        buildingColorExpression(theme,isLocal));}
+      catch(error){console.warn('Building color theme:',error);}
+    }
+  }
+}
+$('building-theme').onchange=e=>setBuildingTheme(e.target.value);
+renderBuildingLegend();
 // If the vector tiles do not show buildings locally, recover source-backed
 // building outlines from OpenStreetMap. Public Overpass is rate limited; only
 // sample when the camera has stopped and the area actually lacks extrusions.
