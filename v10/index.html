@@ -2,14 +2,15 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b2534">
 <meta name="description" content="SICILIA 3D – Interaktive 3D-Karte Siziliens mit überprüfbaren Stadtinformationen, historischen Quellen, Wetter und Verkehr.">
-<title>SICILIA 3D v10.6 | 3D-Atlas und Stadtwissen</title>
+<title>SICILIA 3D v10.7 | Lebendige 3D-Landschaft & Architektur</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.css">
-<link rel="stylesheet" href="./atlas.css?v=121">
+<link rel="stylesheet" href="./atlas.css?v=130">
 </head>
 <body>
 <div id="map"></div>
+<canvas id="weather-clouds" aria-hidden="true" hidden></canvas>
 <header class="top">
-  <div class="brand glass"><strong>SICILIA <em>3D</em> <span>V10</span></strong><small>ATLAS V10.6 · 3D-GEBÄUDE · VERIFIZIERTE QUELLEN</small></div>
+  <div class="brand glass"><strong>SICILIA <em>3D</em> <span>V10</span></strong><small>ATLAS V10.7 · ARCHITEKTUR · WETTERWELT</small></div>
   <div class="quicklinks">
     <button id="santateresa" title="Santa Teresa di Riva – Lungomare">🌊 Santa Teresa</button>
     <button id="casal" title="Nach Casalvecchio Siculo springen">⛪ Casalvecchio</button>
@@ -22,6 +23,23 @@
   <span id="weather-summary">🌦️ Wetter wird geladen …</span>
   <button id="weather-update" title="Aktuelle Modellwetterdaten erneut abrufen">↻</button>
 </div>
+<section id="sky-studio" class="glass" aria-label="Wolkenanimation und Inselrundflug">
+  <div class="sky-studio-title">☁️ Wetterwelt <span>MODELLBASIERTE SIMULATION</span></div>
+  <div class="sky-actions">
+    <button id="cloud-toggle" type="button" aria-pressed="false">☁️ Wolken einschalten</button>
+    <button id="tour-toggle" type="button" aria-pressed="false">🛩️ Inselrundflug</button>
+  </div>
+  <div class="sky-description" id="sky-status">Wolken aus Bewölkung und Windmodell animieren · keine Live-Satellitenbilder</div>
+  <div class="sky-sliders" id="sky-sliders" hidden>
+    <label>Wolkenwirkung <strong id="cloud-opacity-label">70 %</strong>
+      <input id="cloud-opacity" type="range" min="10" max="100" step="5" value="70">
+    </label>
+    <label>Flugtempo <strong id="tour-speed-label">1,0×</strong>
+      <input id="tour-speed" type="range" min=".5" max="2" step=".25" value="1">
+    </label>
+  </div>
+  <button id="sky-expand" class="sky-expand" type="button" aria-expanded="false">⚙ Einstellungen</button>
+</section>
 <section id="tools" class="glass">
   <div class="tools-head"><span>🗺️ SICILIA KARTENSTUDIO</span><button id="tools-toggle" aria-label="Kartenstudio ein- oder ausklappen">−</button></div>
   <div id="tools-body">
@@ -32,6 +50,16 @@
     </div>
     <label class="slider-label">Reliefhöhe <strong id="exaggeration-label">1,0×</strong></label>
     <input id="exaggeration" type="range" min=".3" max="2" step=".1" value="1">
+    <div class="building-theme-ui">
+      <label for="building-theme">🏘️ Gebäudefarben</label>
+      <select id="building-theme" aria-label="3D-Gebäude nach Architektur oder Höhe einfärben">
+        <option value="architecture">🏛️ Architekturfokus</option>
+        <option value="height">🌈 Gebäudehöhe</option>
+        <option value="stone">🪨 Mediterrane Naturtöne</option>
+      </select>
+      <div id="building-legend" class="building-legend"></div>
+      <p id="building-color-note" class="color-note">Kartografische Farbcodierung, keine exakten Fassadenfarben.</p>
+    </div>
     <div class="options">
       <label><input type="checkbox" id="buildings" checked> 3D-Gebäude</label>
       <label><input type="checkbox" id="peaks"> Gipfelpunkte</label>
@@ -108,9 +136,9 @@
       <strong>🚌 Bus & Bahn</strong><p>Haltestellen und offizielle Fahrpläne.</p>
     </div>
   </div>
-  <p class="inspector-note">Datenqualität: Offizielle Angaben, OSM-Merkmale und geschätzte 3D-Höhen sind getrennt. Fehlende Angaben werden nicht erfunden.</p>
+  <p class="inspector-note">Kartografische Gebäude- und Wolkenfarben sind eine Simulation. Historische Angaben, OSM-Daten und Modellannahmen sind ausdrücklich getrennt.</p>
 </section>
-<footer>© OpenStreetMap-Mitwirkende · Mapzen/AWS · OpenFreeMap · Esri · Open-Meteo · Wikimedia · Atlas v10.6</footer>
+<footer>© OpenStreetMap-Mitwirkende · Mapzen/AWS · OpenFreeMap · Esri · Open-Meteo · Wikimedia · Atlas v10.7</footer>
 <div id="error" hidden class="error">
   Die neue Kartenansicht konnte nicht gestartet werden.
   <p><a href="../index.html" style="color:#d9ffe8;font-weight:700">↩ Funktionierende bisherige Karte öffnen</a></p>
@@ -133,5 +161,5 @@
 })();
 </script>
 <script src="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.js"></script>
-<script type="module" src="./atlas.js?v=121"></script>
+<script type="module" src="./atlas.js?v=130"></script>
 </body></html>
