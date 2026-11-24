@@ -1,0 +1,80 @@
+{
+  "version": "0.1",
+  "area": "Santa Teresa di Riva",
+  "center": {
+    "lat": 37.94533,
+    "lon": 15.3683
+  },
+  "radius_m": 750,
+  "last_reviewed": "2026-11-24",
+  "sources": [
+    {
+      "id": "osm",
+      "type": "buildings/roads",
+      "status": "runtime_integration",
+      "source": "OpenStreetMap via Overpass",
+      "accuracy": "footprints only; individual heights often missing",
+      "coverage": "verify live",
+      "license": "ODbL; attribution required"
+    },
+    {
+      "id": "satellite",
+      "type": "raster",
+      "status": "runtime_integration",
+      "source": "Esri World Imagery",
+      "accuracy": "imagery source; acquisition dates and local resolution unverified",
+      "coverage": "verify live",
+      "license": "Esri/provider terms apply"
+    },
+    {
+      "id": "terrain_ion",
+      "type": "global terrain",
+      "status": "optional_token_integration",
+      "source": "Cesium World Terrain",
+      "coverage": "verify once entitled",
+      "license": "Cesium ion plan/terms"
+    },
+    {
+      "id": "buildings_ion",
+      "type": "3D Tiles",
+      "status": "optional_token_integration",
+      "source": "Cesium OSM Buildings",
+      "coverage": "verify once entitled",
+      "license": "Cesium ion plan/terms"
+    },
+    {
+      "id": "photoreal",
+      "type": "photogrammetry",
+      "status": "optional_token_integration",
+      "source": "Google Photorealistic 3D Tiles via Cesium ion",
+      "coverage": "unverified for Santa Teresa di Riva",
+      "license": "provider plan, terms and costs"
+    },
+    {
+      "id": "lidar_dtm_1m",
+      "type": "terrain DTM",
+      "status": "metadata_only",
+      "source": "Italian national LiDAR metadata",
+      "url": "https://www.dati.gov.it/node/view-dataset/dataset?id=ffad6512-1854-4e4d-bfec-bd867d8b18dc",
+      "coverage": "pilot overlap not verified",
+      "license": "individual dataset rights not yet audited"
+    },
+    {
+      "id": "lidar_dtm_2m",
+      "type": "terrain DTM",
+      "status": "metadata_only",
+      "source": "Italian national LiDAR metadata",
+      "url": "https://www.dati.gov.it/node/view-dataset/dataset?id=92dda1ec-a252-466d-9f1e-4bb6c0fff2ef",
+      "coverage": "pilot overlap not verified",
+      "license": "individual dataset rights not yet audited"
+    },
+    {
+      "id": "façades",
+      "type": "historical/architectural facade models",
+      "status": "not_acquired",
+      "source": null,
+      "coverage": "unknown",
+      "license": "unknown"
+    }
+  ]
+}
