@@ -34,7 +34,7 @@ const src={
 };
 const ids={sat:'s10-satellite',color:'s10-color',shade:'s10-shade',build:'s10-buildings',
   peaks:'s10-peaks',poi:'s10-poi',cloud:'s10-cloud',local:'s10-local-buildings',
-  roofs:'s10-roof-detail',outline:'s10-footprint-outline'};
+  roofs:'s10-roof-detail',outline:'s10-footprint-outline',highlight:'s10-selected-building'};
 const state={mode:'relief',exaggeration:1,shade:true,buildings:true,peaks:false,
   selected:null,articleRequest:0,weatherRequest:0,loaded:false,wheelMode:'zoom',stops:true,
   buildingTheme:'architecture',clouds:false,historyHideBuildings:false,
@@ -349,6 +349,15 @@ function prepareStyle(){
     }},labels);
   addLayer({id:ids.outline,type:'line',source:'s10-local-src',minzoom:16.5,
     paint:{'line-color':'#f6ead9','line-opacity':.5,'line-width':1.3}},labels);
+  addSource('s10-highlight-src',{type:'geojson',
+    data:{type:'FeatureCollection',features:[]}});
+  addLayer({id:ids.highlight,type:'fill-extrusion',source:'s10-highlight-src',minzoom:13,
+    paint:{
+      'fill-extrusion-color':'#f7e38c',
+      'fill-extrusion-base':0,
+      'fill-extrusion-height':['to-number',['get','height_m'],10],
+      'fill-extrusion-opacity':.42,'fill-extrusion-vertical-gradient':false
+    }},labels);
   updateLayers();
 }
 function updateLayers(){
@@ -359,6 +368,7 @@ function updateLayers(){
   visible(ids.local,state.buildings&&!state.localDetail&&!state.historyHideBuildings);
   visible(ids.roofs,state.buildings&&!state.historyHideBuildings);
   visible(ids.outline,state.buildings&&!state.historyHideBuildings);
+  visible(ids.highlight,state.buildings&&!state.historyHideBuildings);
   visible(ids.peaks,state.peaks);
   visible(ids.poi,true);
 }
@@ -490,6 +500,66 @@ map.on('error',e=>{
 map.on('moveend',()=>{
   queueLocalBuildings();
 });
+let lastBuildingCheck=0;
+function updateBuildingDiagnostic(){
+  const output=$('building-render-status');
+  if(!output)return;
+  if(state.historyHideBuildings){
+    output.dataset.state='pending';
+    output.textContent='Zeitreise: heutige Gebäude ausgeblendet, damit alte Luftbilder nicht verfälscht werden.';
+    return;
+  }
+  if(!state.buildings){
+    output.dataset.state='pending';
+    output.textContent='3D-Gebäude wurden deaktiviert.';
+    return;
+  }
+  if(map.getZoom()<13.4){
+    output.dataset.state='pending';
+    output.textContent='3D-Gebäude erscheinen erst ab Ortszoom 13,4.';
+    return;
+  }
+  if(!map.getLayer(ids.build)&&!map.getLayer(ids.local)){
+    output.dataset.state='error';
+    output.textContent='3D-Gebäudeebene konnte nicht geladen werden. Kartenquelle kontrollieren.';
+    return;
+  }
+  try{
+    const available=[ids.build,ids.local].filter(id=>map.getLayer(id)&&
+      map.getLayoutProperty(id,'visibility')!=='none');
+    const features=available.length?map.queryRenderedFeatures({layers:available}):[];
+    const tags=features.filter(f=>['church','school','residential','industrial',
+      'house','commercial','retail','office','public','apartments'].includes(
+        String(f.properties?.building||f.properties?.type||'').toLowerCase()));
+    if(features.length){
+      output.dataset.state='ok';
+      output.textContent='✓ '+features.length+' sichtbare 3D-Bauteile · '+tags.length+
+        ' mit Nutzungszuordnung · übrige in dekorativen Farben';
+    }else{
+      output.dataset.state='error';
+      output.textContent='Keine 3D-Bauten im aktuellen Ausschnitt sichtbar. Näher zoomen oder OSM-Gebäude nachladen.';
+    }
+  }catch(error){
+    output.dataset.state='pending';
+    output.textContent='Gebäudekacheln werden noch vorbereitet …';
+  }
+}
+map.on('idle',()=>{
+  if(Date.now()-lastBuildingCheck<2200)return;
+  lastBuildingCheck=Date.now();updateBuildingDiagnostic();
+});
+map.on('mousemove',e=>{
+  if(map.getZoom()<13.5||state.historyHideBuildings)return;
+  if(Date.now()-(map._siciliaCursorAt||0)<100)return;
+  map._siciliaCursorAt=Date.now();
+  try{
+    const layers=[ids.local,ids.build].filter(id=>map.getLayer(id)&&
+      map.getLayoutProperty(id,'visibility')!=='none');
+    map.getCanvas().style.cursor=
+      layers.length&&map.queryRenderedFeatures(e.point,{layers}).length?'pointer':'';
+  }catch(error){}
+});
+
 // All selected places use the same 3D GIS map. There is no separate
 // low-quality 3D Walk / Coastal / Flight route in this release.
 $('city-overview').onclick=()=>{
@@ -608,6 +678,17 @@ function handleClick(e){
       props:{},source:'Digitale Karte'});return;
   }
   const p=f.properties||{};
+  // Illuminate the actual selected polygon; the visible 3D body itself
+  // responds to clicks instead of showing only a separate info panel.
+  const target=map.getSource('s10-highlight-src');
+  const isBuilding=f.layer?.id===ids.build||f.layer?.id===ids.local;
+  if(target&&isBuilding&&['Polygon','MultiPolygon'].includes(f.geometry?.type)){
+    const h=getBuildingHeight(p);
+    target.setData({type:'FeatureCollection',features:[{
+      type:'Feature',geometry:f.geometry,
+      properties:{height_m:Number.isFinite(Number(p.height_m))?Number(p.height_m):h.metres}
+    }]});
+  }else if(target)target.setData({type:'FeatureCollection',features:[]});
   const location=f.geometry?.type==='Point'?{lon:f.geometry.coordinates[0],lat:f.geometry.coordinates[1]}:
     {lon:e.lngLat.lng,lat:e.lngLat.lat};
   const kind=(f.layer.id===ids.build||f.layer.id===ids.local)?'Gebäude':f.layer.id===ids.peaks?'Berggipfel':
