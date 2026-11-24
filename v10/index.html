@@ -1,23 +1,20 @@
 <!DOCTYPE html><html lang="de"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b2534">
-<meta name="description" content="SICILIA 3D v10.1 – 3D-Terrain, Orte, Gebäude und begehbare 3D-Welten auf Sizilien.">
-<title>SICILIA 3D v10.5 | Santa Teresa – Wetter, Verkehr & Ortswissen</title>
+<meta name="description" content="SICILIA 3D – Interaktive 3D-Karte Siziliens mit überprüfbaren Stadtinformationen, historischen Quellen, Wetter und Verkehr.">
+<title>SICILIA 3D v10.6 | 3D-Atlas und Stadtwissen</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.css">
-<link rel="stylesheet" href="./atlas.css?v=116">
+<link rel="stylesheet" href="./atlas.css?v=120">
 </head>
 <body>
 <div id="map"></div>
 <header class="top">
-  <div class="brand glass"><strong>SICILIA <em>3D</em> <span>V10</span></strong><small>GEOSPATIAL EXPLORER · V10.5 · SANTA TERESA · WISSEN + WETTER</small></div>
+  <div class="brand glass"><strong>SICILIA <em>3D</em> <span>V10</span></strong><small>ATLAS V10.6 · 3D-GEBÄUDE · VERIFIZIERTE QUELLEN</small></div>
   <div class="quicklinks">
     <button id="santateresa" title="Santa Teresa di Riva – Lungomare">🌊 Santa Teresa</button>
     <button id="casal" title="Nach Casalvecchio Siculo springen">⛪ Casalvecchio</button>
     <button id="overview" title="Inselübersicht">🌍 Insel</button>
-    <a id="walking" href="./explore.html" title="An jedem Ort bodennah die echte 3D-Karte erkunden">🎮 3D-Erkundung</a>
-    <a id="detail-walk" href="./walk.html" title="Detailliertes Ortsmodell aus OSM-Gebäuden und Wegen">🚶 Ortsmodell</a>
-    <a href="../airport.html" title="Bestehender Flight Explorer – Ausbau in v10.3">✈️ AIR v9</a>
-    <a href="../index.html" title="Bisheriger SICILIA 3D Kartenatlas">↩ Karte v9</a>
+    <button id="city-overview" title="Stadtübersicht, Wikipedia und offizielle Stadtwebsite">📖 Stadtwissen</button>
   </div>
 </header>
 <div id="state" class="glass">Karte wird geladen …</div>
@@ -66,21 +63,53 @@
     🖱️ Mausrad: Zoom
   </button>
 </nav>
-<section class="inspector glass" id="inspector" aria-label="Ortsinformationen" hidden>
-  <div class="inspector-head"><h2 id="object-title">Ortsinformationen</h2><button id="inspector-close" aria-label="Schliessen">×</button></div>
-  <p id="object-source"></p>
-  <div id="object-properties"></div>
-  <div class="information" id="article"><strong>📖 Wissen</strong><p>Wähle einen Ort oder ein Gebäude.</p></div>
-  <div class="links" id="object-links"></div>
-  <div class="information" id="related"><strong>📚 Weitere Quellen</strong>
-    <p>Historische Angaben werden nur bei klarer Zuordnung als Fakten angezeigt.</p></div>
-  <div class="weather" id="weather"><strong>🌦️ Wetter</strong><p>Wähle einen Ort.</p></div>
-  <div class="information" id="transport"><strong>🚌 Bus & Bahn</strong>
-    <p>Wähle eine Haltestelle für Fahrplanquellen und Betreiberhinweise.</p></div>
-  <div class="information" id="street-imagery"><strong>📷 Echte Strassenbilder</strong>
-    <p>Die Verfügbarkeit von Aufnahmen wird beim externen Anbieter geprüft.</p></div>
+<section class="inspector glass" id="inspector" aria-label="Stadt- und Objektwissen" hidden>
+  <div class="inspector-head">
+    <div class="inspector-title-group">
+      <span class="inspector-eyebrow" id="object-source">Geografische Informationen</span>
+      <h2 id="object-title">Stadtwissen</h2>
+      <div id="city-navigation" class="city-navigation" aria-label="Stadtübersicht und Originalwebsites"></div>
+    </div>
+    <button id="inspector-close" class="close-inspector" aria-label="Wissensfenster schliessen">×</button>
+  </div>
+  <nav class="info-tabs" id="info-tabs" aria-label="Wissensbereiche">
+    <button type="button" data-info-tab="overview" class="is-active" aria-selected="true">🧭 Überblick</button>
+    <button type="button" data-info-tab="knowledge" aria-selected="false">📚 Geschichte</button>
+    <button type="button" data-info-tab="sources" aria-selected="false">🔗 Quellen</button>
+    <button type="button" data-info-tab="local" aria-selected="false">🌦️ Alltag</button>
+  </nav>
+  <div class="info-pane" data-info-pane="overview">
+    <div class="info-hint" id="overview-intro">Wähle ein Objekt, um die vorhandenen Geodaten zu sehen.</div>
+    <div class="object-grid" id="object-properties"></div>
+    <div class="links primary-links" id="object-links"></div>
+  </div>
+  <div class="info-pane" data-info-pane="knowledge" hidden>
+    <div class="information knowledge-section" id="article">
+      <strong>Geschichte und Architektur</strong>
+      <p>Wähle eine Stadt oder Sehenswürdigkeit.</p>
+    </div>
+  </div>
+  <div class="info-pane" data-info-pane="sources" hidden>
+    <div class="information sources-section" id="related">
+      <strong>Originalquellen</strong>
+      <p>Gemeinde, Wikipedia, Wikidata und Kartenquellen werden hier getrennt aufgeführt.</p>
+    </div>
+    <div class="information" id="street-imagery">
+      <strong>📷 Strassenbilder</strong>
+      <p>Verfügbare Bilder bei externen Anbietern prüfen.</p>
+    </div>
+  </div>
+  <div class="info-pane" data-info-pane="local" hidden>
+    <div class="weather" id="weather">
+      <strong>🌦️ Wetter</strong><p>Wähle einen Ort.</p>
+    </div>
+    <div class="information" id="transport">
+      <strong>🚌 Bus & Bahn</strong><p>Haltestellen und offizielle Fahrpläne.</p>
+    </div>
+  </div>
+  <p class="inspector-note">Datenqualität: Offizielle Angaben, OSM-Merkmale und geschätzte 3D-Höhen sind getrennt. Fehlende Angaben werden nicht erfunden.</p>
 </section>
-<footer>© OpenStreetMap-Mitwirkende · Mapzen/AWS · OpenFreeMap · Esri · Open-Meteo · Wikimedia · Pilotphase v10.1</footer>
+<footer>© OpenStreetMap-Mitwirkende · Mapzen/AWS · OpenFreeMap · Esri · Open-Meteo · Wikimedia · Atlas v10.6</footer>
 <div id="error" hidden class="error">
   Die neue Kartenansicht konnte nicht gestartet werden.
   <p><a href="../index.html" style="color:#d9ffe8;font-weight:700">↩ Funktionierende bisherige Karte öffnen</a></p>
@@ -103,5 +132,5 @@
 })();
 </script>
 <script src="https://unpkg.com/maplibre-gl@5.6.2/dist/maplibre-gl.js"></script>
-<script type="module" src="./atlas.js?v=116"></script>
+<script type="module" src="./atlas.js?v=120"></script>
 </body></html>
