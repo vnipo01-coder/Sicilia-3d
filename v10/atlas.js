@@ -130,6 +130,12 @@ $('cloud-opacity').oninput=e=>{
   if(clouds)clouds.setIntensity(v/100);
   $('cloud-opacity-label').textContent=v+' %';
 };
+$('demo-clouds').onchange=e=>{
+  if(clouds)clouds.setDemo(Boolean(e.target.checked));
+  $('sky-status').textContent=e.target.checked?
+    '☁️ Vorführmodus: künstlich 68 % Bewölkung · keine aktuellen Wolkenpositionen':
+    '☁️ Demomodus aus · Wolkenmenge wieder aus dem aktuellen Open-Meteo-Modell';
+};
 $('sky-expand').onclick=()=>{
   const pane=$('sky-sliders'),visible=pane.hidden;
   pane.hidden=!visible;
@@ -393,6 +399,7 @@ $('casal').onclick=()=>centerPlace(PLACES.find(p=>p.name==='Casalvecchio Siculo'
 $('overview').onclick=()=>{
   state.selected=null;map.flyTo({center:[14.1,37.55],zoom:7.7,pitch:40,bearing:0,duration:1300});
   $('inspector').hidden=true;
+  document.body.classList.remove('has-inspector');
 };
 $('tools-toggle').onclick=()=>{
   $('tools-body').hidden=!$('tools-body').hidden;
@@ -549,6 +556,7 @@ function updateCityNavigation(obj){
 
 function select(obj){
   state.selected=obj;state.articleRequest++;state.weatherRequest++;
+  document.body.classList.add('has-inspector');
   $('inspector').hidden=false;$('object-title').textContent=obj.name;
   setInfoTab('overview');
   updateCityNavigation(obj);
@@ -627,7 +635,10 @@ function select(obj){
   loadArticle(obj,state.articleRequest);
   loadWeather(obj,state.weatherRequest);
 }
-$('inspector-close').onclick=()=>$('inspector').hidden=true;
+$('inspector-close').onclick=()=>{
+  $('inspector').hidden=true;
+  document.body.classList.remove('has-inspector');
+};
 function appendKnowledgeCard(root,data,isOfficial=false,expanded=false){
   const panel=create('details','source-entry');
   panel.open=expanded;
