@@ -507,6 +507,11 @@ function select(obj){
   }catch(e){}
   for(const [label,value] of propertyRows(obj.props||{}))row(box,label,value);
   if(obj.kind==='Gebäude'){
+    const details=architectureProperties(obj.props||{});
+    if(details.some(d=>d.tag==='roof:shape'))
+      row(box,'Dachdetails','OSM-Dachform dokumentiert · Darstellung vereinfacht');
+  }
+  if(obj.kind==='Gebäude'){
     const h=getBuildingHeight(obj.props||{});
     row(box,'3D-Modellhöhe',h.metres.toFixed(1)+' m · '+h.source);
     if(!obj.props?.start_date&&!obj.props?.['building:year_built'])
@@ -614,6 +619,43 @@ async function loadArticle(obj,key){
   }else{
     root.append(create('p','knowledge-summary',
       'Keine örtliche Originalbeschreibung direkt hinterlegt. Die offenen Wissensquellen werden zusätzlich geprüft; nicht belegte historische Angaben bleiben leer.'));
+  }
+  // Carefully sourced architectural dossiers and a clear separation
+  // between a city's style and the attributes of one particular house.
+  const architecturalAttributes=architectureProperties(obj.props||{});
+  const profiles=architectureProfilesFor(obj);
+  if(profiles.length||architecturalAttributes.length){
+    const title=create('div','source-section-title');
+    title.append(create('span','','🏗️ Architektur im Detail'));
+    title.append(create('span','source-count',
+      profiles.length+' Fachprofil'+(profiles.length===1?'':'e')));
+    root.append(title);
+    if(architecturalAttributes.length){
+      const properties=create('div','arch-properties');
+      properties.append(create('span','arch-category','ORIGINALMERKMALE · OPENSTREETMAP'));
+      for(const item of architecturalAttributes){
+        const row=create('div','architecture-attribute');
+        row.append(create('span','',item.label),create('span','',item.value));
+        properties.append(row);
+      }
+      root.append(properties);
+    }
+    for(const profile of profiles){
+      const card=create('article','arch-essay');
+      card.append(create('span','arch-category',
+        profile.kind==='landmark'?'DOKUMENTIERTES DENKMAL · QUELLENORIENTIERT':'ARCHITEKTURGESCHICHTLICHE EINORDNUNG'));
+      card.append(create('h3','',profile.title));
+      card.append(create('div','arch-era',profile.era));
+      for(const paragraph of profile.paragraphs)
+        card.append(create('p','',paragraph));
+      for(const source of profile.sources){
+        const a=link('Originalquelle: '+source.title+' ↗',source.url);
+        a.classList.add('arch-source-link');
+        card.append(a);
+      }
+      root.append(card);
+    }
+    root.append(create('p','source-provider',MATERIAL_NOTE));
   }
   if(obj.kind==='Bushaltestelle')return;
   if(isBuilding&&!obj.props?.wikidata&&!obj.props?.wikipedia)return;
