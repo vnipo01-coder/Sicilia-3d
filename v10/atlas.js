@@ -815,6 +815,11 @@ async function loadWeather(obj,key,force=false){
       create('p','','Der Wetterdienst liefert derzeit keine bestätigten aktuellen Werte.'));
     card.append(link('Wetterdienst öffnen','https://open-meteo.com/en/docs'));
     $('weather-summary').textContent='🌦️ Wetterdaten fehlen · ↻ erneut abfragen';
+    if(clouds&&!$('demo-clouds').checked){
+      clouds.setWeather({cloud_cover:0,wind_speed_10m:0});
+      if(!flightTour.active)
+        $('sky-status').textContent='Keine Wettermodellwerte verfügbar: keine aktuelle Wolkensimulation. Der Demomodus ist optional.';
+    }
   }
 }
 $('weather-update').onclick=()=>{
