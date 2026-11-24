@@ -22,7 +22,9 @@ Die bislang funktionierende MapLibre-Karte unter \`/v10/\` bleibt unverändert a
 | Echtes 3D-Gelände | Optional Cesium World Terrain über Cesium ion | gültiger Client-Token mit ausreichenden Rechten erforderlich |
 | Weltweite Gebäude-3D-Tiles | Optional Cesium OSM Buildings über Cesium ion | Qualität und lokaler Datenstand nicht vorab verifiziert |
 | Fotorealistische 3D Tiles | Optional Google Photorealistic 3D Tiles über Cesium ion | Abdeckung, Tarife, Zugang und Lizenz vorher prüfen |
-| Tests | Node-Tests, Quellcodeprüfung und GitHub Actions | Live-Browserprüfung weiterhin notwendig |
+| Architekturwissen | Quellenorientierte Fachprofile aus dem bestehenden v10-Atlas auf dokumentierten OSM-Gebäuden | nur bei fachlich plausibler Objektzuordnung |
+| Wetter | Aktuelle Open-Meteo-Modellwerte in einem separaten Badge | kein Sensor direkt am Haus, keine 3D-Wolkenrekonstruktion |
+| Tests | Node-Tests, Quellcodeprüfung, GitHub Actions und manueller Playwright-Browserlauf | öffentlicher Live-Browser noch nicht verifiziert |
 
 **Nicht enthalten:** Nachgebildete authentische Balkone, Fenster, Kanten, reale Fassadentexturen, ein lückenloser begehbarer Küstenweg, eine simulierte historische Stadt oder eine Echtzeit-Busabfahrt. Diese dürfen nicht aus fehlenden Daten frei erfunden werden.
 
