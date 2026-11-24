@@ -32,6 +32,12 @@ export class CloudVisual{
     }
     this.resizeHandler=()=>this.resize();
     window.addEventListener('resize',this.resizeHandler);
+    this.visibilityHandler=()=>{
+      if(this.enabled&&!document.hidden&&!this.raf){
+        this.prev=0;this.raf=requestAnimationFrame(this.frame);
+      }
+    };
+    document.addEventListener('visibilitychange',this.visibilityHandler);
     this.reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||false;
     this.frame=this.frame.bind(this);
   }
@@ -117,5 +123,6 @@ export class CloudVisual{
   destroy(){
     this.setEnabled(false);
     window.removeEventListener('resize',this.resizeHandler);
+    document.removeEventListener('visibilitychange',this.visibilityHandler);
   }
 }
