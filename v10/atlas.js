@@ -37,7 +37,8 @@ const ids={sat:'s10-satellite',color:'s10-color',shade:'s10-shade',build:'s10-bu
 const state={mode:'relief',exaggeration:1,shade:true,buildings:true,peaks:false,
   selected:null,articleRequest:0,weatherRequest:0,loaded:false,wheelMode:'zoom',stops:true,
   buildingTheme:'architecture',clouds:false,
-  localBusy:false,localAt:0,localPosition:null,localCount:0,vectorSource:null};
+  localBusy:false,localAt:0,localPosition:null,localCount:0,vectorSource:null,
+  localDetail:false};
 const create=(tag,cls,text)=>{
   const el=document.createElement(tag);if(cls)el.className=cls;
   if(text!==undefined)el.textContent=String(text);return el;
@@ -263,7 +264,7 @@ function updateLayers(){
   visible(ids.color,state.mode==='relief');
   visible(ids.shade,state.shade&&state.mode!=='map');
   visible(ids.build,state.buildings);
-  visible(ids.local,state.buildings);
+  visible(ids.local,state.buildings&&!state.localDetail);
   visible(ids.roofs,state.buildings);
   visible(ids.outline,state.buildings);
   visible(ids.peaks,state.peaks);
@@ -312,11 +313,17 @@ async function loadLocalBuildings(){
   if(zoom<14.15||!isSicily(c.lat,c.lng))return;
   // Tiles might simply be late; don't overload Overpass if there are
   // already visible extrusions in the current viewport.
+  let vectorHasBuildings=false;
   try{
     const current=map.queryRenderedFeatures({layers:[ids.build]});
-    if(current.length>=3){
+    vectorHasBuildings=current.length>=3;
+    // At high zoom, actual OSM roof tags and outlines enrich the 3D scene.
+    // Hide overlapping locally extruded walls if vector 3D buildings exist.
+    state.localDetail=vectorHasBuildings;
+    visible(ids.local,state.buildings&&!state.localDetail);
+    if(vectorHasBuildings&&zoom<16.3){
       map.getSource('s10-local-src').setData({type:'FeatureCollection',features:[]});
-      $('source-info').textContent='3D-Gebäude aus OpenFreeMap-Vektorkacheln; fehlende Höhen sind Modellwerte.';
+      $('source-info').textContent='3D-Vektorgebäude verfügbar · ab Zoom 16,3 können zusätzliche OSM-Dachmerkmale geladen werden.';
       return;
     }
   }catch(error){/* Source may not be ready; try cached OSM outlines */}
@@ -329,7 +336,9 @@ async function loadLocalBuildings(){
   state.localBusy=true;state.localAt=Date.now();
   state.localPosition={lat:c.lat,lng:c.lng};
   const call=++osmFetchSequence;
-  $('source-info').textContent='Prüfe fehlende Gebäudegrundrisse in OpenStreetMap …';
+  $('source-info').textContent=state.localDetail?
+    'Ergänze echte OSM-Merkmale zu Dächern und Gebäudegrundrissen …':
+    'Prüfe zusätzliche Gebäudegrundrisse in OpenStreetMap …';
   try{
     const result=await getLocalOSM(c.lat,c.lng,450);
     if(call!==osmFetchSequence)return;
@@ -352,7 +361,8 @@ async function loadLocalBuildings(){
     if(src&&map.getZoom()>=14.15)src.setData({type:'FeatureCollection',features});
     state.localCount=features.length;
     $('source-info').textContent=features.length?
-      'Zusätzlich '+features.length+' OSM-Gebäude geladen; Höhen teilweise geschätzt · '+new Date(result.queriedAt).toLocaleString('de-CH'):
+      (state.localDetail?'Dachattribute und Grundrisse: ':'Zusätzliche 3D-Gebäude: ')+features.length+
+      ' OSM-Objekte geladen · Höhen teils geschätzt · '+new Date(result.queriedAt).toLocaleString('de-CH'):
       'Für diesen Ausschnitt wurden keine weiteren OSM-Gebäude gefunden.';
   }catch(error){
     $('source-info').textContent='Zusätzliche OSM-Gebäudedaten nicht erreichbar. Vektor-Gebäude bleiben eingeschaltet.';
