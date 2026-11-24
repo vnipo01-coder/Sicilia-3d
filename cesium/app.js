@@ -94,23 +94,19 @@ async function initViewer(){
   // Unlike the older atlas, a failure to load buildings NEVER
   // removes the globe, its imagery or the camera.
   try{
-    const imagery=await Cesium.ArcGisMapServerImageryProvider.fromUrl(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",{
-        enablePickFeatures:false
-      });
+    // Direct XYZ imagery has no mandatory metadata round-trip. It avoids
+    // the "infinite loading" regression from earlier atlas versions.
+    const imagery=new Cesium.UrlTemplateImageryProvider({
+      url:"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      tilingScheme:new Cesium.WebMercatorTilingScheme(),
+      maximumLevel:19,
+      credit:"Esri und Datenpartner"
+    });
     viewer.imageryLayers.addImageryProvider(imagery);
-    log("Esri-Luftbild verbunden. OSM-Gebäude werden unabhängig nachgeladen.");
+    log("Esri-Luftbildquelle verbunden. OSM-Gebäude werden unabhängig nachgeladen.");
   }catch(e){
-    try{
-      const imagery=new Cesium.UrlTemplateImageryProvider({
-        url:"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        maximumLevel:19,credit:"Esri und Datenpartner"
-      });
-      viewer.imageryLayers.addImageryProvider(imagery);
-      log("Satellitenkacheln über direkten Esri-Endpunkt aktiviert.");
-    }catch(error){
-      log("Satellitenbilder momentan nicht erreichbar. 3D-Globus bleibt verfügbar.",true);
-    }
+    log("Satellitenkacheln nicht initialisierbar: "+String(e.message||e)+
+      ". Der Cesium-Globus bleibt unabhängig davon benutzbar.",true);
   }
   viewPlace("municipio",0);
   loader(null,false);
