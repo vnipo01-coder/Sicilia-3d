@@ -2,7 +2,7 @@
 
 ## Die eine aktive Anwendung
 - https://vnipo01-coder.github.io/Sicilia-3d/
-- https://vnipo01-coder.github.io/Sicilia-3d/v10/?release=120
+- https://vnipo01-coder.github.io/Sicilia-3d/v10/?release=121
 - Start in Santa Teresa di Riva; direkte Auswahl weiterer Städte oder Inselübersicht.
 
 ## Änderungen gegenüber v10.5
