@@ -18,7 +18,8 @@ export class CloudVisual{
     this.map=map;
     this.ctx=canvas.getContext('2d',{alpha:true});
     if(!this.ctx)throw Error('Kein Canvas-Kontext für Wolken');
-    this.cover=38;this.modelCover=38;this.demo=false;this.wind=12;this.direction=280;
+    // No synthetic "current weather" before the first genuine model response.
+    this.cover=0;this.modelCover=0;this.demo=false;this.wind=0;this.direction=280;
     this.enabled=false;this.intensity=1;this.prev=0;this.raf=0;
     this.sprites=[];
     this.cloudSprite=this.makeCloud();
