@@ -179,8 +179,14 @@ const history=createHistoricalExplorer(map,{
           b.classList.toggle('selected',b.dataset.mode==='sat');
       }
       if(clouds)clouds.setEnabled(false);
-    }else if(clouds&&state.clouds)clouds.setEnabled(true);
+    }else{
+      state.mode=previousHistoryMode;
+      for(const button of $('modes').querySelectorAll('button'))
+        button.classList.toggle('selected',button.dataset.mode===state.mode);
+      if(clouds&&state.clouds)clouds.setEnabled(true);
+    }
     updateLayers();
+    updateBuildingDiagnostic();
   },
   onActive({active,playing}){
     $('history-toggle').textContent=active?'✕ Zeitreise beenden':'🕰️ Zeitreise starten';
@@ -479,6 +485,7 @@ map.on('style.load',()=>{
   try{
     prepareStyle();
     history.styleReloaded();
+    if(history.active)map.once('idle',()=>history.styleReloaded());
     queueLocalBuildings();
     setStatus('● SICILIA 3D · Karte + 3D-Gebäude geladen');
   }catch(error){
@@ -686,7 +693,9 @@ function handleClick(e){
     const h=getBuildingHeight(p);
     target.setData({type:'FeatureCollection',features:[{
       type:'Feature',geometry:f.geometry,
-      properties:{height_m:Number.isFinite(Number(p.height_m))?Number(p.height_m):h.metres}
+      properties:{height_m:Number.isFinite(Number(p.height_m))?Number(p.height_m):
+        Number.isFinite(Number(p.render_height))&&Number(p.render_height)>0?
+          Number(p.render_height):h.metres}
     }]});
   }else if(target)target.setData({type:'FeatureCollection',features:[]});
   const location=f.geometry?.type==='Point'?{lon:f.geometry.coordinates[0],lat:f.geometry.coordinates[1]}:
