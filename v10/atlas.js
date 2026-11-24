@@ -263,8 +263,35 @@ setTimeout(()=>{
 map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'bottom-right');
 function addSource(id,source){if(!map.getSource(id))map.addSource(id,source);}
 function addLayer(obj,before){
-  if(map.getLayer(obj.id))return;
-  try{map.addLayer(obj,before);}catch(error){console.warn('V10 layer',obj.id,error);}
+  if(map.getLayer(obj.id))return true;
+  try{map.addLayer(obj,before);return true;}
+  catch(error){
+    console.warn('SICILIA layer',obj.id,error);
+    // A complex color expression must never make all 3D buildings disappear.
+    // Provide a plainly colored, independently rendered backup extrusion.
+    if(obj.type==='fill-extrusion'&&[ids.build,ids.local].includes(obj.id)){
+      try{
+        const basic={...obj,filter:undefined,
+          paint:{
+            'fill-extrusion-color':['interpolate',['linear'],
+              ['to-number',['get',obj.id===ids.local?'height_m':'render_height'],9.5],
+              0,'#f07f68',12,'#53bdd5',25,'#ad83d6',65,'#e9b74f'],
+            'fill-extrusion-height':['interpolate',['linear'],['zoom'],
+              13,0,15,['to-number',['get',
+                obj.id===ids.local?'height_m':'render_height'],10]],
+            'fill-extrusion-base':0,'fill-extrusion-opacity':.96
+          }
+        };
+        map.addLayer(basic,before);
+        state.buildingFallback=true;
+        console.warn('Safe fallback 3D extrusion restored:',obj.id);
+        return true;
+      }catch(safeError){
+        console.error('Safe 3D extrusion also unavailable:',safeError);
+      }
+    }
+    return false;
+  }
 }
 function visible(id,on){
   if(map.getLayer(id))map.setLayoutProperty(id,'visibility',on?'visible':'none');
