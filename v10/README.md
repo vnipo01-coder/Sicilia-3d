@@ -1,3 +1,55 @@
+# SICILIA 3D v10.8 – Sichtbare Gebäudefarben & echte historische Luftbilder
+
+**Build 141 · 24. November 2026**
+
+Diese Iteration behebt gezielt den Widerspruch zwischen der sichtbaren Gebäudefarben-Legende und einer überwiegend einfarbigen 3D-Karte.
+
+## Root-Cause und Reparaturen
+- Die OpenFreeMap-Vektorkacheln enthalten für zahlreiche Gebäude weder eine explizite Nutzungskategorie noch eine präzise Höhe. Der bisherige Fallback \`9.5 m\` und ein nur schwach variierender beigefarbener Verlauf liessen viele Häuser nahezu gleich aussehen.
+- Der Architekturfarbmodus nutzt jetzt **tatsächlich unterschiedliche Farben je Gebäude**, wo eine stabile Vektor-/OSM-Feature-ID existiert. Ein nicht kategorisiertes Objekt erhält eine **dekorative, ID-basierte** Farbzuteilung. Die Farben sind nicht als historische Fassadenfarbe oder als exakte Gebäudenutzung zu verstehen.
+- Bei fehlenden IDs erscheint mindestens eine markante Korallenfarbe statt des bisherigen Beige.
+- Wenn MapLibre die differenzierte Extrusionsregel nicht verarbeiten kann, wird eine einfachere farbige 3D-Ersatzebene versucht. Diese Ebene ist keine zusätzliche Überlagerung, sondern ein technischer Fallback.
+- **Echtes Render-Diagnosefeld:** prüft aus der sichtbaren Szene, ob das Gebäude-Layer vorhanden ist und wie viele gezeichnete Bauteile zurückgeliefert werden. Fehlende Kacheln werden offen angezeigt.
+- **Gebäudeauswahl:** durch Klick auf einen 3D-Baukörper wird dieser als halbtransparenter goldfarbener Körper hervorgehoben; Architekturwissen bleibt parallel zugänglich.
+
+## Neu: Zeitreise mit Esri World Imagery Wayback
+- **Datenquelle:** offizieller Esri-Wayback-Katalog für Veröffentlichungen von \`World Imagery\` seit Februar 2014.
+- \`history.js\` liest den öffentlich beschriebenen \`waybackconfig.json\`-Katalog dynamisch ein und validiert URL, Veröffentlichungsdatum und Veröffentlichungsnummer.
+- Eine **Jahreszeitleiste** wählt pro Kalenderjahr den letzten veröffentlichten Archiv-Kartenstand aus dem jeweiligen Jahr.
+- Der **Zeitraffer** spielt diese belegten Stände nacheinander ab; vorherige/nächste Ansicht und Pause sind möglich.
+- Ein **Vorher-nachher-Regler** blendet den ausgewählten Archivstand gegen den normalen aktuellen Esri-Satellitenhintergrund. \`0%\` bedeutet heutiger Hintergrund, \`100%\` Archivstand.
+- Die historischen Kacheln werden als neues Raster-Layer **in derselben 3D-Karte** geladen; Gelände, Kamerawinkel, Stadtsuche und Quellen bleiben erhalten.
+- **Keine anachronistischen 3D-Gebäude:** Sobald eine historische Aufnahme gewählt wird, werden heutige 3D-Gebäude standardmässig ausgeblendet. Auf Wunsch kann man sie ausdrücklich als *heutige* Objekte zuschalten.
+- Die App verwendet bei gesperrtem Wayback-JSON-Katalog einen sehr begrenzten Ersatz aus drei öffentlich dokumentierten Releases: 2014-02-20 (\`10\`), 2019-05-15 (\`9598\`), 2023-12-07 (\`56102\`). Der Status kennzeichnet diesen eingeschränkten Modus ausdrücklich. Ohne erreichbare Esri-Rasterkacheln ist auch dieser Modus nicht nutzbar.
+- Offizielle Fallback-Links: https://livingatlas.arcgis.com/wayback/ für Luftbilder und https://www.oldmapsonline.org/ für ältere gedruckte historische Karten.
+
+### Was ein Wayback-Datum bedeutet
+**Ein Veröffentlichungsdatum des World-Imagery-Kartenstands ist nicht das Datum der Luftbildaufnahme.** Ein als \`2023-12-07\` ausgewiesener Archivstand kann ein an diesem Ort bereits Jahre zuvor aufgenommenes Bild enthalten. Zwei Kartenstände können identisch sein, wenn die betreffenden Kacheln lokal unverändert geblieben sind. Ein zeitlich exakt datierter Baufortschrittsfilm wie aus lokalen Originalaufnahmen kann daher ohne lokales Capture-Datum und Änderungsabgleich nicht versprochen werden.
+
+## Praktischer Test
+1. Browser hart aktualisieren: \`Strg+Shift+R\`.
+2. Santa Teresa öffnen, auf ungefähr Zoom 16 gehen, Kartenstudio aufklappen. \`🏛️ Architekturfokus\` wählen: Die Häuser sollten jetzt deutlich unterschiedliche Korall-, Türkis-, Gold-, Grün- und Violetttöne aufweisen; die Meldung \`3D-Bauteile sichtbar\` zeigt, ob die Ebene gerendert wird.
+3. Ein Gebäude anklicken: goldfarbene Hervorhebung und Objektwissen.
+4. Unten \`🕰️ Zeitreise starten\` drücken: Katalog laden, Archivjahre wechseln und \`▶ Zeitraffer\` starten.
+5. Bei der Zeitreise \`Vorher/Archiv\` überblenden; \`heutige 3D-Gebäude\` bewusst ein-/ausschalten.
+6. Falls kein einziges historisches Luftbild lädt, die offizielle Esri-Wayback-App aus dem Zeitreise-Panel öffnen. Der externe Karten-/Katalogdienst muss erreichbar sein.
+
+## Grenzen
+- Die tatsächliche historische Aufnahmezeit ist **nicht pro Kachel** verifiziert; für diese müsste die metadataLayerUrl des jeweiligen Archivreleases abgefragt werden.
+- Frühere Satellitenarchive sind **nicht gleichbedeutend mit gezeichneten historischen Karten**. Originalkarten vor 2014 stehen als externer Link bereit, noch nicht als georeferenzierter eigener MapLibre-Layer.
+- Ein GIF/Video wird derzeit nicht exportiert; Zeitraffer ist eine interaktive Wiedergabe im Browser.
+- Die Architektureinfärbung und die 3D-Extrusionen sind vereinfachte Kartografie, keine Fassaden-Photogrammetrie. Diese neue Version liefert daher noch keinen fotorealistischen Google-Earth-Klon.
+- Server-/Browser-Verfügbarkeit des kompletten Wayback-Archivs muss nach GitHub-Pages-Publikation end-to-end überprüft werden.
+
+## Quellen und Bedingungen
+- Esri Wayback-Projekt und Release-Dokumentation: https://github.com/Esri/wayback-core
+- World Imagery Wayback: https://livingatlas.arcgis.com/wayback/
+- Esri-Nutzungsbedingungen: https://www.esri.com/en-us/legal/terms/full-master-agreement
+- MapLibre-3D-Architektur: https://maplibre.org/maplibre-gl-js/docs/examples/display-buildings-in-3d/
+- Alte Landkarten: https://www.oldmapsonline.org/
+
+---
+
 # SICILIA 3D v10.7 – Farbiges Relief, Architekturwissen & Wetterwelt
 
 **Release 132 · 24. November 2026**
