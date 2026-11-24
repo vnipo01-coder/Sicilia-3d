@@ -271,7 +271,7 @@ function addLayer(obj,before){
     // Provide a plainly colored, independently rendered backup extrusion.
     if(obj.type==='fill-extrusion'&&[ids.build,ids.local].includes(obj.id)){
       try{
-        const basic={...obj,filter:undefined,
+        const basic={...obj,
           paint:{
             'fill-extrusion-color':['interpolate',['linear'],
               ['to-number',['get',obj.id===ids.local?'height_m':'render_height'],9.5],
@@ -282,6 +282,7 @@ function addLayer(obj,before){
             'fill-extrusion-base':0,'fill-extrusion-opacity':.96
           }
         };
+        delete basic.filter;
         map.addLayer(basic,before);
         state.buildingFallback=true;
         console.warn('Safe fallback 3D extrusion restored:',obj.id);
