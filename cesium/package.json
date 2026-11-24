@@ -1,0 +1,9 @@
+{
+  "name": "sicilia-cesium-reference-pilot",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check core.js && node --check app.js && npm test"
+  }
+}
