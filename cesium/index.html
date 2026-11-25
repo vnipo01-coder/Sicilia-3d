@@ -8,7 +8,7 @@
 <title>SICILIA 3D · Santa Teresa Cesium Pilot</title>
 <link rel="preconnect" href="https://cesium.com">
 <link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.146/Build/Cesium/Widgets/widgets.css">
-<link rel="stylesheet" href="./style.css?v=1">
+<link rel="stylesheet" href="./style.css?v=2">
 </head>
 <body>
 <div id="cesiumContainer" aria-label="Interaktive 3D-Welt Santa Teresa di Riva"></div>
@@ -18,7 +18,7 @@
     <div><strong>SICILIA <em>3D</em></strong><small>CESIUM LAB · SANTA TERESA DI RIVA</small></div>
   </div>
   <div class="top-right">
-    <div class="build-indicator"><span class="dot"></span><span id="stage">Referenzgebiet · Phase 1</span></div>
+    <div class="build-indicator"><span class="dot"></span><span id="stage">Referenzgebiet · Phase 2</span></div>
     <div class="weather-indicator" id="pilot-weather" title="Aktuelle Wettermodellwerte von Open-Meteo">🌦️ Wetter wird geladen …</div>
     <a class="top-link" href="../v10/?release=141">← Zum bisherigen Atlas</a>
   </div>
@@ -45,11 +45,16 @@
       <div><strong id="road-count">–</strong><small>Strassen</small></div>
       <div><strong id="measured-count">–</strong><small>Höhenwerte direkt dokumentiert</small></div>
     </div>
+    <div class="terrain-control">
+      <button type="button" id="terrain-free" class="button terrain-button">⛰️ Reales Relief aktivieren</button>
+      <p id="terrain-state" role="status">Kostenloses AWS-/Mapzen-Geländemodell wird geprüft …</p>
+      <small class="terrain-note">Echte rasterbasierte Geländeoberfläche – keine lokal vermessenen Fassaden. Bei Ausfall bleibt der Globus erhalten.</small>
+    </div>
     <div class="control-row">
       <label class="switchline"><input type="checkbox" id="osm-layer" checked> <span>3D-Gebäude anzeigen</span></label>
       <label class="switchline"><input type="checkbox" id="roads-layer" checked> <span>Strassen und Haltestellen</span></label>
     </div>
-    <p class="explainer">Ohne Zugangsschlüssel: Satellitenbild + echte OSM-Grundrisse, aber <strong>vereinfachte 3D-Körper auf einem flachen Erdmodell</strong>. Diese Darstellung ist noch kein digitaler Zwilling.</p>
+    <p class="explainer">Ohne Zugangsschlüssel: Satellitenbild, echte OSM-Grundrisse und – wenn die externen Höhenkacheln laden – <strong>reales Gelände aus offenen Rasterdaten</strong>. Häuser bleiben vereinfachte Baukörper ohne fotorealistische Fassaden.</p>
     <button class="button primary" id="quality-open">✦ Hochwertige 3D-Daten verbinden</button>
   </section>
   <section class="section">
@@ -61,7 +66,7 @@
       <a href="https://www.dati.gov.it/node/view-dataset/dataset?id=ffad6512-1854-4e4d-bfec-bd867d8b18dc" target="_blank" rel="noopener noreferrer">Italienisches LiDAR-Register ↗</a>
     </div>
   </section>
-  <div class="bottom-note">PILOT 0.1 · Gemessene Angaben und Modellannahmen werden getrennt angezeigt. © OpenStreetMap-Mitwirkende · Esri/Datenanbieter · Cesium</div>
+  <div class="bottom-note">PILOT 0.2 · Gemessene Angaben und Modellannahmen werden getrennt angezeigt. © OpenStreetMap-Mitwirkende · Esri/Datenanbieter · Cesium</div>
 </aside>
 <div class="hud panel">
  <span class="hud-label">KAMERA</span>
@@ -108,6 +113,6 @@
 <noscript><div class="noscript">Bitte JavaScript aktivieren, um die Cesium-3D-Welt zu öffnen.</div></noscript>
 <script>window.CESIUM_BASE_URL="https://cesium.com/downloads/cesiumjs/releases/1.146/Build/Cesium/";</script>
 <script src="https://cesium.com/downloads/cesiumjs/releases/1.146/Build/Cesium/Cesium.js"></script>
-<script type="module" src="./app.js?v=1"></script>
+<script type="module" src="./app.js?v=2"></script>
 </body>
 </html>
