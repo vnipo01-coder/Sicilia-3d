@@ -6,7 +6,9 @@ Die GitHub-Pages-Startseite leitet automatisch zur aktuellen, einzigen Hauptanwe
 
 ## Cesium-Referenzwelt – neuer Entwicklungsschwerpunkt
 
-**Neu:** [Santa Teresa di Riva in CesiumJS erkunden](https://vnipo01-coder.github.io/Sicilia-3d/cesium/).
+**Neu – Cesium Lab 0.2:** [Santa Teresa di Riva mit echtem Relief erkunden](https://vnipo01-coder.github.io/Sicilia-3d/cesium/?pilot=02).
+**Fortschritt 25.11.2026:** Die Referenzwelt versucht jetzt automatisch ein echtes Höhenmodell aus AWS/Mapzen-Terrarium-Daten zu laden (ohne Cesium-ion-Token). Die Höhenkachel wird vorab geprüft, der Kamerastart an das Relief angepasst und bei Dienstfehlern automatisch auf die flache Ansicht zurückgeschaltet. Die Quelle ist ein regionales Rastermodell, **kein verifiziertes lokales 1-m-LiDAR**. Die Sichtbarkeit in Chrome und die Erreichbarkeit der externen Daten bleiben Teil des Abnahmetests.
+
 Die bisherige MapLibre-Anwendung bleibt erhalten. Im `cesium/`-Ordner entsteht ein eigenständiger Qualitäts-Pilot: Satellitenkacheln, echte OSM-Gebäudegrundrisse und Strassen, Architekturwissen mit Quellennachweisen und Live-Wettermodellwerte. Optional können Cesium World Terrain, Cesium OSM Buildings oder Google Photorealistic 3D Tiles über einen eigenen, eingeschränkten Cesium-ion-Token zugeschaltet werden. Das deutsche/i​talienische LiDAR-Register wird zunächst auditiert, nicht als vorhandenes Terrain behauptet. Die Pilotansicht ohne Token ist noch kein fotorealistischer digitaler Zwilling.
 
 **Qualitätsprüfung:** `cesium/package.json`, `cesium/tests/`, automatischer GitHub-Check sowie manuell startbarer Browser-Workflow mit Screenshots. [Daten- und Qualitätshandbuch](cesium/README.md).
