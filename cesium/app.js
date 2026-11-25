@@ -299,6 +299,7 @@ function terrainButtonLabel(){
 function switchToEllipsoid(){
   // Invalidate unfinished requests before they can replace a later choice.
   state.terrainBuild++;
+  state.terrainLoading=false;
   if(!state.viewer)return;
   state.viewer.terrainProvider=new Cesium.EllipsoidTerrainProvider();
   state.viewer.scene.globe.depthTestAgainstTerrain=false;
@@ -326,7 +327,9 @@ async function enableOpenTerrain(){
     state.viewer.scene.globe.depthTestAgainstTerrain=false;
     state.terrainMode="terrarium";
     state.terrain=true;
-    setTerrainStatus("✓ Echte Geländeoberfläche aus AWS-/Mapzen-Terrarium aktiv. Referenzkachel dekodiert; weitere Kacheln laden bei Bedarf.");
+    setTerrainStatus("✓ Reales Relief aus AWS/Mapzen aktiv. Referenzpunkt ca. "+
+      result.preflightHeightMetres.toFixed(1)+
+      " m im DEM; weitere Kacheln laden bei Bedarf. Kein lokales 1-m-LiDAR.");
     setMode(state.mode);
   }catch(error){
     if(generation!==state.terrainBuild)return;
@@ -376,6 +379,7 @@ async function runIon(action){
       setTokenState("Lade echte Gelände-Kacheln von Cesium ion …");
       const terrain=await Cesium.createWorldTerrainAsync({requestVertexNormals:true});
       ++state.terrainBuild; // discard pending public DEM requests
+      state.terrainLoading=false;
       state.viewer.terrainProvider=terrain;
       state.viewer.scene.globe.depthTestAgainstTerrain=false;
       state.terrain=true;state.terrainMode="ion";
