@@ -22,6 +22,15 @@ export function mercatorTile(lat,lon,z){
   const y=clamp(Math.floor((1-Math.log(Math.tan(latitude)+1/Math.cos(latitude))/Math.PI)/2*n),0,n-1);
   return {x,y,z};
 }
+export function mercatorFraction(lat,lon,z){
+  if(!Number.isFinite(lat)||!Number.isFinite(lon)||
+      !Number.isInteger(z)||z<0||z>20)throw Error('Ungültiger Höhenpunkt');
+  const latitude=clamp(lat,-WEBMERCATOR_MAX,WEBMERCATOR_MAX)*Math.PI/180;
+  const n=2**z;
+  const u=((lon+180)/360*n);
+  const v=((1-Math.log(Math.tan(latitude)+1/Math.cos(latitude))/Math.PI)/2*n);
+  return {x:Math.floor(u),y:Math.floor(v),u:u-Math.floor(u),v:v-Math.floor(v),z};
+}
 export function parentTile(x,y,z,cap=TERRARIUM_MAX_ZOOM){
   if(!Number.isInteger(x)||!Number.isInteger(y)||!Number.isInteger(z)||
     z<0||x<0||y<0)throw Error('Ungültige Tile-ID');
@@ -95,7 +104,8 @@ export async function prepareTerrarium(Cesium,{
   const preflight=mercatorTile(lat,lon,12);
   onStatus('Geländemodell: prüfe echte Höhenkachel bei Santa Teresa …');
   const first=await loadTerrainPixels(preflight.x,preflight.y,preflight.z);
-  const rawHeight=sampleTerrariumPixels(first.data,first.width,first.height,.5,.5);
+  const centre=mercatorFraction(lat,lon,12);
+  const rawHeight=sampleTerrariumPixels(first.data,first.width,first.height,centre.u,centre.v);
   if(!Number.isFinite(rawHeight)||rawHeight< -500||rawHeight>4500)
     throw Error('Unplausible Geländehöhen aus AWS Terrarium');
   const cache=new Map();
