@@ -49,8 +49,16 @@ function viewPlace(id="municipio",duration=1.4){
   state.lastPlace=p.id;
   document.querySelectorAll("[data-place]").forEach(button=>
     button.classList.toggle("selected",button.dataset.place===p.id));
+  // Camera presets are approximately above local terrain; ellipsoid height
+  // alone can put a near-ground camera beneath a hillside when DEM is enabled.
+  const cartographic=Cesium.Cartographic.fromDegrees(p.lon,p.lat);
+  const sampled=state.terrainMode==="ellipsoid"?0:
+    state.viewer.scene.globe.getHeight(cartographic);
+  const ground=Number.isFinite(sampled)?Math.max(0,sampled):
+    (state.terrainMode==="terrarium"&&state.openTerrain?
+      Math.max(0,state.openTerrain.preflightHeightMetres):0);
   state.viewer.camera.flyTo({
-    destination:Cesium.Cartesian3.fromDegrees(p.lon,p.lat,p.height),
+    destination:Cesium.Cartesian3.fromDegrees(p.lon,p.lat,p.height+ground),
     orientation:{
       heading:Cesium.Math.toRadians(p.heading),
       pitch:Cesium.Math.toRadians(p.pitch),roll:0
@@ -331,6 +339,7 @@ async function enableOpenTerrain(){
       result.preflightHeightMetres.toFixed(1)+
       " m im DEM; weitere Kacheln laden bei Bedarf. Kein lokales 1-m-LiDAR.");
     setMode(state.mode);
+    viewPlace(state.lastPlace,1.1); // reframe safely above loaded terrain
   }catch(error){
     if(generation!==state.terrainBuild)return;
     state.terrainMode="ellipsoid";
