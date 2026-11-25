@@ -1,12 +1,12 @@
 {
-  "version": "0.1",
+  "version": "0.2",
   "area": "Santa Teresa di Riva",
   "center": {
     "lat": 37.94533,
     "lon": 15.3683
   },
   "radius_m": 750,
-  "last_reviewed": "2026-11-24",
+  "last_reviewed": "2026-11-25",
   "sources": [
     {
       "id": "osm",
@@ -25,6 +25,18 @@
       "accuracy": "imagery source; acquisition dates and local resolution unverified",
       "coverage": "verify live",
       "license": "Esri/provider terms apply"
+    },
+    {
+      "id": "aws-terrarium",
+      "type": "terrain elevation (PNG encoded DEM)",
+      "status": "runtime_integration_with_preflight",
+      "source": "AWS Terrain Tiles / Mapzen Terrarium",
+      "endpoint": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png",
+      "nominal_detail": "tile grid max source zoom 14, Cesium 33x33 heightmap samples",
+      "coverage": "pilot point preflight; public browser CORS and local geomorphological accuracy not independently verified",
+      "accuracy": "regional terrain dataset, not equivalent to 1 m local survey; source survey resolution varies",
+      "license": "AWS Terrain Tiles public-data attribution and individual elevation inputs must be respected",
+      "fallback": "Cesium EllipsoidTerrainProvider if preflight or browser decoding fails"
     },
     {
       "id": "terrain_ion",
