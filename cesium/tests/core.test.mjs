@@ -115,6 +115,6 @@ test("Pilot is discoverable with direct verification sources",()=>{
   assert.ok(html.includes("OpenStreetMap"));
   assert.ok(html.includes("Gemeinde"));
   assert.ok(html.includes("Strassen und Haltestellen"));
-  assert.ok(html.includes("./app.js?v=1"));
+  assert.ok(html.includes("./app.js?v=2"));
   assert.ok(html.includes('id="quality-label"'));
 });
