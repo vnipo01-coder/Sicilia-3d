@@ -1,3 +1,32 @@
+# CESIUM LAB 0.2 – Erstes echtes Relief ohne ion-Token
+
+**25. November 2026 · Santa Teresa di Riva**
+
+## Neuer technischer Schritt
+
+Die Pilotseite lädt nun **standardmässig einen optionalen, echten Höhenmodell-Adapter**. Die Daten stammen aus AWS/Mapzen Terrain Tiles im Terrarium-PNG-Format. Der Adapter nutzt \`Cesium.CustomHeightmapTerrainProvider\` mit \`Cesium.WebMercatorTilingScheme\` und decodiert die Höhe aus RGB nach \`R × 256 + G + B / 256 − 32768\`. Eine Quelle: https://www.nextzen.org/ und die offizielle Cesium-API https://cesium.com/learn/cesiumjs/ref-doc/CustomHeightmapTerrainProvider.html.
+
+**Ohne Token:** Nach dem ersten Satellitenbild wird eine reale Höhenkachel für Santa Teresa geladen und auf plausible Höhenwerte geprüft. Falls das funktioniert, ersetzt der Adapter das flache Ellipsoid. Die Gebäudemodelle sind weiterhin echte OSM-Grundrisse mit teilweise geschätzter Gebäudehöhe und werden relativ zur jeweiligen Geländeoberfläche extrudiert.
+
+**Bei Fehlern:** Wenn die AWS-Kacheln, CORS-Freigaben oder die PNG-Decodierung nicht funktionieren, wechselt die Anwendung automatisch zum Ellipsoid zurück. Satellitenbild und OSM-Geometrien laden unabhängig und bleiben nutzbar. Einzelne spätere Kachelausfälle werden offengelegt; innerhalb dieser Kacheln kann ein flacher Ersatz angezeigt werden. Ein sichtbarer Schalter erlaubt den Wechsel zwischen flach und Gelände. Auf Kamera-Presets wird die geladene lokale Terrainhöhe berücksichtigt.
+
+**Keine wissenschaftliche Falschbehauptung:** Ein verwendeter globaler oder regionaler Höhenrasterdatensatz entspricht nicht automatisch einer lokal vermessenen 1-m-LiDAR-Topografie. Das AWS-Datenmodell ist nicht identisch mit dem bei dati.gov.it dokumentierten 1-m-LiDAR; dessen **konkrete Abdeckung, Lizenz und Download für Santa Teresa bleiben offen**.
+
+## Qualitätskontrolle
+
+- **Unabhängiger Start:** Die Cesium-Karte wartet nicht auf das Höhendaten-Preflight, um erstmals sichtbar zu werden.
+- **Datenherkunft:** Quelle und Einschränkungen sind in \`data-audit.json\` ergänzt.
+- **Kamera:** Presetpositionen werden nach dem Laden des Reliefs nachgeführt.
+- **Sicherheit:** Kein Cesium-ion-Schlüssel wird im Repository gespeichert. Das freie Relief benötigt keine ion-Berechtigung.
+- **Regressionstests:** \`tests/terrain.test.mjs\` deckt Terrarium-RGB-Formel, WebMercator-Koordinaten, Zoom-Interpolation, geografische Punkte und die Cesium-Kontrollverknüpfung ab.
+- **Live-Browser:** Die tatsächlichen externen AWS-Bildkacheln und die WebGL-Darstellung müssen noch mit Chrome/Firefox und den Entwicklertools geprüft werden. Dies ist für die Abnahme zwingend.
+
+## Verbleibender Engpass
+
+Diese Iteration ist der erste echte Geodaten-Qualitätsschritt, aber **noch keine fotorealistische Stadt**. Dachformen, Fassaden, Strassenmöbel und lokal präzise Terrainmodelle erfordern ein klar umrissenes, lizenziertes Geodatenset und anschliessend konvertierte, effiziente 3D Tiles. Die nächste Phase sollte einen tatsächlichen, herunterladbaren 1-m-DTM-/DSM-Ausschnitt und einzelne verifizierte Gebäudequellen für den Referenzabschnitt sichern.
+
+---
+
 # SICILIA 3D · Cesium Lab (Pilot 0.1)
 
 ## Starten
