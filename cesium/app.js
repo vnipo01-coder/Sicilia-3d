@@ -3,7 +3,8 @@
  * Satellite raster, OSM 3D extrusions, verified ion 3D Tiles are different
  * quality classes. We label every one and never fake detailed facades.
 */
-import {PILOT,PLACES,fetchPilotOsm,SOURCE_LINKS} from "./core.js?v=1";
+import {PILOT,PLACES,fetchPilotOsm,SOURCE_LINKS} from "./core.js?v=2";
+import {prepareTerrarium} from "./terrain.js?v=2";
 import {architectureProfilesFor,architectureProperties} from "../v10/architecture.js?v=132";
 import {getWeather,formatWeather} from "../v10/weather.js?v=132";
 const $=id=>document.getElementById(id);
@@ -15,7 +16,8 @@ if(!Cesium){
 const state={
   viewer:null,source:null,roads:null,bus:null,
   terrain:false,tiles:null,photoreal:null,mode:"osm",
-  osmData:null,loading:false,tokenConnected:false,lastPlace:"municipio"
+  osmData:null,loading:false,tokenConnected:false,lastPlace:"municipio",
+  terrainMode:"ellipsoid",terrainLoading:false,terrainBuild:0,openTerrain:null
 };
 const log=(msg,isError=false)=>{
   $("data-state").textContent=msg;
@@ -68,8 +70,11 @@ function setMode(mode){
   state.mode=mode;
   setSourceVisibility();
   if(mode==="osm")
-    quality(state.terrain?"Reale Geländekacheln · OSM-Gebäudemodelle":
-      "Satellit + OSM-Kartengeometrie · ohne echtes Gelände");
+    quality(state.terrainMode==="ellipsoid"?
+      "Satellit + kartierte OSM-Gebäude · Gelände derzeit flach":
+      state.terrainMode==="terrarium"?
+      "Reales AWS-Terrarium-Gelände + OSM-Gebäudegrundrisse":
+      "Cesium World Terrain + kartierte OSM-Gebäude");
   if(mode==="ion")quality("Cesium OSM Buildings · gestreamte 3D Tiles");
   if(mode==="photo")quality("Photorealistische 3D Tiles · Abdeckung noch prüfen");
 }
@@ -277,6 +282,66 @@ function renderPilotOSM(data){
     (failed?" "+failed+" ungültige Polygone übersprungen.":""));
   quality("OSM-3D-Baukörper · echte Grundrisse, modellierte Fassaden");
 }
+function setTerrainStatus(message,error=false){
+  const el=$("terrain-state");
+  if(el){el.textContent=message;el.dataset.state=error?"error":"ok";}
+}
+function terrainButtonLabel(){
+  const b=$("terrain-free");
+  if(!b)return;
+  b.disabled=state.terrainLoading;
+  b.textContent=state.terrainLoading?
+    "⏳ Lade echtes Relief …":
+    state.terrainMode==="terrarium"?
+      "⛰️ Reales Relief deaktivieren":
+      "⛰️ Kostenloses reales Relief aktivieren";
+}
+function switchToEllipsoid(){
+  // Invalidate unfinished requests before they can replace a later choice.
+  state.terrainBuild++;
+  if(!state.viewer)return;
+  state.viewer.terrainProvider=new Cesium.EllipsoidTerrainProvider();
+  state.viewer.scene.globe.depthTestAgainstTerrain=false;
+  state.terrain=false;
+  state.terrainMode="ellipsoid";
+  setTerrainStatus("Flaches Erdmodell aktiv. Das Luftbild und die OSM-Gebäude bleiben sichtbar.");
+  terrainButtonLabel();
+  setMode(state.mode);
+}
+async function enableOpenTerrain(){
+  if(state.terrainLoading)return;
+  if(state.terrainMode==="terrarium"){switchToEllipsoid();return;}
+  const generation=++state.terrainBuild;
+  state.terrainLoading=true;
+  terrainButtonLabel();
+  setTerrainStatus("AWS-Geländekachel für Santa Teresa wird unabhängig von der Karte geprüft …");
+  try{
+    const result=state.openTerrain||await prepareTerrarium(Cesium,{
+      lat:PILOT.lat,lon:PILOT.lon,
+      onStatus:message=>{if(generation===state.terrainBuild)setTerrainStatus(message);}
+    });
+    if(generation!==state.terrainBuild)return;
+    state.openTerrain=result;
+    state.viewer.terrainProvider=result.provider;
+    state.viewer.scene.globe.depthTestAgainstTerrain=false;
+    state.terrainMode="terrarium";
+    state.terrain=true;
+    setTerrainStatus("✓ Echte Geländeoberfläche aus AWS-/Mapzen-Terrarium aktiv. Referenzkachel dekodiert; weitere Kacheln laden bei Bedarf.");
+    setMode(state.mode);
+  }catch(error){
+    if(generation!==state.terrainBuild)return;
+    state.terrainMode="ellipsoid";
+    state.terrain=false;
+    state.viewer.terrainProvider=new Cesium.EllipsoidTerrainProvider();
+    setTerrainStatus("Geländekacheln nicht verfügbar: "+String(error.message||error)+
+      " · flache Satellitenwelt bleibt bedienbar.",true);
+    setMode(state.mode);
+  }finally{
+    if(generation===state.terrainBuild){
+      state.terrainLoading=false;terrainButtonLabel();
+    }
+  }
+}
 async function loadOSM(){
   if(state.loading)return;
   state.loading=true;
@@ -310,10 +375,12 @@ async function runIon(action){
     if(action==="terrain"){
       setTokenState("Lade echte Gelände-Kacheln von Cesium ion …");
       const terrain=await Cesium.createWorldTerrainAsync({requestVertexNormals:true});
+      ++state.terrainBuild; // discard pending public DEM requests
       state.viewer.terrainProvider=terrain;
-      state.viewer.scene.globe.depthTestAgainstTerrain=true;
-      state.terrain=true;
+      state.viewer.scene.globe.depthTestAgainstTerrain=false;
+      state.terrain=true;state.terrainMode="ion";
       setTokenState("Geländedaten erfolgreich verbunden. Gebäude bleiben geometrisch vereinfachte OSM-Körper.");
+      setTerrainStatus("Cesium World Terrain mit ion-Zugriff aktiv.");terrainButtonLabel();
       quality("Cesium World Terrain aktiv · Datenabdeckung prüfen");
       if(state.mode==="photo")setMode("osm");
     }else if(action==="tiles"){
@@ -367,6 +434,7 @@ function wireUI(){
     state.viewer.camera.positionCartographic.height*.23));
   $("zoom-out").onclick=()=>state.viewer.camera.zoomOut(Math.max(25,
     state.viewer.camera.positionCartographic.height*.33));
+  $("terrain-free").onclick=enableOpenTerrain;
   $("osm-layer").onchange=setSourceVisibility;
   $("roads-layer").onchange=setSourceVisibility;
   $("place-close").onclick=()=>$("place-overlay").hidden=true;
@@ -387,6 +455,7 @@ function wireUI(){
 try{
   await initViewer();
   wireUI();
+  enableOpenTerrain(); // does not block the satellite image or OSM loading
   refreshPilotWeather(); // independent of imagery and Overpass
   setInterval(()=>{if(!document.hidden)refreshPilotWeather();},6*60*1000);
   await loadOSM();
